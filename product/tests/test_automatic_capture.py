@@ -114,13 +114,91 @@ class CaptureTests(unittest.TestCase):
                 self.assertEqual(recovered, config)
 
     @unittest.skipUnless(capture.fcntl is not None, 'POSIX capture runner')
-    def test_error_code_message_and_attention_are_preserved(self):
+    def test_runtime_error_code_is_preserved_without_untrusted_message(self):
         self.runtime.write_text('print(\'{"ok": false, "code": "fixture_failure", "message": "Useful diagnosis", "data": {"readiness": "partial", "attention": ["review conflict"]}}\')')
         self.config['sha256'] = hashlib.sha256(self.runtime.read_bytes()).hexdigest()
         self.assertNotEqual(capture.run_once(self.config), 0)
         result = json.loads((self.logs / 'last-result.json').read_text())
-        self.assertIn('Useful diagnosis', result['error'])
+        self.assertEqual(result['error_code'], 'fixture_failure')
+        self.assertNotIn('Useful diagnosis', json.dumps(result))
+        self.assertEqual(result['phase'], 'runtime_sync')
         self.assertEqual(result['summary']['attention'], ['review conflict'])
+
+    @unittest.skipUnless(capture.fcntl is not None, 'POSIX capture runner')
+    def test_stderr_and_forged_io_message_never_leak_note_text(self):
+        secret = 'Private note body must stay out of capture diagnostics'
+        self.runtime.write_text('import json, sys\n'
+                                f'sys.stderr.write({secret!r})\n'
+                                f'print(json.dumps({{"ok": False, "code": "folder_io", "message": {secret!r}}}))\n')
+        self.config['sha256'] = hashlib.sha256(self.runtime.read_bytes()).hexdigest()
+        self.assertNotEqual(capture.run_once(self.config), 0)
+        result = json.loads((self.logs / 'last-result.json').read_text())
+        self.assertNotIn(secret, json.dumps(result))
+        self.assertEqual(result['error_code'], 'folder_io')
+        self.assertEqual(result['stderr_bytes'], len(secret.encode()))
+
+    @unittest.skipUnless(capture.fcntl is not None, 'POSIX capture runner')
+    def test_safe_folder_phase_and_errno_reach_capture_status(self):
+        message = 'Folder operation failed during sync_capture_local (OSError, ENOSPC); preserve history and private recovery state.'
+        self.runtime.write_text('import json\nprint(json.dumps({"ok": False, "code": "folder_io", "message": ' + repr(message) + '}))')
+        self.config['sha256'] = hashlib.sha256(self.runtime.read_bytes()).hexdigest()
+        self.assertNotEqual(capture.run_once(self.config), 0)
+        result = json.loads((self.logs / 'last-result.json').read_text())
+        self.assertEqual(result['error'], message)
+
+    def test_private_progress_reader_returns_only_fresh_safe_fields(self):
+        import time
+        marker = self.state / 'capture-progress.json'
+        marker.write_text(json.dumps({'format': 1, 'phase': 'sync_load_history_provider',
+                                      'updated_at': time.time(), 'pid': 42, 'count': 400,
+                                      'note_text': 'private body'}))
+        self.assertEqual(capture.read_progress(self.config, time.time() - 1),
+                         {'phase': 'sync_load_history_provider', 'count': 400})
+        self.assertIsNone(capture.read_progress(self.config, time.time() + 30))
+        marker.write_text(json.dumps({'format': 1, 'phase': '../private', 'updated_at': time.time()}))
+        self.assertIsNone(capture.read_progress(self.config, time.time() - 1))
+
+    def test_progress_reader_resolves_migrated_folder_state(self):
+        import time
+        (self.state / 'connection.json').write_text('{}')
+        folder = self.state / 'folder'; folder.mkdir()
+        (self.state / 'folder.json').rename(folder / 'folder.json')
+        (folder / 'capture-progress.json').write_text(json.dumps({
+            'format': 1, 'phase': 'sync_capture_local_read', 'updated_at': time.time(), 'count': 50}))
+        self.assertEqual(capture.read_progress(self.config, time.time() - 1),
+                         {'phase': 'sync_capture_local_read', 'count': 50})
+
+    def test_status_rechecks_runtime_digest_and_labels_local_health(self):
+        import contextlib
+        import io
+        import time
+        from argparse import Namespace
+        from subprocess import CompletedProcess
+        args = Namespace(project=str(self.project), state_dir=str(self.state), python=self.config['python'],
+                         runtime=str(self.runtime), interval=60, sha256=self.config['sha256'])
+        with patch.object(Path, 'home', return_value=self.base):
+            config, _, _ = capture.plan(args)
+            directory = Path(config['capture']); directory.mkdir(parents=True)
+            (directory / 'config.json').write_text(json.dumps(config))
+            result = dict(ok=True, readiness='ready', checked_at=time.time(),
+                          capture_signature=capture.capture_signature(config), provider_delivery='unverified')
+            (directory / 'last-result.json').write_text(json.dumps(result))
+            def status():
+                output = io.StringIO()
+                with patch.object(sys, 'argv', [str(SCRIPT), str(self.project), '--status']), \
+                     patch.object(sys, 'platform', 'darwin'), patch.object(capture.os, 'getuid', return_value=42, create=True), \
+                     patch.object(capture, 'launchctl', return_value=CompletedProcess([], 0)), \
+                     contextlib.redirect_stdout(output):
+                    code = capture.main()
+                return code, json.loads(output.getvalue())
+            code, report = status()
+            self.assertEqual(code, 0)
+            self.assertEqual(report['health_scope'], 'local_capture_only')
+            self.assertEqual(report['provider_integrity'], 'unverified')
+            self.runtime.write_text('changed runtime content')
+            code, report = status()
+            self.assertEqual(code, 2)
+            self.assertFalse(report['healthy'])
 
     def test_known_provider_roots_are_refused_outside_selected_workspace(self):
         for folder in ('OneDrive - Example', 'Google Drive', 'GoogleDrive-user', 'Dropbox', 'CloudStorage', 'Mobile Documents', 'Nextcloud', 'Box'):
@@ -144,6 +222,25 @@ class CaptureTests(unittest.TestCase):
         argv = [str(SCRIPT), str(self.project), '--state-dir', str(self.state), '--runtime', str(self.runtime), '--sha256', self.config['sha256']]
         with patch.object(sys, 'argv', argv), patch.object(sys, 'platform', 'win32'), patch.object(Path, 'home', return_value=self.base), patch.object(capture.os, 'getuid', side_effect=AssertionError('must not call'), create=True), contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(capture.main(), 0)
+
+    def test_install_validates_binding_without_full_folder_scan(self):
+        import contextlib
+        import io
+        from subprocess import CompletedProcess
+        argv = [str(SCRIPT), str(self.project), '--state-dir', str(self.state), '--runtime', str(self.runtime),
+                '--sha256', self.config['sha256'], '--install']
+        output = io.StringIO()
+        def launch_result(*arguments, **kwargs):
+            return CompletedProcess([], 1 if arguments[0] == 'print' and len(arguments) == 2 else 0)
+        with patch.object(sys, 'argv', argv), patch.object(sys, 'platform', 'darwin'), patch.object(Path, 'home', return_value=self.base), \
+             patch.object(capture.os, 'getuid', return_value=42, create=True), \
+             patch.object(capture, 'launchctl', side_effect=launch_result), \
+             patch.object(capture.subprocess, 'run', side_effect=AssertionError('full scan is not an install preflight')), \
+             contextlib.redirect_stdout(output):
+            self.assertEqual(capture.main(), 0)
+        result = json.loads(output.getvalue())
+        self.assertTrue(result['installed'])
+        self.assertFalse(result['capture_verified'])
 
     @unittest.skipUnless(capture.fcntl is not None, 'POSIX capture runner')
     def test_partial_readiness_has_attention_and_nonzero_status(self):
@@ -169,9 +266,29 @@ class CaptureTests(unittest.TestCase):
             (directory / 'config.json').write_text(json.dumps(config))
             cases = [(True, 'ready', time.time(), 0), (True, 'partial', time.time(), 2), (False, 'ready', time.time(), 2), (True, 'ready', 0, 2)]
             for ok, readiness, checked_at, expected in cases:
-                (directory / 'last-result.json').write_text(json.dumps(dict(ok=ok, readiness=readiness, checked_at=checked_at)))
+                (directory / 'last-result.json').write_text(json.dumps(dict(ok=ok, readiness=readiness, checked_at=checked_at,
+                                                                            capture_signature=capture.capture_signature(config))))
                 with patch.object(sys, 'argv', [str(SCRIPT), str(self.project), '--status']), patch.object(sys, 'platform', 'darwin'), patch.object(capture.os, 'getuid', return_value=42, create=True), patch.object(capture, 'launchctl', return_value=CompletedProcess([], 0)), contextlib.redirect_stdout(io.StringIO()):
                     self.assertEqual(capture.main(), expected)
+
+    def test_status_rejects_prior_runner_result_after_update(self):
+        import contextlib
+        import io
+        import time
+        from argparse import Namespace
+        from subprocess import CompletedProcess
+        args = Namespace(project=str(self.project), state_dir=str(self.state), python=self.config['python'], runtime=str(self.runtime), interval=60, sha256=self.config['sha256'])
+        with patch.object(Path, 'home', return_value=self.base):
+            config, _, _ = capture.plan(args)
+            directory = Path(config['capture'])
+            directory.mkdir(parents=True)
+            (directory / 'config.json').write_text(json.dumps(config))
+            (directory / 'last-result.json').write_text(json.dumps(dict(ok=True, readiness='ready', checked_at=time.time(),
+                                                                        capture_signature='old-runner')))
+            output = io.StringIO()
+            with patch.object(sys, 'argv', [str(SCRIPT), str(self.project), '--status']), patch.object(sys, 'platform', 'darwin'), patch.object(capture.os, 'getuid', return_value=42, create=True), patch.object(capture, 'launchctl', return_value=CompletedProcess([], 0)), contextlib.redirect_stdout(output):
+                self.assertEqual(capture.main(), 2)
+            self.assertFalse(json.loads(output.getvalue())['healthy'])
 
     def successful_runtime(self):
         from subprocess import CompletedProcess
@@ -251,6 +368,16 @@ class CaptureTests(unittest.TestCase):
         self.assertIsNotNone(before)
         target.write_text('changed external content')
         self.assertEqual(before, capture.fingerprint(str(self.project)))
+
+    def test_bounded_fingerprint_disables_idle_reuse_when_provider_stalls(self):
+        import threading
+        gate = threading.Event()
+        def blocked(project, stop=None):
+            gate.wait()
+            return {'version': 1, 'sha256': 'stale', 'entries': 1}
+        with patch.object(capture, 'fingerprint', side_effect=blocked):
+            self.assertIsNone(capture.bounded_fingerprint(str(self.project), timeout=0.01))
+        gate.set()
 
     @unittest.skipUnless(capture.fcntl is not None, 'POSIX capture runner')
     def test_incomplete_scan_or_config_change_cannot_skip(self):

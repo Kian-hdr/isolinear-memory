@@ -1,4 +1,4 @@
-"""Versioned JSON boundary for the Shared Memory CLI."""
+"""Versioned JSON boundary for the Isolinear Memory CLI."""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ class Parser(argparse.ArgumentParser):
 
 
 def parser() -> argparse.ArgumentParser:
-    result = Parser(prog="shared-workspace", description="Shared Memory selected-folder collaboration and explicit revision delivery.")
+    result = Parser(prog="isolinear-memory", description="Isolinear Memory selected-folder collaboration and explicit revision delivery. The shared-memory launcher remains compatible.")
     result.add_argument("--bundle", help="Explicit reviewed built directory or package for source-mode execution")
     commands = result.add_subparsers(dest="command", required=True, parser_class=Parser)
     commands.add_parser("version", help="Show exact package identity and build provenance")
@@ -67,6 +67,7 @@ def parser() -> argparse.ArgumentParser:
 
 def capabilities() -> dict:
     return {
+        "product_name": "Isolinear Memory", "legacy_name": "Shared Memory",
         "commands": list(COMMANDS) + list(folder_workflow.COMMANDS) + list(workflow.TEAM_COMMANDS) + list(maintenance.COMMANDS) + list(delivery_workflow.COMMANDS) + list(knowledge_workflow.COMMANDS) + list(coordination_workflow.COMMANDS) + list(graph_rename.COMMANDS) + list(onboarding.COMMANDS),
         "default_workflow": "folder",
         "folder_workflow": {"commands": list(folder_workflow.COMMANDS), "direct_edits": True, "mandatory_approval": False, "coordinator_required": False, "history": "immutable_files", "provider_delivery": "unverified", "missing_file_is_delete": False, "self_hosted_candidate": "nextcloud"},
@@ -132,6 +133,19 @@ def emit(command, *, ok, code, data=None, warnings=None, message=None):
     print(json.dumps(result, ensure_ascii=True))
 
 
+def emit_text(command, data):
+    if command == 'recall':
+        print(f"method={data['method']} unavailable={data['unavailable']} unavailable_sources={','.join(data['unavailable_sources']) or 'none'} unsearched={','.join(data['unsearched']) or 'none'} truncated={str(data['truncated']).lower()}")
+        for hit in data['hits']:
+            print(f"{hit['path']}:{hit['start']}-{hit['end']} sha256={hit['sha256'][:24]}")
+            print(hit['excerpt'])
+    elif command == 'show':
+        print(f"{data['path']}:{data['start']}-{data['end']} sha256={data['sha256']}")
+        print(data['excerpt'])
+    else:
+        print(f"appended {data['path']}:{data['line']} row_sha256={data['row_sha256']}")
+
+
 def main(argv=None) -> int:
     arguments = list(sys.argv[1:] if argv is None else argv)
     command = command_hint(arguments)
@@ -181,7 +195,10 @@ def main(argv=None) -> int:
                 warnings.append(project.SHARED_WARNING)
             if getattr(args, "brief", False):
                 data = folder_workflow.brief(data)
-            emit(command, ok=True, code="ok", data=data, warnings=warnings)
+            if getattr(args, 'text', False) and command in {'recall', 'show', 'append-row'}:
+                emit_text(command, data)
+            else:
+                emit(command, ok=True, code="ok", data=data, warnings=warnings)
             return 0
     except ProductError as exc:
         emit(command, ok=False, code=exc.code, data=exc.data, warnings=exc.warnings, message=str(exc))

@@ -11,7 +11,7 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-PRODUCT_VERSION = "0.4.0"
+PRODUCT_VERSION = "0.5.0"
 TOOLKIT_VERSION = "1.3.0"
 BOOTSTRAP = r'''import hashlib
 import json
@@ -20,7 +20,7 @@ import zipfile
 
 
 def fail(code, message, exit_code):
-    print(json.dumps({"schema_version": 1, "product_version": "0.4.0",
+    print(json.dumps({"schema_version": 1, "product_version": "0.5.0",
                       "command": sys.argv[1] if len(sys.argv) > 1 else "",
                       "ok": False, "code": code, "message": message,
                       "data": {}, "warnings": []}))
@@ -28,7 +28,7 @@ def fail(code, message, exit_code):
 
 
 if sys.version_info < (3, 11):
-    fail("unsupported_runtime", "Shared Memory requires Python 3.11 or newer; use a maintained Python such as 3.13.", 2)
+    fail("unsupported_runtime", "Isolinear Memory requires Python 3.11 or newer; use a maintained Python such as 3.13.", 2)
 try:
     with zipfile.ZipFile(sys.argv[0]) as archive:
         names = archive.namelist()
@@ -71,22 +71,24 @@ def build(output: Path, *, source_files: dict[str, bytes] | None = None,
             ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
             cwd=ROOT).decode().split("\0"))
         modules = ROOT / "product/shared_workspace"
-        skill = ROOT / "skills/setup-shared-project-workspace"
+        skill_roots = (ROOT / "skills/setup-shared-project-workspace",
+                       ROOT / "skills/setup-isolinear-memory")
         for source in sorted(modules.rglob("*.py")):
             if source.relative_to(ROOT).as_posix() not in eligible:
                 continue
             if source.is_symlink():
                 raise ValueError("Source symlinks are not package inputs.")
             inputs[source.relative_to(ROOT).as_posix()] = source.read_bytes()
-        for source in sorted(skill.rglob("*")):
-            if source.relative_to(ROOT).as_posix() not in eligible:
-                continue
-            if "__pycache__" in source.parts or source.suffix in {".pyc", ".pyo"}:
-                continue
-            if source.is_symlink():
-                raise ValueError("Skill symlinks are not package inputs.")
-            if source.is_file():
-                inputs[source.relative_to(ROOT).as_posix()] = source.read_bytes()
+        for skill in skill_roots:
+            for source in sorted(skill.rglob("*")):
+                if source.relative_to(ROOT).as_posix() not in eligible:
+                    continue
+                if "__pycache__" in source.parts or source.suffix in {".pyc", ".pyo"}:
+                    continue
+                if source.is_symlink():
+                    raise ValueError("Skill symlinks are not package inputs.")
+                if source.is_file():
+                    inputs[source.relative_to(ROOT).as_posix()] = source.read_bytes()
         for name in ("LICENSE", "docs/PRODUCT-V1.md", "docs/KNOWLEDGE-GRAPH.md", "docs/CONTENT-MODE.md", "requirements-server.txt"):
             inputs[name] = (ROOT / name).read_bytes()
     else:
@@ -101,7 +103,7 @@ def build(output: Path, *, source_files: dict[str, bytes] | None = None,
     for name, data in sorted(inputs.items()):
         if name.startswith("product/shared_workspace/") and name.endswith(".py"):
             payload[name.removeprefix("product/")] = data
-        elif name.startswith("skills/setup-shared-project-workspace/"):
+        elif name.startswith(("skills/setup-shared-project-workspace/", "skills/setup-isolinear-memory/")):
             if "__pycache__" not in name.split("/") and Path(name).suffix not in {".pyc", ".pyo"}:
                 payload["bundle/" + name] = data
     for destination, source in (("LICENSE", "LICENSE"), ("PRODUCT-GUIDE.md", "docs/PRODUCT-V1.md"),
@@ -121,7 +123,8 @@ def build(output: Path, *, source_files: dict[str, bytes] | None = None,
         source_dirty |= any(name not in tracked or tracked[name] != "H" for name in inputs)
     else:
         source_dirty = False
-    metadata = {"product_version": PRODUCT_VERSION, "toolkit_version": TOOLKIT_VERSION,
+    metadata = {"product_name": "Isolinear Memory", "legacy_name": "Shared Memory",
+                "product_version": PRODUCT_VERSION, "toolkit_version": TOOLKIT_VERSION,
                 "source_revision": source_revision, "source_dirty": source_dirty,
                 "engine_protocol": 1, "bundle_id": bundle_id, "files": files}
     payload["BUILD.json"] = (json.dumps(metadata, sort_keys=True, indent=2) + "\n").encode()

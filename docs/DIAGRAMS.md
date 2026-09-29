@@ -1,4 +1,4 @@
-# Shared Memory diagrams
+# Isolinear Memory diagrams
 
 These figures explain the developing **0.3.0 folder workflow**, not the older
 format-1/2 coordinator. They are design and operating illustrations, not evidence

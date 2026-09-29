@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export native macOS appearances from SharedMemory.icon using Icon Composer.
+"""Export native macOS appearances from IsolinearMemory.icon using Icon Composer.
 
 Requires macOS, Icon Composer (bundled with Xcode) and Pillow. No runtime dependency.
 """
@@ -21,9 +21,9 @@ def main():
     if not args.ictool.is_file():
         parser.error('Icon Composer ictool is required; use --ictool for another installation.')
     args.output.mkdir(parents=True, exist_ok=False)
-    for stem, rendition in [('shared-memory', 'Default'), ('shared-memory-dark', 'Dark')]:
+    for stem, rendition in [('isolinear-memory', 'Default'), ('isolinear-memory-dark', 'Dark')]:
         png = args.output / (stem + '.png')
-        subprocess.run([str(args.ictool), str(ROOT / 'assets/SharedMemory.icon'),
+        subprocess.run([str(args.ictool), str(ROOT / 'assets/IsolinearMemory.icon'),
                         '--export-image', '--output-file', str(png), '--platform', 'macOS',
                         '--rendition', rendition, '--width', '1024', '--height', '1024',
                         '--scale', '1', '--design-generation', '27'], check=True)

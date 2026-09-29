@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.5.0
+
+- Adopt **Isolinear Memory** as the public source/release name. Preserve
+  `shared-memory` as an optional launcher alias and
+  `setup-shared-project-workspace` as a packaged legacy skill. Portable project
+  metadata, history, IDs and the internal `shared_workspace` module do not change.
+  Release assets and commands use the Isolinear name.
+- Add bounded, source-linked `recall` and hash-checked `show` over existing Markdown.
+  A private rebuildable SQLite FTS5 index accelerates search; direct bounded reads
+  remain available when the index is absent or incomplete. No extraction LLM,
+  hosted memory service or new canonical store is required.
+- Add atomic `append-row` for large Markdown tables without returning the full note
+  to model context. Keep normal canonical edits native and preserve folder format 3.
+- Bound folder-lock waits and report safe capture phases/OS error labels. Normal
+  sync reuses validated private canonical history for matching provider duplicates;
+  full status continues auditing provider bytes. Local capture never proves delivery.
+
 ## 0.4.0
 
 - Skip untracked symlink/reparse directories without weakening tracked-path boundaries.

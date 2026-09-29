@@ -28,7 +28,7 @@ and independent-recipient acceptance have separate evidence in
 [validation](../VALIDATION.md); the [full product requirements](READINESS.md) remain
 tracked without becoming a prerequisite checklist for local use.
 
-The product source is [Kian-hdr/shared-memory](https://github.com/Kian-hdr/shared-memory).
+The product source is [Kian-hdr/isolinear-memory](https://github.com/Kian-hdr/isolinear-memory).
 Toolkit 1.3.0 and the historical CLI 0.1.0 are separate versions.
 
 ## What is installed and shared
@@ -76,7 +76,7 @@ permission changes remain their own gates.
 
 Obtain a specific reviewed package and its expected SHA-256 from the approved
 source. The release asset names are `shared-memory-0.2.0.pyz` and
-`SHA256SUMS` on [v0.2.0](https://github.com/Kian-hdr/shared-memory/releases/tag/v0.2.0).
+`SHA256SUMS` on [v0.2.0](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.2.0).
 Download only assets actually present there; otherwise obtain an explicitly reviewed
 source revision or package. The checksum is external to the executable archive. It
 checks downloaded bytes against the trusted release source; a package's own hashes
