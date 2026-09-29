@@ -1,6 +1,7 @@
 """Actual independent folder roots and immutable-history transport fixtures."""
 from pathlib import Path
 import hashlib
+import errno
 import json
 import os
 import shutil
@@ -42,6 +43,410 @@ class FolderTests(unittest.TestCase):
             destination = root / path; destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes(text.encode())
         return Folder.initialize(root, self.base / (name + '-private'), name, 'Fixture person', name + ' agent', **kwargs)
+
+    def test_sync_io_reports_phase_and_errno_without_exception_content(self):
+        one = self.create()
+        secret = 'private note text inside OS error'
+        with patch.object(one, '_capture', side_effect=OSError(errno.ENOSPC, secret)):
+            with self.assertRaises(ProductError) as caught:
+                one.sync()
+        self.assertEqual(caught.exception.code, 'folder_io')
+        self.assertIn('sync_capture_local', str(caught.exception))
+        self.assertIn('ENOSPC', str(caught.exception))
+        self.assertNotIn(secret, str(caught.exception))
+
+    def test_opt_in_private_progress_records_only_phase_and_count(self):
+        one = self.create()
+        marker = one.state / 'capture-progress.json'
+        self.assertFalse(marker.exists())
+        secret = 'private note text inside OS error'
+        with patch.dict(os.environ, {'SHARED_MEMORY_CAPTURE_PHASES': '1'}):
+            with patch.object(one, '_capture', side_effect=OSError(errno.ENOSPC, secret)):
+                with self.assertRaises(ProductError):
+                    one.sync()
+        record = json.loads(marker.read_text())
+        self.assertEqual(record['phase'], 'sync_capture_local')
+        self.assertEqual(set(record), {'format', 'phase', 'updated_at', 'pid'})
+        self.assertNotIn(secret, marker.read_text())
+        with patch.dict(os.environ, {'SHARED_MEMORY_CAPTURE_PHASES': '1'}):
+            self.assertEqual(one.sync()['readiness'], 'ready')
+        self.assertEqual(json.loads(marker.read_text())['phase'], 'complete')
+
+    def test_large_ignored_asset_tree_avoids_per_file_link_checks(self):
+        one = self.create()
+        assets = one.root / 'Raw' / 'media'
+        assets.mkdir(parents=True)
+        for index in range(2000):
+            (assets / f'asset-{index:04}.png').write_bytes(b'fixture')
+        actual = module.is_link_or_reparse
+        checked = []
+        def counted(path):
+            checked.append(Path(path))
+            if Path(path).suffix == '.png':
+                raise AssertionError('Ignored binary asset triggered provider link metadata I/O')
+            return actual(path)
+        with patch.object(module, 'is_link_or_reparse', side_effect=counted):
+            result = one._scan(set(one._baseline()))
+        self.assertIn('Note.md', result)
+        self.assertLess(len(checked), 20)
+        outside = self.base / 'outside.md'; outside.write_text('external')
+        tracked = one.root / 'Note.md'; tracked.unlink(); tracked.symlink_to(outside)
+        with self.assertRaises(ProductError):
+            one._scan(set(one._baseline()))
+
+    @unittest.skipIf(os.name == 'nt', 'Windows disables metadata reuse; the separate Windows test verifies partial coverage without a false ready state')
+    def test_incremental_scan_converges_over_four_thousand_new_notes(self):
+        one = self.create()
+        bulk = one.root / 'Wiki' / 'bulk'
+        bulk.mkdir(parents=True)
+        for index in range(4001):
+            (bulk / f'note-{index:04}.md').write_text(f'detail {index}\n')
+        coverages = []
+        for _ in range(10):
+            result = one.sync()
+            coverage = result['scan_coverage']
+            coverages.append(coverage['covered'])
+            self.assertLessEqual(coverage['read_this_run'], module.SCAN_READ_LIMIT)
+            if result['readiness'] == 'ready':
+                break
+            self.assertIn(coverage['audit'], {'in_progress', 'coverage_incomplete'})
+            self.assertGreater(coverage['deferred'], 0)
+        self.assertEqual(result['readiness'], 'ready')
+        self.assertEqual(coverage['eligible'], 4002)
+        self.assertEqual(coverage['covered'], 4002)
+        self.assertEqual(coverage['deferred'], 0)
+        self.assertEqual(coverage['audit'], 'current')
+        self.assertEqual(sorted(coverages), coverages)
+        self.assertEqual((bulk / 'note-4000.md').read_text(), 'detail 4000\n')
+        index_bytes = (one.state / 'scan-index.json').read_bytes()
+        self.assertNotIn(b'detail 4000', index_bytes)
+        self.assertIn(b'"checksum"', index_bytes)
+
+    def test_incremental_scan_prioritizes_fresh_edits_over_backlog(self):
+        from shared_workspace import folder_workflow
+        one = self.create()
+        bulk = one.root / 'Wiki' / 'bulk'; bulk.mkdir(parents=True)
+        for index in range(1200):
+            (bulk / f'note-{index:04}.md').write_text(f'old {index}\n')
+        first = one.sync()
+        self.assertEqual(first['readiness'], 'partial')
+        index = json.loads((one.state / 'scan-index.json').read_text())
+        covered = next(name for name in index['entries'] if name.startswith('Wiki/bulk/'))
+        (one.root / covered).write_text('fresh covered edit\n')
+        (one.root / 'AGENTS.md').write_text('fresh agent rule\n')
+        (one.root / 'INDEX.md').write_text('fresh routing detail\n')
+        (bulk / 'new-fresh.md').write_text('fresh new detail\n')
+        second = one.sync()
+        self.assertEqual(second['readiness'], 'partial')
+        self.assertLessEqual(second['scan_coverage']['read_this_run'], module.SCAN_READ_LIMIT)
+        for name in (covered, 'AGENTS.md', 'INDEX.md', 'Wiki/bulk/new-fresh.md'):
+            expected = (one.root / name).read_bytes().decode('utf-8')
+            self.assertIn(expected, [event['changes'].get(name) for event in one.history(name)['events']])
+        brief = folder_workflow.brief(second)
+        self.assertEqual(brief['scan_coverage']['deferred'], second['scan_coverage']['deferred'])
+        self.assertNotIn('note-', json.dumps(brief['scan_coverage']))
+
+    def test_windows_no_reuse_prioritizes_new_and_changed_over_reaudit(self):
+        one = self.create()
+        bulk = one.root / 'Wiki' / 'bulk'; bulk.mkdir(parents=True)
+        for index in range(700):
+            (bulk / f'note-{index:04}.md').write_bytes(f'old {index}\n'.encode())
+        with patch.object(module, 'scan_metadata_reuse_allowed', return_value=False):
+            first = one.sync()
+            self.assertEqual(first['readiness'], 'partial')
+            indexed = json.loads((one.state / 'scan-index.json').read_text())['entries']
+            covered = next(name for name in indexed if name.startswith('Wiki/bulk/'))
+            (one.root / covered).write_bytes(b'changed covered\n')
+            (one.root / 'AGENTS.md').write_bytes(b'new agent rule\n')
+            (one.root / 'INDEX.md').write_bytes(b'new routing\n')
+            fresh = bulk / 'new-fresh.md'; fresh.write_bytes(b'new detail\n')
+            second = one.sync()
+        self.assertEqual(second['readiness'], 'partial')
+        self.assertEqual(second['scan_coverage']['audit'], 'metadata_unavailable')
+        self.assertLessEqual(second['scan_coverage']['read_this_run'], module.SCAN_READ_LIMIT)
+        for name in (covered, 'AGENTS.md', 'INDEX.md', 'Wiki/bulk/new-fresh.md'):
+            expected = (one.root / name).read_bytes().decode('utf-8')
+            self.assertIn(expected, [event['changes'].get(name) for event in one.history(name)['events']])
+
+    def test_incremental_scan_detects_same_size_restored_mtime_via_ctime(self):
+        one = self.create()
+        path = one.root / 'Note.md'
+        prior = path.stat()
+        path.write_bytes(b'ONE\ntwo\nthree\n')  # exact same byte length on every OS
+        os.utime(path, ns=(prior.st_atime_ns, prior.st_mtime_ns))
+        if module.scan_metadata_reuse_allowed():
+            self.assertNotEqual(path.stat().st_ctime_ns, prior.st_ctime_ns)
+        expected = path.read_bytes().decode('utf-8')
+        result = one.sync()
+        self.assertEqual(result['readiness'], 'ready')
+        self.assertGreaterEqual(result['scan_coverage']['read_this_run'], 1)
+        self.assertEqual(self.text(one), expected)
+        self.assertIn(expected, [e['changes'].get('Note.md') for e in one.history('Note.md')['events']])
+
+    def test_incremental_scan_missing_file_remains_partial_without_delete(self):
+        one = self.create()
+        path = one.root / 'Note.md'
+        original = path.read_bytes(); path.unlink()
+        result = one.sync()
+        self.assertEqual(result['readiness'], 'partial')
+        self.assertGreater(result['scan_coverage']['deferred'], 0)
+        self.assertFalse(any(e['kind'] == 'delete' for e in one.history('Note.md')['events']))
+        path.write_bytes(original)
+        self.assertEqual(one.sync()['readiness'], 'ready')
+
+    def test_incremental_index_commit_follows_history_capture(self):
+        one = self.create()
+        index = one.state / 'scan-index.json'
+        before = index.read_bytes()
+        self.edit(one, 'changed\ntwo\nthree\n')
+        with patch.object(one, '_save_scan_index', side_effect=RuntimeError('simulated index interruption')):
+            with self.assertRaises(RuntimeError):
+                one.sync()
+        self.assertEqual(index.read_bytes(), before)
+        event_count = one.status()['event_count']
+        self.assertEqual(one.sync()['readiness'], 'ready')
+        self.assertEqual(one.status()['event_count'], event_count)
+        self.assertEqual(self.text(one), 'changed\ntwo\nthree\n')
+
+    def test_incremental_index_rebuilds_and_periodically_audits_bytes(self):
+        one = self.create()
+        index = one.state / 'scan-index.json'
+        with patch.object(module, 'SCAN_AUDIT_INTERVAL_SECONDS', 0):
+            result = one.sync()
+        self.assertEqual(result['readiness'], 'ready')
+        self.assertGreaterEqual(result['scan_coverage']['read_this_run'], 1)
+        index.write_text('{"private_note_text":"must not be trusted"}')
+        rebuilt = one.sync()
+        self.assertEqual(rebuilt['readiness'], 'ready')
+        self.assertTrue(rebuilt['scan_coverage']['index_rebuilt'])
+        self.assertNotIn('private_note_text', index.read_text())
+
+    def test_second_scan_reuses_verified_bytes_after_read_deadline(self):
+        import time
+        one = self.create()
+        (one.root / 'A.md').write_text('new detail\n')
+        capture = one._capture
+        def exhaust_after_first_scan(baseline):
+            result = capture(baseline)
+            one._scan_deadline = time.monotonic() - 1
+            return result
+        with patch.object(one, '_capture', side_effect=exhaust_after_first_scan):
+            result = one.sync()
+        self.assertEqual(result['scan_coverage']['eligible'], 2)
+        if module.scan_metadata_reuse_allowed():
+            self.assertEqual(result['readiness'], 'ready')
+            self.assertEqual(result['scan_coverage']['covered'], 2)
+            self.assertEqual(result['scan_coverage']['deferred'], 0)
+        else:
+            self.assertEqual(result['readiness'], 'partial')
+            self.assertEqual(result['scan_coverage']['audit'], 'metadata_unavailable')
+            self.assertGreater(result['scan_coverage']['deferred'], 0)
+
+    def test_two_stuck_provider_reads_finish_partial_without_indexing_them(self):
+        one = self.create()
+        (one.root / 'C.md').write_text('deferred C\n')
+        (one.root / 'A.md').write_text('blocked A\n')
+        (one.root / 'B.md').write_text('blocked B\n')
+        code = r'''
+import json, sys, threading
+sys.path.insert(0, sys.argv[1])
+from shared_workspace import folder as module
+one = module.Folder(sys.argv[2], sys.argv[3])
+original = one._read
+never = threading.Event()
+def blocked(name):
+    if name in {'A.md', 'B.md'}:
+        never.wait()
+    return original(name)
+one._read = blocked
+module.SCAN_FILE_SECONDS = 0.01
+module.SCAN_WALL_SECONDS = 0.2
+module.SCAN_PENDING_READ_LIMIT = 2
+result = one.sync()
+print(json.dumps({'readiness': result['readiness'], 'timeouts': result['scan_timeout_count'],
+                  'deferred': result['scan_coverage']['deferred'],
+                  'read_this_run': result['scan_coverage']['read_this_run']}))
+'''
+        completed = subprocess.run([sys.executable, '-c', code, str(Path(__file__).resolve().parents[1]),
+                                    str(one.root), str(one.state)], capture_output=True, text=True, timeout=5)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        result = json.loads(completed.stdout)
+        self.assertEqual(result['readiness'], 'partial')
+        self.assertGreaterEqual(result['timeouts'], 2)
+        self.assertGreaterEqual(result['deferred'], 2)
+        self.assertGreaterEqual(result['read_this_run'], 2)
+        self.assertLessEqual(result['read_this_run'], module.SCAN_READ_LIMIT)
+        index = json.loads((one.state / 'scan-index.json').read_text())
+        self.assertNotIn('A.md', index['entries'])
+        self.assertNotIn('B.md', index['entries'])
+        self.assertFalse(one.history('A.md')['events'])
+
+    def test_unstable_control_file_retry_is_bounded_and_labeled(self):
+        one = self.create()
+        original = module.read_bytes
+        calls = 0
+        def once(path, *args, **kwargs):
+            nonlocal calls
+            if Path(path).name == '.shared-memory.json':
+                calls += 1
+                if calls == 1:
+                    raise ProductError(4, 'folder_partial_file', 'transient')
+            return original(path, *args, **kwargs)
+        with patch.object(module, 'read_bytes', side_effect=once):
+            self.assertEqual(Folder(one.root, one.state).project_id, one.project_id)
+        self.assertEqual(calls, 2)
+        def always(path, *args, **kwargs):
+            if Path(path).name == '.shared-memory.json':
+                raise ProductError(4, 'folder_partial_file', 'transient')
+            return original(path, *args, **kwargs)
+        with patch.object(module, 'read_bytes', side_effect=always):
+            with self.assertRaises(ProductError) as caught:
+                Folder(one.root, one.state)
+        self.assertEqual(caught.exception.code, 'folder_control_unstable')
+
+    def test_recovery_defers_unstable_note_and_preserves_journal(self):
+        one = self.create()
+        baseline = one._baseline()
+        original = self.text(one)
+        operation = {'text': 'replacement\n', 'before': original, 'heads': baseline['Note.md']['heads'],
+                     'baseline': baseline['Note.md'], 'evacuated': '.folder-old-' + 'a' * 32,
+                     'new': '.folder-new-' + 'b' * 32, 'mode': 0o600}
+        journal = {'format': module.VERSION, 'project_id': one.project_id,
+                   'operations': {'Note.md': operation}}
+        journal['checksum'] = module.digest(journal)
+        module.atomic(one.state / 'journal.json', module.canonical(journal))
+        with patch.object(one, '_read', side_effect=ProductError(4, 'folder_partial_file', 'unstable')):
+            self.assertEqual(one._recover(), ['Note.md'])
+        self.assertEqual(self.text(one), original)
+        self.assertTrue((one.state / 'journal.json').exists())
+        self.assertEqual(one._baseline(), baseline)
+
+    def test_capture_defers_unstable_provider_event_copy(self):
+        one = self.create()
+        self.edit(one, 'changed\ntwo\nthree\n')
+        with patch.object(one, '_emit', side_effect=ProductError(4, 'folder_partial_file', 'unstable')):
+            result = one.sync()
+        self.assertEqual(result['readiness'], 'partial')
+        self.assertIn('Note.md', result['partial_files'])
+        self.assertEqual(self.text(one), 'changed\ntwo\nthree\n')
+        self.assertEqual(one.sync()['readiness'], 'ready')
+
+    def test_windows_metadata_reuse_disabled_prevents_false_ready(self):
+        one = self.create()
+        bulk = one.root / 'Wiki' / 'bulk'; bulk.mkdir(parents=True)
+        for index in range(600):
+            (bulk / f'item-{index:04}.md').write_text('same size\n')
+        with patch.object(module, 'scan_metadata_reuse_allowed', return_value=False):
+            first = one.sync(); second = one.sync()
+        self.assertEqual(first['readiness'], 'partial')
+        self.assertEqual(second['readiness'], 'partial')
+        self.assertEqual(second['scan_coverage']['audit'], 'metadata_unavailable')
+        self.assertEqual(second['scan_coverage']['reuse_basis'], 'none_windows_full_byte_read_required')
+
+    def test_bounded_enumeration_fails_safely_and_releases_lock(self):
+        import threading
+        one = self.create()
+        baseline = (one.state / 'baseline.json').read_bytes()
+        index = (one.state / 'scan-index.json').read_bytes()
+        gate = threading.Event()
+        with patch.object(one, '_enumerate_scan', side_effect=lambda required: gate.wait()), \
+             patch.object(module, 'SCAN_METADATA_SECONDS', 0.01):
+            with self.assertRaises(ProductError) as caught:
+                one.sync()
+        gate.set()
+        self.assertEqual(caught.exception.code, 'folder_scan_timeout')
+        with one._lock():
+            pass
+        self.assertEqual((one.state / 'baseline.json').read_bytes(), baseline)
+        self.assertEqual((one.state / 'scan-index.json').read_bytes(), index)
+
+    def test_bounded_stat_defers_one_file_without_index_or_materialization(self):
+        import threading
+        one = self.create()
+        (one.root / 'A.md').write_text('keep A\n')
+        real = module.file_stamp
+        gate = threading.Event()
+        def stalled(path):
+            if Path(path).name == 'A.md':
+                gate.wait()
+            return real(path)
+        with patch.object(module, 'file_stamp', side_effect=stalled), \
+             patch.object(module, 'SCAN_STAT_SECONDS', 0.01):
+            result = one.sync()
+        gate.set()
+        self.assertEqual(result['readiness'], 'partial')
+        self.assertIn('A.md', result['partial_files'])
+        self.assertNotIn('A.md', json.loads((one.state / 'scan-index.json').read_text())['entries'])
+        self.assertEqual((one.root / 'A.md').read_text(), 'keep A\n')
+        with one._lock():
+            pass
+
+    def test_bounded_provider_event_read_defers_new_history(self):
+        import threading
+        one = self.create()
+        event_id = one.status()['heads']['Note.md'][0]
+        local = one.state / 'events' / (event_id + '.json')
+        provider = one.root / '.shared-memory/events' / (event_id + '.json')
+        local.unlink()
+        real = module.read_bytes
+        gate = threading.Event()
+        def stalled(path, *args, **kwargs):
+            if Path(path) == provider:
+                gate.wait()
+            return real(path, *args, **kwargs)
+        with patch.object(module, 'read_bytes', side_effect=stalled), \
+             patch.object(module, 'SCAN_EVENT_SECONDS', 0.01):
+            result = one.sync()
+        gate.set()
+        for thread in one._pending_metadata_reads:
+            thread.join(timeout=2)
+            self.assertFalse(thread.is_alive())
+        self.assertEqual(result['readiness'], 'partial')
+        self.assertTrue(any(item.get('reason') == 'provider-history-read-timeout'
+                            for item in result['deferred_events']))
+        self.assertFalse(local.exists())
+        with one._lock():
+            pass
+
+    @unittest.skipIf(os.name == 'nt', 'POSIX lock contention fixture')
+    def test_folder_lock_timeout_is_bounded_without_running_sync(self):
+        one = self.create()
+        with one._lock(), patch.object(module, 'LOCK_TIMEOUT_SECONDS', 0.05):
+            with patch.object(one, '_sync_locked') as sync:
+                with self.assertRaises(ProductError) as caught:
+                    one.sync()
+                sync.assert_not_called()
+        self.assertEqual(caught.exception.code, 'folder_lock_timeout')
+
+    def test_provider_duplicate_uses_private_copy_but_full_status_audits_bytes(self):
+        one = self.create()
+        event_id = one.status()['heads']['Note.md'][0]
+        provider = one.root / '.shared-memory/events' / (event_id + '.json')
+        original = provider.read_bytes()
+        provider.write_bytes(b'[' + original[1:])  # same size, invalid provider copy
+        result = one.sync()
+        self.assertEqual(result['readiness'], 'ready')
+        self.assertGreater(result['provider_duplicate_bytes_unverified'], 0)
+        self.assertEqual(result['provider_delivery'], 'not_applicable')
+        audited = one.status()
+        self.assertEqual(audited['provider_duplicate_bytes_unverified'], 0)
+        self.assertTrue(audited['invalid_events'])
+        self.assertEqual(audited['readiness'], 'partial')
+
+    def test_missing_private_event_and_new_provider_event_are_still_imported(self):
+        one = self.create()
+        initial = one.status()['heads']['Note.md'][0]
+        local = one.state / 'events' / (initial + '.json')
+        local.unlink()
+        self.assertEqual(one.sync()['readiness'], 'ready')
+        self.assertTrue(local.exists())
+        two = self.attach(one)
+        self.edit(two, 'new provider detail\n')
+        two.sync()
+        transport(two, one)
+        result = one.sync()
+        self.assertEqual(result['readiness'], 'ready')
+        self.assertEqual(self.text(one), 'new provider detail\n')
 
     def attach(self, owner, name='two', readonly=False):
         root = self.base / name; root.mkdir()
@@ -524,6 +929,154 @@ class FolderTests(unittest.TestCase):
                                    st_ctime_ns=info.st_ctime_ns + 10_000_000_000)
         with patch.object(module.os, 'fstat', descriptor_metadata):
             self.assertEqual(module.read_bytes(path), content)
+
+    def test_stable_read_accepts_verified_fileprovider_zero_size_metadata(self):
+        from types import SimpleNamespace
+        path = self.base / 'provider-zero-size.md'
+        content = b'Actual source bytes\r\nwith exact content\n'
+        path.write_bytes(content)
+        real_stat, real_fstat = module.os.stat, module.os.fstat
+        def zero(info):
+            return SimpleNamespace(st_dev=info.st_dev, st_ino=info.st_ino, st_mode=info.st_mode,
+                                   st_size=0, st_mtime_ns=info.st_mtime_ns, st_ctime_ns=info.st_ctime_ns)
+        def named(value, *args, **kwargs):
+            result = real_stat(value, *args, **kwargs)
+            return zero(result) if isinstance(value, (str, os.PathLike)) and Path(value) == path else result
+        with patch.object(module.os, 'stat', side_effect=named), \
+             patch.object(module.os, 'fstat', side_effect=lambda fd: zero(real_fstat(fd))):
+            self.assertEqual(module.read_bytes(path), content)
+
+    def test_stable_read_rejects_different_second_fileprovider_read(self):
+        from types import SimpleNamespace
+        import io
+        path = self.base / 'provider-race.md'; path.write_bytes(b'original bytes')
+        real_stat, real_fstat, real_fdopen = module.os.stat, module.os.fstat, module.os.fdopen
+        def zero(info):
+            return SimpleNamespace(st_dev=info.st_dev, st_ino=info.st_ino, st_mode=info.st_mode,
+                                   st_size=0, st_mtime_ns=info.st_mtime_ns, st_ctime_ns=info.st_ctime_ns)
+        def named(value, *args, **kwargs):
+            result = real_stat(value, *args, **kwargs)
+            return zero(result) if isinstance(value, (str, os.PathLike)) and Path(value) == path else result
+        reads = 0
+        def changed(fd, *args, **kwargs):
+            nonlocal reads
+            reads += 1
+            return real_fdopen(fd, *args, **kwargs) if reads == 1 else io.BytesIO(b'changed! bytes')
+        with patch.object(module.os, 'stat', side_effect=named), \
+             patch.object(module.os, 'fstat', side_effect=lambda fd: zero(real_fstat(fd))), \
+             patch.object(module.os, 'fdopen', side_effect=changed):
+            with self.assertRaises(ProductError) as caught:
+                module.read_bytes(path)
+        self.assertEqual(caught.exception.code, 'folder_partial_file')
+
+    @unittest.skipIf(os.name == 'nt', 'Windows prevents unlinking an open file; replacement-before-open and identity tests still apply')
+    def test_stable_read_rejects_fileprovider_path_replaced_by_symlink(self):
+        from types import SimpleNamespace
+        path = self.base / 'provider-link-race.md'; path.write_bytes(b'original bytes')
+        outside = self.base / 'outside-provider.md'; outside.write_bytes(b'outside bytes')
+        real_stat, real_fstat, real_fdopen = module.os.stat, module.os.fstat, module.os.fdopen
+        def zero(info):
+            return SimpleNamespace(st_dev=info.st_dev, st_ino=info.st_ino, st_mode=info.st_mode,
+                                   st_size=0, st_mtime_ns=info.st_mtime_ns, st_ctime_ns=info.st_ctime_ns)
+        def named(value, *args, **kwargs):
+            result = real_stat(value, *args, **kwargs)
+            return zero(result) if isinstance(value, (str, os.PathLike)) and Path(value) == path else result
+        reads = 0
+        def replace(fd, *args, **kwargs):
+            nonlocal reads
+            reads += 1
+            if reads == 2:
+                path.unlink(); path.symlink_to(outside)
+            return real_fdopen(fd, *args, **kwargs)
+        with patch.object(module.os, 'stat', side_effect=named), \
+             patch.object(module.os, 'fstat', side_effect=lambda fd: zero(real_fstat(fd))), \
+             patch.object(module.os, 'fdopen', side_effect=replace):
+            with self.assertRaises(ProductError) as caught:
+                module.read_bytes(path)
+        self.assertEqual(caught.exception.code, 'folder_partial_file')
+        self.assertEqual(outside.read_bytes(), b'outside bytes')
+
+    def test_zero_size_metadata_never_reuses_nonempty_baseline(self):
+        one = self.create()
+        real_stamp = module.file_stamp
+        def provider_stamp(path):
+            value = real_stamp(path)
+            if Path(path).name == 'Note.md':
+                value[2] = 0
+            return value
+        with patch.object(module, 'file_stamp', side_effect=provider_stamp), \
+             patch.object(one, '_read', wraps=one._read) as read:
+            first = one.sync()
+            calls = read.call_count
+            second = one.sync()
+            self.assertGreater(read.call_count, calls)
+        self.assertEqual(first['readiness'], 'ready')
+        self.assertEqual(second['readiness'], 'ready')
+
+    def test_second_pass_rechecks_zero_metadata_despite_first_pass_timeouts(self):
+        self._exercise_zero_metadata_second_pass(module.scan_metadata_reuse_allowed(), 'zero-native')
+
+    @unittest.skipIf(os.name == 'nt', 'The native Windows branch runs in the main test')
+    def test_second_pass_zero_metadata_forced_windows_no_reuse(self):
+        self._exercise_zero_metadata_second_pass(False, 'zero-windows-mode')
+
+    def _exercise_zero_metadata_second_pass(self, reuse_allowed, name):
+        import threading
+        import time
+        one = self.create(name=name)
+        for index in range(8):
+            (one.root / f'blocked-{index}.md').write_text('provider waiting\n')
+        time.sleep(0.01)
+        (one.root / 'Z.md').write_text('verified source bytes\n')
+        actual_read, actual_stamp = one._read, module.file_stamp
+        gate = threading.Event()
+        def stalled(name):
+            if name.startswith('blocked-'):
+                gate.wait()
+            return actual_read(name)
+        def zero_stamp(path):
+            value = actual_stamp(path)
+            if Path(path).name == 'Z.md':
+                value[2] = 0
+            return value
+        with patch.object(one, '_read', side_effect=stalled), \
+             patch.object(module, 'file_stamp', side_effect=zero_stamp), \
+             patch.object(module, 'SCAN_FILE_SECONDS', 0.01), \
+             patch.object(module, 'scan_metadata_reuse_allowed', return_value=reuse_allowed):
+            result = one.sync()
+        gate.set()
+        for pending in one._pending_scan_reads:
+            pending.join(timeout=1)
+        self.assertEqual(result['readiness'], 'partial')
+        self.assertEqual(result['scan_coverage']['covered'], 2 if reuse_allowed else 1)
+        self.assertEqual(result['scan_coverage']['deferred'], 8 if reuse_allowed else 9)
+        if not reuse_allowed:
+            self.assertEqual(result['scan_coverage']['audit'], 'metadata_unavailable')
+        entries = json.loads((one.state / 'scan-index.json').read_text())['entries']
+        self.assertIn('Z.md', entries)
+        self.assertIn((one.root / 'Z.md').read_bytes().decode('utf-8'),
+                      [event['changes'].get('Z.md') for event in one.history('Z.md')['events']])
+        for index in range(8):
+            blocked = f'blocked-{index}.md'
+            self.assertNotIn(blocked, entries)
+            self.assertIn(blocked, result['partial_files'])
+        self.assertGreaterEqual(result['scan_timeout_count'], 8)
+
+    def test_empty_tracked_provider_placeholder_stays_partial(self):
+        one = self.create()
+        prior = one._baseline()['Note.md']['text']
+        real_stamp = module.file_stamp
+        def placeholder_stamp(path):
+            value = real_stamp(path)
+            if Path(path).name == 'Note.md':
+                value[2] = 0
+            return value
+        with patch.object(module, 'file_stamp', side_effect=placeholder_stamp), \
+             patch.object(one, '_read', return_value=''):
+            result = one.sync()
+        self.assertEqual(result['readiness'], 'partial')
+        self.assertIn('Note.md', result['partial_files'])
+        self.assertEqual(one._baseline()['Note.md']['text'], prior)
 
     def test_stable_read_rejects_real_replacement_between_path_check_and_open(self):
         path = self.base / 'replace-during-read.txt'; path.write_bytes(b'original')

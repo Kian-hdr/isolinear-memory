@@ -99,27 +99,36 @@ def release(output: Path, version: str) -> dict:
         raise ValueError("Release version must match the runtime version, optionally with -alpha.N")
     source_revision, sources = committed_source()
     verify_checkout(source_revision, sources)
-    required = {"LICENSE", "SETUP-PROMPT.md", "assets/shared-memory.svg", "assets/shared-memory.png",
-                "assets/shared-memory.icns", "assets/README.md", "skills/setup-shared-project-workspace/SKILL.md",
+    required = {"LICENSE", "SETUP-PROMPT.md", "assets/isolinear-memory.svg", "assets/isolinear-memory.png",
+                "assets/isolinear-memory.icns", "assets/README.md", "skills/setup-shared-project-workspace/SKILL.md",
+                "skills/setup-isolinear-memory/SKILL.md", "docs/BRAND-MIGRATION.md",
+                "assets/isolinear-memory-wordmark-dark.svg", "assets/isolinear-memory-wordmark-light.svg",
+                "assets/isolinear-memory-wordmark-dark.png", "assets/isolinear-memory-wordmark-light.png",
                 "product/shared_workspace/cli.py", "product/shared_workspace/__init__.py",
                 "docs/PRODUCT-V1.md", "docs/KNOWLEDGE-GRAPH.md", "requirements-server.txt"}
     if not required <= sources.keys():
         raise ValueError("Release is missing required committed source inputs")
     output.mkdir(parents=True, exist_ok=False)
-    package = output / f"shared-memory-{version}.pyz"
+    package = output / f"isolinear-memory-{version}.pyz"
     product = build(package, source_files=sources, source_revision=source_revision)
-    skill_prefix = "skills/setup-shared-project-workspace/"
-    skill_files = {"setup-shared-project-workspace/" + name.removeprefix(skill_prefix): content
-                   for name, content in sources.items() if name.startswith(skill_prefix)}
+    skill_files = {name.removeprefix("skills/"): content for name, content in sources.items()
+                   if name.startswith(("skills/setup-isolinear-memory/", "skills/setup-shared-project-workspace/"))}
     skill_files["LICENSE"] = sources["LICENSE"]
-    archive(output / f"shared-memory-skill-{version}.zip", skill_files)
+    archive(output / f"isolinear-memory-skills-{version}.zip", skill_files)
     icons = {name.removeprefix("assets/"): content
-             for name, content in sources.items() if name.startswith("assets/")}
+             for name, content in sources.items() if name.startswith("assets/")
+             and not name.startswith(("assets/shared-memory", "assets/SharedMemory.icon/"))}
     icons["LICENSE"] = sources["LICENSE"]
-    archive(output / f"shared-memory-icons-{version}.zip", icons)
+    archive(output / f"isolinear-memory-icons-{version}.zip", icons)
     manifest = {
         "release_tag": "v" + version, "maturity": "experimental_alpha" if "-alpha." in version else "release", "stable_v1": False,
-        "source_repository": "https://github.com/Kian-hdr/shared-memory",
+        "product_name": "Isolinear Memory", "legacy_name": "Shared Memory",
+        "legacy_command": "shared-memory", "canonical_command": "isolinear-memory",
+        "public_wordmarks": ["isolinear-memory-wordmark-dark.svg", "isolinear-memory-wordmark-light.svg",
+                             "isolinear-memory-wordmark-dark.png", "isolinear-memory-wordmark-light.png"],
+        "public_icons": ["isolinear-memory.svg", "isolinear-memory.png", "isolinear-memory-dark.png",
+                         "isolinear-memory.icns", "isolinear-memory-dark.icns"],
+        "source_repository": "https://github.com/Kian-hdr/isolinear-memory",
         "source_revision": source_revision, "source_dirty": False,
         "runtime_version": PRODUCT_VERSION, "runtime_asset": package.name,
         "runtime_sha256": sha(package), "bundle_id": product["bundle_id"],
@@ -136,7 +145,7 @@ def release(output: Path, version: str) -> dict:
     kit[package.name] = package.read_bytes()
     kit["RELEASE-MANIFEST.json"] = (output / "RELEASE-MANIFEST.json").read_bytes()
     kit["SHA256SUMS"] = (sha(package) + "  " + package.name + "\n").encode()
-    archive(output / f"shared-memory-{version}.zip", kit)
+    archive(output / f"isolinear-memory-{version}.zip", kit)
     files = sorted(path for path in output.iterdir() if path.is_file())
     (output / "SHA256SUMS").write_bytes("".join(f"{sha(path)}  {path.name}\n" for path in files).encode())
     verify_checkout(source_revision, sources)

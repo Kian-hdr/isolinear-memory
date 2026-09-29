@@ -1,6 +1,6 @@
 # Agent compatibility and context budget
 
-Shared Memory stores ordinary Markdown. Use native search/read/edit tools and a
+Isolinear Memory, formerly Shared Memory, stores ordinary Markdown. Use native search/read/edit tools and a
 small INDEX; runtime setup, history and recovery are separate operations. Automatic
 capture runs outside the model. It removes sync tool calls, not tokens spent reading
 notes, reasoning or editing. `--brief` bounds routine output; full diagnostics remain
@@ -28,7 +28,7 @@ Z.ai's [function calling](https://docs.z.ai/guides/capabilities/function-calling
 supports auto tool choice; its [thinking protocol](https://docs.z.ai/guides/capabilities/thinking-mode)
 requires preserving reasoning across tool turns. [Coding Plan setup](https://docs.z.ai/devpack/tool/opencode)
 is distinct from standard API access. [OpenRouter provider routing](https://openrouter.ai/docs/guides/routing/provider-selection)
-can vary provider capabilities. Shared Memory does not replace these host adapters.
+can vary provider capabilities. Isolinear Memory does not replace these host adapters.
 
 For live acceptance, use a synthetic nonprivate workspace: native read, targeted
 edit, capture, then a fresh-session recall. Record client/model/provider, filesystem
@@ -74,8 +74,8 @@ However FTS returned 153 bytes per result versus 83 for bounded rg. Full indexin
 cost 106.20 ms; a known-path update 2.73 ms; change-discovery stat scanning 21.49 ms;
 the derived index occupied 9.58 MB. No model calls were used. Warm-cache conditions
 and SQLite's persistent process favor its latency result. This does not measure
-semantic recall or production workloads. An index is deferred: this evidence does
-not justify extra lifecycle/staleness complexity for improved speed AND tokens.
+semantic recall or production workloads. The index was deferred on this evidence
+alone; later v0.5.0 accepted-task tests justified an optional private index.
 A 20-copy constructed excerpt example shrank 1,810 to 350 bytes by deduplicating
 text while keeping every source path; that is illustrative, not production savings.
 
@@ -84,3 +84,22 @@ must inspect pinned code, dependencies and license, preserve source provenance a
 invalidate changed/deleted inputs. Markdown stays authoritative; any future index
 must remain private and rebuildable. Include creation/indexing/background costs in
 comparisons, not only foreground query time or vendor headline benchmarks.
+
+## v0.5.0 assimilation and agent contract
+
+| Source | Useful behavior adapted | Reuse boundary and check |
+| --- | --- | --- |
+| [Basic Memory](https://github.com/basicmachines-co/basic-memory), AGPL-3.0 | Existing Markdown can be indexed by passage. | Compared only on disposable copies; no code or dependency imported. Its full reindex changed the copied source files by adding frontmatter and changing a trailing newline, so live Vaults were never attached. |
+| [ReMe](https://github.com/agentscope-ai/ReMe), Apache-2.0 | Small result sets and bounded line reads. | Original `recall`/`show` interface; no source copied or model-based consolidation required. |
+| [EverOS](https://github.com/EverMind-AI/EverOS), Apache-2.0 | Markdown authority with a private rebuildable index. | Original local FTS5 index in per-device state; no EverOS schema, code or LLM extraction imported. |
+
+The v0.5.0 routine path remains readable Markdown and native file tools. `recall`
+and `show` provide a small optional CLI contract with source hashes, coverage and
+freshness indicators. A host that cannot run the CLI still uses bounded path-first
+search. File-format compatibility does not prove every model performs correct tool
+calls; record each tested client/model/provider separately. Kimi and Qwen are
+design-compatible, not live-tested by this release's acceptance run.
+On Windows, `st_ctime` is creation time in the tested Python versions, so a
+cache miss or explicit refresh rereads eligible files instead of trusting an
+unchanged metadata stamp. A large vault can reach the five-second partial
+deadline; use bounded native file search when it does.

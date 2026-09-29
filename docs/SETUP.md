@@ -1,4 +1,4 @@
-# Shared Memory setup routes
+# Isolinear Memory setup routes
 
 For normal 0.3.0 use, [paste the setup prompt](../SETUP-PROMPT.md), select the folder
 and let the agent finish local setup. Runtime verification, Python 3.11+, existing

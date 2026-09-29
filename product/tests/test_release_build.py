@@ -15,7 +15,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = '0.4.0'
+VERSION = '0.5.0'
 
 
 class ReleaseBuildTests(unittest.TestCase):
@@ -25,8 +25,18 @@ class ReleaseBuildTests(unittest.TestCase):
         # Include distribution prerequisites when exercising an uncommitted
         # working change to the release tooling or assets.
         names += ['scripts/build_release.py', 'scripts/build_product.py', '.gitattributes',
-                  'assets/README.md', 'assets/shared-memory.svg', 'assets/shared-memory.png',
-                  'assets/shared-memory.icns']
+                  'assets/README.md', 'assets/isolinear-memory.svg', 'assets/isolinear-memory.png',
+                  'assets/isolinear-memory.icns', 'assets/isolinear-memory-dark.png',
+                  'assets/isolinear-memory-dark.icns', 'skills/setup-isolinear-memory/SKILL.md',
+                  'docs/BRAND-MIGRATION.md',
+                  'assets/isolinear-memory-wordmark-dark.svg', 'assets/isolinear-memory-wordmark-light.svg',
+                  'assets/isolinear-memory-wordmark-dark.png', 'assets/isolinear-memory-wordmark-light.png',
+                  'scripts/render_wordmark.py', 'product/shared_workspace/recall.py',
+                  'product/tests/test_recall_cli.py']
+        names += [path.relative_to(ROOT).as_posix()
+                  for path in (ROOT / 'assets').glob('isolinear-memory*') if path.is_file()]
+        names += [path.relative_to(ROOT).as_posix()
+                  for path in (ROOT / 'assets/IsolinearMemory.icon').rglob('*') if path.is_file()]
         cls.sources = {name: (ROOT / name).read_bytes() for name in set(names)
                        if name and (ROOT / name).is_file() and not (ROOT / name).is_symlink()}
 
@@ -92,7 +102,7 @@ class ReleaseBuildTests(unittest.TestCase):
         self.invoke()
         for content in self.files(self.output).values():
             self.assert_secret_absent(content, secret)
-        with zipfile.ZipFile(self.output / f'shared-memory-{VERSION}.pyz') as archive:
+        with zipfile.ZipFile(self.output / f'isolinear-memory-{VERSION}.pyz') as archive:
             build = json.loads(archive.read('BUILD.json'))
             self.assertFalse(build['source_dirty'])
             self.assertEqual(build['source_revision'], self.revision)
@@ -118,8 +128,23 @@ class ReleaseBuildTests(unittest.TestCase):
     def test_complete_committed_source_bundle_hashes_provenance_and_repeatability(self):
         self.invoke()
         assets = self.files(self.output)
-        package_name = f'shared-memory-{VERSION}.pyz'
-        with zipfile.ZipFile(io.BytesIO(assets[f'shared-memory-{VERSION}.zip'])) as kit:
+        package_name = f'isolinear-memory-{VERSION}.pyz'
+        self.assertIn(f'isolinear-memory-icons-{VERSION}.zip', assets)
+        self.assertNotIn(f'shared-memory-{VERSION}.pyz', assets)
+        with zipfile.ZipFile(io.BytesIO(assets[f'isolinear-memory-icons-{VERSION}.zip'])) as artwork:
+            names = set(artwork.namelist())
+            for appearance in ('dark', 'light'):
+                stem = f'isolinear-memory-wordmark-{appearance}'
+                self.assertIn(stem + '.svg', names)
+                self.assertIn(stem + '.png', names)
+                self.assertIn(b'Isolinear Memory', artwork.read(stem + '.svg'))
+                self.assertEqual(artwork.read(stem + '.png')[16:24], b'\x00\x00\x04\x00\x00\x00\x00\xdc')
+            self.assertFalse(any(name.startswith('shared-memory') for name in names))
+            self.assertFalse(any(name.startswith('SharedMemory.icon/') for name in names))
+            for icon in ('isolinear-memory.svg', 'isolinear-memory.png', 'isolinear-memory-dark.png',
+                         'isolinear-memory.icns', 'isolinear-memory-dark.icns'):
+                self.assertIn(icon, names)
+        with zipfile.ZipFile(io.BytesIO(assets[f'isolinear-memory-{VERSION}.zip'])) as kit:
             committed = self.git('ls-tree', '-r', '--name-only', '-z', 'HEAD').decode().split('\0')
             for name in filter(None, committed):
                 self.assertEqual(kit.read(name), self.git('show', 'HEAD:' + name), name)
@@ -133,6 +158,11 @@ class ReleaseBuildTests(unittest.TestCase):
         self.assertEqual(manifest['source_revision'], self.revision)
         self.assertFalse(manifest['source_dirty'])
         self.assertEqual(manifest['runtime_sha256'], hashlib.sha256(assets[package_name]).hexdigest())
+        self.assertEqual(manifest['product_name'], 'Isolinear Memory')
+        self.assertIn('isolinear-memory.png', manifest['public_icons'])
+        with zipfile.ZipFile(io.BytesIO(assets[f'isolinear-memory-skills-{VERSION}.zip'])) as skills:
+            self.assertIn('setup-isolinear-memory/SKILL.md', skills.namelist())
+            self.assertIn('setup-shared-project-workspace/SKILL.md', skills.namelist())
         for line in assets['SHA256SUMS'].decode().splitlines():
             checksum, name = line.split('  ', 1)
             self.assertEqual(hashlib.sha256(assets[name]).hexdigest(), checksum)
@@ -146,6 +176,24 @@ class ReleaseBuildTests(unittest.TestCase):
                                 capture_output=True, timeout=30)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertTrue(json.loads(result.stdout)['ok'])
+        project = self.root / 'memory-fixture'
+        (project / 'Wiki').mkdir(parents=True)
+        (project / 'Wiki' / 'Note.md').write_text('# Note\nNeedle value is 42.\n', encoding='utf-8')
+        recall = subprocess.run([sys.executable, str(self.output / package_name),
+                                 'recall', str(project), 'Needle'], capture_output=True,
+                                timeout=30)
+        self.assertEqual(recall.returncode, 0, recall.stderr)
+        packet = json.loads(recall.stdout)
+        self.assertTrue(packet['ok'], packet)
+        hit = next(item for item in packet['data']['hits'] if item['path'] == 'Wiki/Note.md')
+        show = subprocess.run([sys.executable, str(self.output / package_name),
+                               'show', str(project), '--path', hit['path'],
+                               '--sha256', hit['sha256'], '--start', str(hit['start']),
+                               '--end', str(hit['end'])], capture_output=True, timeout=30)
+        self.assertEqual(show.returncode, 0, show.stderr)
+        expanded = json.loads(show.stdout)
+        self.assertTrue(expanded['ok'], expanded)
+        self.assertIn('Needle value is 42.', expanded['data']['excerpt'])
         second = self.root / 'repeat'
         self.invoke(second)
         self.assertEqual(self.files(second), assets)

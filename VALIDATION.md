@@ -114,7 +114,7 @@ changed note bytes and arriving attachments. The private-reference case also
 requires credential directories and notes to be pruned before traversal/reading.
 Local package execution verified the new diagnostics inside a selected-subfolder
 fixture while preserving all existing bytes. No live vault or backup drive was used.
-The correction at `0294259` passed [all fourteen CI jobs](https://github.com/Kian-hdr/shared-memory/actions/runs/34264997523).
+The correction at `0294259` passed [all fourteen CI jobs](https://github.com/Kian-hdr/isolinear-memory/actions/runs/34264997523).
 Each product job collected 366 cases: Windows 362 passed/four skipped, macOS
 346/twenty, Ubuntu 344/twenty-two, on Python 3.11 and 3.13. All five added regressions
 ran on every product job. These results validate that correction, not later changes.
@@ -128,12 +128,12 @@ checkpoints, including failed and withheld candidates. Their old private/public
 status does not override this current release scope. Final artifact validation is
 recorded with its exact revision and hashes in the GitHub prerelease.
 
-At source `bdf8f54`, [the twelve-job matrix](https://github.com/Kian-hdr/shared-memory/actions/runs/34250200466)
+At source `bdf8f54`, [the twelve-job matrix](https://github.com/Kian-hdr/isolinear-memory/actions/runs/34250200466)
 passed. Each product job collected 356 tests: Windows 352 passed/four skipped,
 macOS 336 passed/twenty skipped, Ubuntu 334 passed/twenty-two skipped. Both Windows
 runtimes executed actual junction regressions. Every product job also passed the
 57-call coordination and 20-call graph rename rehearsals. The matching
-[four-job same-project HTTPS rehearsal](https://github.com/Kian-hdr/shared-memory/actions/runs/34250215586)
+[four-job same-project HTTPS rehearsal](https://github.com/Kian-hdr/isolinear-memory/actions/runs/34250215586)
 passed 438 calls, including four expected refusals, with matching accepted files
 and preserved private fixture bytes across all three OS runners. These are actual
 OS runners executing automated participants, not independent users.
@@ -196,7 +196,7 @@ No live production-vault migration has been performed.
 
 ## Alpha candidate Windows correction, 2026-09-08
 
-Candidate `46b6341` is withheld. Its final [CI matrix](https://github.com/Kian-hdr/shared-memory/actions/runs/34261825753)
+Candidate `46b6341` is withheld. Its final [CI matrix](https://github.com/Kian-hdr/isolinear-memory/actions/runs/34261825753)
 exposed a legacy toolkit setup bug on both Windows runtimes: text-mode copying
 changed the trusted LF tracker asset to CRLF, which the strict byte-integrity check
 correctly rejected. Earlier platform-dependent Git checkout endings masked it.
@@ -215,7 +215,7 @@ exclusion without matching the test itself. Recursive archive/byte checks remain
 strict. All five release-builder tests passed after correction, independently
 repeated. This was a false-positive test assertion, not observed credential leakage.
 
-The withheld candidate's separate [schema-2 HTTPS run](https://github.com/Kian-hdr/shared-memory/actions/runs/34261863973)
+The withheld candidate's separate [schema-2 HTTPS run](https://github.com/Kian-hdr/isolinear-memory/actions/runs/34261863973)
 passed all four jobs, and its five fault scenarios passed on both the Mac and the
 actual Brev Linux machine. Those successes do not override the Windows setup issue.
 Its private artifacts were retained and were not published. The final prerelease
@@ -256,8 +256,8 @@ The final combined local Python 3.13 suite collected **356 tests: 336 passed and
 changed-source cross-OS results are recorded separately when complete.
 Real provider, independent-person and operational
 deployment gates remain open. The prior 8b33a8e checkpoint passed all twelve
-[CI jobs](https://github.com/Kian-hdr/shared-memory/actions/runs/34248482601) and all
-four [HTTPS jobs](https://github.com/Kian-hdr/shared-memory/actions/runs/34248511266),
+[CI jobs](https://github.com/Kian-hdr/isolinear-memory/actions/runs/34248482601) and all
+four [HTTPS jobs](https://github.com/Kian-hdr/isolinear-memory/actions/runs/34248511266),
 with 351 tests per product job and 425 packaged HTTPS calls/four expected refusals.
 Those results remain historical evidence and do not negate these newly found gaps.
 
@@ -308,7 +308,7 @@ checkpoint below records its own completed validation separately.
 
 ## Graph error-contract compatibility, 2026-09-08
 
-The core path correction at `9a150a3` passed ten [matrix jobs](https://github.com/Kian-hdr/shared-memory/actions/runs/34245369088).
+The core path correction at `9a150a3` passed ten [matrix jobs](https://github.com/Kian-hdr/isolinear-memory/actions/runs/34245369088).
 Both Windows product jobs passed the new junction and rename regressions but failed
 four subcases of one existing graph CLI test: the earlier shared root guard emitted
 `project_path_unsafe` instead of the graph command's established `knowledge_root`.
@@ -323,7 +323,7 @@ regression uses actual POSIX symlinks or Windows junctions for roots, ancestors 
 graph CLI tests passed on local Python 3.13 and 3.12. Independent review approved
 the bounded correction. Exact corrected Windows execution is still required.
 
-The same `9a150a3` [HTTPS trial](https://github.com/Kian-hdr/shared-memory/actions/runs/34245368476)
+The same `9a150a3` [HTTPS trial](https://github.com/Kian-hdr/isolinear-memory/actions/runs/34245368476)
 passed all four jobs and 406 calls/four expected refusals. All three OS clients
 matched accepted revision 5 and content hash, preserved private bytes and stopped
 temporary processes. The subsequent correction changes only graph error reporting
@@ -333,7 +333,7 @@ separate open gates.
 
 ## Selected-root and core path-boundary correction, 2026-09-08
 
-The `24f1ff3` candidate is withheld. Its [matrix](https://github.com/Kian-hdr/shared-memory/actions/runs/34243071900)
+The `24f1ff3` candidate is withheld. Its [matrix](https://github.com/Kian-hdr/isolinear-memory/actions/runs/34243071900)
 passed ten jobs, but both Windows product jobs rejected valid rename plans with
 `project_mismatch`: setup saved a canonical root while rename compared a lexical
 path. The correction checks the original path for links/reparse points before
@@ -361,7 +361,7 @@ Python 3.13 suite collected **345 tests: 324 passed and 21 Windows-only cases
 skipped**, in 73.892 seconds. Actual Windows/macOS/Linux matrix and exact-source
 HTTPS execution remain separate acceptance evidence.
 
-The same candidate's [schema-2 HTTPS trial](https://github.com/Kian-hdr/shared-memory/actions/runs/34243094389)
+The same candidate's [schema-2 HTTPS trial](https://github.com/Kian-hdr/isolinear-memory/actions/runs/34243094389)
 passed all four jobs and 423 packaged calls/four expected refusals. All three OS
 clients reached revision 5 with matching content, preserved private bytes and
 stopped temporary processes. This separate protocol result does not override the
@@ -398,7 +398,7 @@ is a separate checkpoint. It does not establish provider or independent-user rea
 ## Windows portability correction, 2026-09-08
 
 The extension at `3c8e9e90e78e4b12890e13c1dd42a03a863ecab5` passed ten
-[CI jobs](https://github.com/Kian-hdr/shared-memory/actions/runs/34238239825) but
+[CI jobs](https://github.com/Kian-hdr/isolinear-memory/actions/runs/34238239825) but
 failed both Windows product jobs. The graph used directory-entry metadata whose
 Windows file identity did not agree with an opened descriptor, matching the
 [Python directory-entry contract](https://docs.python.org/3.13/library/os.html#os.DirEntry.stat). Backup and schema
@@ -414,13 +414,13 @@ Both local Python 3.13 and 3.12 runs collected **280 tests: 278 passed and
 two real Windows-only junction fixtures were explicitly skipped**. The native-renamed
 synthetic graph still resolves five notes/twelve edges without diagnostics.
 Independent review approved the flush, replacement/mutation and junction boundaries.
-The corrected e1d023c [matrix](https://github.com/Kian-hdr/shared-memory/actions/runs/34239839865)
+The corrected e1d023c [matrix](https://github.com/Kian-hdr/isolinear-memory/actions/runs/34239839865)
 passed all twelve jobs, including both actual Windows junction fixtures. Product
 jobs each collected 280 tests: macOS/Windows passed 278 with two platform skips;
 Ubuntu passed 277 with three. Every product job also passed the 57-call packaged
 coordination rehearsal with four expected refusals.
 
-The preceding 3c8e9e9 [HTTPS regression](https://github.com/Kian-hdr/shared-memory/actions/runs/34238278569)
+The preceding 3c8e9e9 [HTTPS regression](https://github.com/Kian-hdr/isolinear-memory/actions/runs/34238278569)
 passed all four jobs and **123 packaged CLI calls**. All three OS clients reached
 revision 3 with identical content and preserved private parent/settings/attachment
 bytes. Task-owned processes stopped. The package SHA-256 was
@@ -446,7 +446,7 @@ schema 2 made 309 calls/four refusals at revision 5 with content hash
 `34bbe57a2286cd4d98343d8fadf73cc74ac7e783f1ef3ece48535722cd0da764`.
 Call counts include polling, not distinct coverage. All four processes stopped.
 Independent review inspected the frozen script and both complete reports. The actual
-[three-OS HTTPS run](https://github.com/Kian-hdr/shared-memory/actions/runs/34241487058)
+[three-OS HTTPS run](https://github.com/Kian-hdr/isolinear-memory/actions/runs/34241487058)
 at private checkpoint `912ae9f94a050e382fa80fbffa76ae2049242331` then passed all
 four jobs, with 396 packaged calls/four expected refusals, the same revision-5 hash
 and preserved private fixture bytes. Each actual OS client used its own session;
@@ -521,9 +521,9 @@ release is authorized before finished V1.
 ## Private product repository checkpoint, 2026-09-08
 
 At `3b648d08be8f47c698c47375e42c2ee9dc3a45c4`, the new repository's
-[CI matrix](https://github.com/Kian-hdr/shared-memory/actions/runs/34181376740)
+[CI matrix](https://github.com/Kian-hdr/isolinear-memory/actions/runs/34181376740)
 passed all twelve jobs and its
-[concurrent HTTPS rehearsal](https://github.com/Kian-hdr/shared-memory/actions/runs/34181380260)
+[concurrent HTTPS rehearsal](https://github.com/Kian-hdr/isolinear-memory/actions/runs/34181380260)
 passed all four jobs with **111 packaged CLI calls**. All three OS clients used the
 same downloaded package, reached revision 3 and agreed on accepted content hash
 `8d721b8696ffdabe16a392582867e2dc1080131db29acfab8e166d839fd31ff7`.
@@ -561,9 +561,9 @@ in a disposable runner directory, so its Windows/macOS/Linux product jobs exerci
 the actual local driver instead of skipping for missing rclone. The staging script
 was executed on macOS arm64 and verified the downloaded archive hash before extracting
 only its executable. Subsequent exact source `5a6fd30` passed the
-[twelve-job matrix](https://github.com/Kian-hdr/shared-memory/actions/runs/34232620856),
+[twelve-job matrix](https://github.com/Kian-hdr/isolinear-memory/actions/runs/34232620856),
 including real local rclone on every product OS. Its runtime-equivalent `7d88ce3`
-passed the [four-job HTTPS rehearsal](https://github.com/Kian-hdr/shared-memory/actions/runs/34232511551)
+passed the [four-job HTTPS rehearsal](https://github.com/Kian-hdr/isolinear-memory/actions/runs/34232511551)
 with 98 packaged calls; `5a6fd30` changed only readiness documentation.
 No Google Drive account authentication, publication, sharing or provider request has
 been performed; actual account/recipient/mixed-device gates remain open.
@@ -650,14 +650,14 @@ release result.
 ## Published development branch and cross-platform CI, 2026-09-08
 
 The reviewed source is published on
-[the preserved source revision](https://github.com/Kian-hdr/shared-memory/tree/c4aaedbbeb959bce8b624efe2c83c91f96c8ee0d).
+[the preserved source revision](https://github.com/Kian-hdr/isolinear-memory/tree/c4aaedbbeb959bce8b624efe2c83c91f96c8ee0d).
 This is a development branch, not a stable V1 release or a repository rename.
 
 The [first run](https://github.com/Kian-hdr/shared-obsidian-workspace/actions/runs/34178714443)
 passed ten of twelve jobs. Both Windows product jobs exposed a fixture newline
 mismatch: Windows text-mode writes produced CRLF while the test expected LF.
 The runtime correctly preserved the actual bytes. Commit
-[`9214375`](https://github.com/Kian-hdr/shared-memory/commit/9214375ea778c4c650def5ecb5f253756d218f49)
+[`9214375`](https://github.com/Kian-hdr/isolinear-memory/commit/9214375ea778c4c650def5ecb5f253756d218f49)
 uses explicit UTF8 fixture bytes and adds a mixed-line-ending roundtrip, bringing
 the product suite to 106 tests. The
 [corrected run](https://github.com/Kian-hdr/shared-obsidian-workspace/actions/runs/34178908410)
@@ -856,7 +856,7 @@ workflow, and authorized local installation still includes missing Obsidian and
 Homebrew when chosen. Skill validation and documentation link, format, YAML, and
 targeted private-reference checks passed.
 
-Consult the [workflow runs](https://github.com/Kian-hdr/shared-memory/actions/workflows/test.yml)
+Consult the [workflow runs](https://github.com/Kian-hdr/isolinear-memory/actions/workflows/test.yml)
 for Linux, macOS, and Windows results on Python 3.9 and 3.13. A workflow definition
 alone does not establish a passing run.
 

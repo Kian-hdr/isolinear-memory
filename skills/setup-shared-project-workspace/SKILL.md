@@ -1,9 +1,13 @@
 ---
 name: setup-shared-project-workspace
-description: Set up, update or repair Shared Memory in a selected Markdown folder. Ordinary note work uses native file tools; load this skill only for setup or troubleshooting.
+description: Compatibility setup skill for Isolinear Memory, formerly Shared Memory, in a selected Markdown folder. Ordinary note work uses native file tools; load only for setup or troubleshooting.
 ---
 
-# Shared Memory
+# Isolinear Memory, legacy setup skill
+
+This `setup-shared-project-workspace` skill name is retained for existing agents.
+New installations can use `setup-isolinear-memory`; both operate on the same
+format-3 history without renaming project files or IDs.
 
 People and agents read and edit ordinary Markdown. Obsidian is optional. Use native
 file tools; routine memory work does not require generated scripts or model-specific
@@ -18,7 +22,8 @@ execution. Preserve project identity, history, instructions and unrelated files.
 Only an empty new workspace receives Raw/, Wiki/, Output/, AGENTS.md and INDEX.md.
 Never reorganize a populated workspace automatically.
 
-Install a stable `shared-memory` command and optional automatic capture once, outside
+Install stable `isolinear-memory` and `shared-memory` launchers for the same runtime,
+with automatic capture where supported, outside
 shared storage. [Agent integration](references/agent-integration.md) explains the
 small routine contract. Automatic capture works independently of the model; host
 permissions still apply. Without it, run one `sync PROJECT --brief` after edits.

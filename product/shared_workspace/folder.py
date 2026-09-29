@@ -8,6 +8,7 @@ worker can preserve a provider overwrite that occurred before local capture.
 from __future__ import annotations
 
 import contextlib
+import errno
 import functools
 import hashlib
 import json
@@ -16,8 +17,11 @@ from pathlib import Path
 import re
 import stat
 import tempfile
+import threading
+import time
 import uuid
 
+from . import PRODUCT_VERSION
 from .errors import ProductError
 from .path_safety import absolute_path, unsafe_ancestor, is_link_or_reparse
 from .engine import validate_path, validate_files, MAX_FILE_BYTES, MAX_SNAPSHOT_BYTES
@@ -30,13 +34,40 @@ VERSION = 1
 MAX_EVENTS = 20000
 MAX_HISTORY_BYTES = 512 * 1024 * 1024
 MAX_EVENT_BYTES = 128 * 1024 * 1024
+MAX_SCAN_INDEX_BYTES = 8 * 1024 * 1024
+SCAN_READ_LIMIT = 500
+SCAN_AUDIT_INTERVAL_SECONDS = 24 * 60 * 60
+SCAN_WALL_SECONDS = 45
+SCAN_FILE_SECONDS = 3
+SCAN_PENDING_READ_LIMIT = 8
+SCAN_SECOND_PASS_RESERVE = 8
+SCAN_METADATA_SECONDS = 10
+SCAN_STAT_SECONDS = 2
+SCAN_EVENT_SECONDS = 3
 HASH = re.compile(r'[0-9a-f]{64}')
 PROVIDERS = {'local', 'google-drive', 'onedrive', 'icloud', 'self-hosted', 'nextcloud'}
 LIMITATION = 'Provider overwrites before local capture cannot be recovered by this engine; sync is not a provider receipt or an atomic filesystem transaction.'
+LOCK_TIMEOUT_SECONDS = 10
+LOCK_POLL_SECONDS = 0.05
 
 
 def fail(code, message, exit_code=3):
     raise ProductError(exit_code, 'folder_' + code, message) from None
+
+
+def io_message(phase, error):
+    """Describe an I/O failure without paths, note text or exception strings."""
+    os_code = errno.errorcode.get(error.errno, 'UNKNOWN') if isinstance(error, OSError) else 'UNKNOWN'
+    return (f'Folder operation failed during {phase} ({type(error).__name__}, {os_code}); '
+            'preserve history and private recovery state.')
+
+
+@contextlib.contextmanager
+def io_phase(name):
+    try:
+        yield
+    except OSError as error:
+        fail('io', io_message(name, error), 5)
 
 
 def checked(method):
@@ -47,7 +78,7 @@ def checked(method):
         except ProductError:
             raise
         except (OSError, ValueError, UnicodeError, KeyError, TypeError) as exc:
-            fail('io', 'Folder operation could not finish safely; preserve history and private recovery state. ' + type(exc).__name__, 5)
+            fail('io', io_message(method.__name__, exc), 5)
     return run
 
 
@@ -61,6 +92,18 @@ def digest(value):
 
 def byte_hash(value):
     return None if value is None else hashlib.sha256(value.encode('utf-8')).hexdigest()
+
+
+def file_stamp(path):
+    info = os.stat(path, follow_symlinks=False)
+    if not stat.S_ISREG(info.st_mode):
+        fail('partial_file', 'Expected a stable regular local file.', 4)
+    return [info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns]
+
+
+def scan_metadata_reuse_allowed():
+    # Windows st_ctime is creation time, not a reliable in-place change clock.
+    return os.name != 'nt'
 
 
 def safe(value):
@@ -131,13 +174,74 @@ def read_bytes(path, maximum=MAX_EVENT_BYTES):
         # API only; device/file ID and size still bind the open descriptor to the
         # checked pathname. The initial pathname check also catches replacement
         # between inspection and open, even when replacement bytes have equal size.
-        file_identity = lambda value: (value.st_dev, value.st_ino, value.st_size)
-        if (stamp(info) != stamp(after) or stamp(named_before) != stamp(named)
-                or file_identity(after) != file_identity(named) or len(result) != after.st_size):
+        file_identity = lambda value: (value.st_dev, value.st_ino)
+        stable = (stamp(info) == stamp(after) and stamp(named_before) == stamp(named)
+                  and file_identity(after) == file_identity(named)
+                  and stat.S_ISREG(named_before.st_mode) and stat.S_ISREG(named.st_mode))
+        if not stable:
             fail('partial_file', 'File changed while being read; defer until stable local bytes are available.', 4)
-        return result
+        if len(result) == after.st_size == named.st_size:
+            return result
+        # Some macOS FileProvider files expose a stable zero byte size through
+        # both pathname and descriptor stat while an opened descriptor returns
+        # real content. Accept only two identical complete reads from that same
+        # inode with unchanged descriptor and no-follow pathname metadata.
+        if named.st_size == 0 and result and after.st_size in (0, len(result)):
+            os.lseek(fd, 0, os.SEEK_SET)
+            with os.fdopen(fd, 'rb', closefd=False) as stream:
+                second = stream.read(maximum + 1)
+            verified_fd = os.fstat(fd)
+            verified_name = os.stat(path, follow_symlinks=False)
+            if (second == result and stamp(after) == stamp(verified_fd)
+                    and stamp(named) == stamp(verified_name)
+                    and file_identity(verified_fd) == file_identity(verified_name)
+                    and stat.S_ISREG(verified_name.st_mode)):
+                return result
+        fail('partial_file', 'File changed while being read; defer until stable local bytes are available.', 4)
     finally:
         os.close(fd)
+
+
+def read_control_bytes(path, maximum, label):
+    """Retry a transient provider metadata change on a required control file."""
+    pending = []
+    for attempt in range(3):
+        try:
+            completed, value = bounded_read_only(lambda: read_bytes(path, maximum), SCAN_EVENT_SECONDS, pending)
+            if completed:
+                return value
+        except ProductError as error:
+            if error.code != 'folder_partial_file':
+                raise
+        if attempt < 2:
+            time.sleep(0.05)
+    fail('control_unstable', f'{label} changed during bounded reads; preserve local state and retry when the provider settles.', 4)
+
+
+def bounded_read_only(action, timeout, pending):
+    """Bound a read-only OS call; a late daemon result is never consumed."""
+    pending[:] = [thread for thread in pending if thread.is_alive()]
+    if len(pending) >= SCAN_PENDING_READ_LIMIT:
+        return False, None
+    done = threading.Event()
+    result = {}
+
+    def worker():
+        try:
+            result['value'] = action()
+        except Exception as error:
+            result['error'] = error
+        finally:
+            done.set()
+
+    thread = threading.Thread(target=worker, daemon=True)
+    thread.start()
+    if not done.wait(timeout):
+        pending.append(thread)
+        return False, None
+    if 'error' in result:
+        raise result['error']
+    return True, result['value']
 
 
 def parse(raw):
@@ -225,9 +329,9 @@ class Folder:
         if not self.root.is_dir():
             fail('missing', 'Choose an existing physical project folder.', 5)
         self.state = private_path(state, self.root)
-        self.manifest = validate_manifest(parse(read_bytes(self.root / MANIFEST, 65536)))
+        self.manifest = validate_manifest(parse(read_control_bytes(self.root / MANIFEST, 65536, 'Workspace manifest')))
         self.project_id = self.manifest['project_id']
-        self.config = parse(read_bytes(self.state / 'folder.json', 65536))
+        self.config = parse(read_control_bytes(self.state / 'folder.json', 65536, 'Private folder binding'))
         if (self.config.get('format') != VERSION or self.config.get('root') != str(self.root)
                 or self.config.get('project_id') != self.project_id or type(self.config.get('readonly')) is not bool):
             fail('binding', 'Private device state belongs to another project or folder.')
@@ -289,7 +393,7 @@ class Folder:
             intent = {'root': str(root), 'project_id': identifier, 'author': author, 'provider': provider,
                       'files': files, 'migration_origin': origin, 'materialize_initial': materialize_initial}
             atomic(state / 'initialization.json', canonical(intent), immutable=True)
-        manifest = {'format_version': 3, 'product_version': '0.4.0', 'workflow': 'folder',
+        manifest = {'format_version': 3, 'product_version': PRODUCT_VERSION, 'workflow': 'folder',
                     'project_id': intent['project_id'], 'provider': provider}
         if intent['migration_origin'] is not None:
             manifest['migration_origin'] = intent['migration_origin']
@@ -350,26 +454,58 @@ class Folder:
 
     @contextlib.contextmanager
     def _lock(self):
-        safe(self.state)
-        self.state.mkdir(parents=True, exist_ok=True, mode=0o700)
-        path = self.state / '.folder.lock'; safe(path)
-        with open(path, 'a+b') as stream:
+        with io_phase('lock_prepare'):
+            safe(self.state)
+            self.state.mkdir(parents=True, exist_ok=True, mode=0o700)
+            path = self.state / '.folder.lock'; safe(path)
+            stream = open(path, 'a+b')
+        with stream:
             if os.name == 'nt':
                 import msvcrt
-                stream.seek(0)
-                if not stream.read(1):
-                    stream.write(b'0'); stream.flush()
-                stream.seek(0); msvcrt.locking(stream.fileno(), msvcrt.LK_LOCK, 1)
+                with io_phase('lock_prepare'):
+                    stream.seek(0)
+                    if not stream.read(1):
+                        stream.write(b'0'); stream.flush()
             else:
                 import fcntl
-                fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
+            deadline = time.monotonic() + LOCK_TIMEOUT_SECONDS
+            while True:
+                try:
+                    if os.name == 'nt':
+                        stream.seek(0); msvcrt.locking(stream.fileno(), msvcrt.LK_NBLCK, 1)
+                    else:
+                        fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except OSError as error:
+                    if error.errno not in (errno.EACCES, errno.EAGAIN, errno.EDEADLK):
+                        fail('io', io_message('lock_acquire', error), 5)
+                    if time.monotonic() >= deadline:
+                        fail('lock_timeout', 'Private folder state remained busy; retry after the other operation finishes.', 5)
+                    time.sleep(LOCK_POLL_SECONDS)
             try:
                 yield
             finally:
-                if os.name == 'nt':
-                    stream.seek(0); msvcrt.locking(stream.fileno(), msvcrt.LK_UNLCK, 1)
-                else:
-                    fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+                with io_phase('lock_release'):
+                    if os.name == 'nt':
+                        stream.seek(0); msvcrt.locking(stream.fileno(), msvcrt.LK_UNLCK, 1)
+                    else:
+                        fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
+
+    def _progress(self, phase, count=None):
+        """Opt-in, private sync phase marker with no note names or contents."""
+        self._sync_phase = phase
+        if os.environ.get('SHARED_MEMORY_CAPTURE_PHASES') != '1':
+            return
+        if not re.fullmatch(r'[a-z_]{1,48}', phase):
+            return
+        record = {'format': 1, 'phase': phase, 'updated_at': time.time(), 'pid': os.getpid()}
+        if type(count) is int and count >= 0:
+            record['count'] = count
+        try:
+            atomic(self.state / 'capture-progress.json', canonical(record))
+        except (OSError, ProductError):
+            # Observability must not change the sync outcome.
+            pass
 
     def _writable(self):
         if self.config['readonly']:
@@ -387,32 +523,108 @@ class Folder:
             return None
         return read_bytes(path, MAX_FILE_BYTES).decode('utf-8')
 
-    def _scan(self, required):
-        self._excluded, self._partial = [], []
-        self._skipped_paths = {'count': 0, 'samples': []}
-        files = {}
+    def _load_scan_index(self):
+        """Load a rebuildable private hint; never treat it as history authority."""
+        path = self.state / 'scan-index.json'
+        self._scan_index_rebuilt = False
+        try:
+            record = parse(read_bytes(path, MAX_SCAN_INDEX_BYTES))
+            if (not isinstance(record, dict) or record.get('format') != 1
+                    or record.get('project_id') != self.project_id
+                    or record.get('checksum') != digest({k: v for k, v in record.items() if k != 'checksum'})):
+                raise ValueError()
+            entries = record.get('entries')
+            if not isinstance(entries, dict) or len(entries) > 100000:
+                raise ValueError()
+            for name, item in entries.items():
+                path_name(name)
+                if (not isinstance(item, dict) or set(item) != {'stamp', 'hash', 'verified_at'}
+                        or not isinstance(item['stamp'], list) or len(item['stamp']) != 5
+                        or any(type(value) is not int or value < 0 for value in item['stamp'])
+                        or not isinstance(item['hash'], str) or not HASH.fullmatch(item['hash'])
+                        or not isinstance(item['verified_at'], (int, float)) or item['verified_at'] < 0):
+                    raise ValueError()
+            for key in ('audit_started_at', 'full_audit_at'):
+                value = record.get(key)
+                if value is not None and (not isinstance(value, (int, float)) or value < 0):
+                    raise ValueError()
+            record.pop('checksum')
+        except FileNotFoundError:
+            record = {'format': 1, 'project_id': self.project_id, 'entries': {},
+                      'audit_started_at': time.time(), 'full_audit_at': None}
+        except (OSError, ProductError, ValueError, KeyError, TypeError):
+            self._scan_index_rebuilt = True
+            record = {'format': 1, 'project_id': self.project_id, 'entries': {},
+                      'audit_started_at': time.time(), 'full_audit_at': None}
+        now = time.time()
+        full = record['full_audit_at']
+        if record['audit_started_at'] is None and (full is None or not 0 <= now - full < SCAN_AUDIT_INTERVAL_SECONDS):
+            record['audit_started_at'] = now
+        return record
+
+    def _save_scan_index(self, record):
+        value = dict(record)
+        value['checksum'] = digest(value)
+        raw = canonical(value)
+        if len(raw) > MAX_SCAN_INDEX_BYTES:
+            fail('limit', 'Private scan index exceeds its byte bound.')
+        atomic(self.state / 'scan-index.json', raw)
+
+    def _timed_stable_read(self, relative, target):
+        """Bound one cloud-backed read without letting a late result enter history."""
+        self._pending_scan_reads = [thread for thread in self._pending_scan_reads if thread.is_alive()]
+        if len(self._pending_scan_reads) >= self._active_pending_limit:
+            return 'saturated', None
+        remaining = self._scan_deadline - time.monotonic()
+        if remaining <= 0:
+            return 'budget', None
+        done = threading.Event()
+        outcome = {}
+
+        def read():
+            try:
+                outcome['value'] = (self._read(relative), file_stamp(target))
+            except Exception as error:
+                outcome['error'] = error
+            finally:
+                done.set()
+
+        thread = threading.Thread(target=read, daemon=True)
+        thread.start()
+        if not done.wait(min(SCAN_FILE_SECONDS, remaining)):
+            self._pending_scan_reads.append(thread)
+            return 'timeout', None
+        if 'error' in outcome:
+            raise outcome['error']
+        return 'ok', outcome['value']
+
+    def _enumerate_scan(self, required):
+        """Read-only traversal; safe to abandon if a provider metadata call stalls."""
+        excluded, candidates = [], []
+        skipped = {'count': 0, 'samples': []}
+        scanned = 0
         safe(self.root)
         for directory, dirs, names in os.walk(self.root, followlinks=False):
             safe(directory)
             for name in list(dirs):
                 relative = (Path(directory) / name).relative_to(self.root).as_posix()
-                reserved = any(part.casefold() == 'coordination' or part.casefold() in PRIVATE or part.startswith('.') for part in Path(relative).parts)
-                # Archived bundles may contain directory links. Never traverse them,
-                # but reject links replacing managed subtrees rather than treating
-                # those tracked notes as missing and potentially restoring through a link.
+                reserved = any(part.casefold() == 'coordination' or part.casefold() in PRIVATE or part.startswith('.')
+                               for part in Path(relative).parts)
                 linked = is_link_or_reparse(Path(directory) / name)
                 if (reserved or linked) and not any(p.startswith(relative + '/') for p in required):
-                    dirs.remove(name); self._excluded.append(relative)
+                    dirs.remove(name); excluded.append(relative)
                 else:
                     safe(Path(directory) / name)
             for name in names:
+                scanned += 1
                 relative = (Path(directory) / name).relative_to(self.root).as_posix()
                 private_ancestor = any(part.startswith('.') or part.casefold() in PRIVATE or part.casefold() == 'coordination'
                                        for part in Path(relative).parts[:-1])
-                if relative not in required and (is_link_or_reparse(Path(directory) / name)
-                                                or private_ancestor or name.startswith('.') or name.casefold() in PRIVATE | PRIVATE_FILES
-                                                or Path(name).suffix.casefold() not in {'.md', '.markdown'}):
-                    self._excluded.append(relative); continue
+                if relative not in required and (private_ancestor or name.startswith('.')
+                                                or name.casefold() in PRIVATE | PRIVATE_FILES
+                                                or Path(name).suffix.casefold() not in {'.md', '.markdown'}
+                                                or is_link_or_reparse(Path(directory) / name)):
+                    excluded.append(relative); continue
                 try:
                     path_name(relative)
                 except ProductError as exc:
@@ -423,16 +635,126 @@ class Folder:
                     }
                     if relative in required or exc.code != 'engine_invalid' or str(exc) not in portable_errors:
                         raise
-                    self._excluded.append(relative)
-                    self._skipped_paths['count'] += 1
-                    if len(self._skipped_paths['samples']) < 3:
-                        self._skipped_paths['samples'].append({'path': relative[:240], 'reason': str(exc)})
+                    excluded.append(relative)
+                    skipped['count'] += 1
+                    if len(skipped['samples']) < 3:
+                        skipped['samples'].append({'path': relative[:240], 'reason': str(exc)})
                     continue
+                candidates.append((relative, Path(directory) / name))
+        return candidates, excluded, skipped, scanned
+
+    def _scan(self, required, *, incremental=False, baseline=None):
+        self._partial = []
+        files = {}
+        progress_stage = getattr(self, '_sync_phase', 'scan')
+        if incremental:
+            self._scan_pass += 1
+            self._active_pending_limit = (SCAN_PENDING_READ_LIMIT +
+                                          (SCAN_SECOND_PASS_RESERVE if self._scan_pass > 1 else 0))
+            completed, enumeration = bounded_read_only(
+                lambda: self._enumerate_scan(required), SCAN_METADATA_SECONDS, self._pending_metadata_reads)
+            if not completed:
+                fail('scan_timeout', 'Provider metadata traversal exceeded its bound; history and scan index were not advanced.', 5)
+        else:
+            enumeration = self._enumerate_scan(required)
+        candidates, self._excluded, self._skipped_paths, scanned = enumeration
+        seen = {relative for relative, _ in candidates}
+        if hasattr(self, '_sync_phase'):
+            self._progress(progress_stage, scanned)
+        if not incremental:
+            for relative, _ in candidates:
                 try:
                     text = self._read(relative)
                     if text is not None:
                         files[relative] = text
                 except (UnicodeError, FileNotFoundError):
+                    self._partial.append(relative)
+                except OSError:
+                    raise
+                except ProductError as exc:
+                    if exc.code in {'folder_limit', 'folder_partial_file'}:
+                        self._partial.append(relative)
+                    else:
+                        raise
+        if incremental:
+            ordered = []
+            audit = self._scan_index_work['audit_started_at']
+            for relative, _ in candidates:
+                try:
+                    def inspect(name=relative):
+                        target = self._target(name)
+                        return target, file_stamp(target)
+                    completed, value = bounded_read_only(inspect, SCAN_STAT_SECONDS, self._pending_metadata_reads)
+                    if not completed:
+                        self._partial.append(relative)
+                        continue
+                    target, stamp = value
+                except (OSError, FileNotFoundError):
+                    self._partial.append(relative)
+                    continue
+                except ProductError as exc:
+                    if exc.code == 'folder_partial_file':
+                        self._partial.append(relative); continue
+                    raise
+                prior = self._scan_index_work['entries'].get(relative)
+                prior_text = baseline.get(relative, {}).get('text')
+                reusable = bool(scan_metadata_reuse_allowed() and prior and prior_text is not None
+                                and not (prior['stamp'][2] == 0 and prior_text)
+                                and prior['stamp'] == stamp
+                                and prior['hash'] == byte_hash(prior_text)
+                                and (audit is None or prior['verified_at'] >= audit))
+                if reusable:
+                    files[relative] = prior_text
+                    continue
+                prior_matches_baseline = bool(prior and prior_text is not None
+                                              and prior['stamp'] == stamp
+                                              and prior['hash'] == byte_hash(prior_text))
+                priority = (0 if (relative in {'AGENTS.md', 'INDEX.md'} or
+                                  (stamp[2] == 0 and prior is not None) or
+                                  (self._scan_pass > 1 and relative in self._scan_verified_this_cycle and stamp[2] == 0)) else
+                            1 if prior is not None and not prior_matches_baseline else
+                            2 if relative not in baseline else
+                            3 if prior is None else 4)
+                ordered.append((priority, -stamp[4], relative, target, stamp, prior_text))
+            ordered.sort()
+            for _, _, relative, target, stamp, prior_text in ordered:
+                if self._scan_read_remaining <= 0 or time.monotonic() >= self._scan_deadline:
+                    self._partial.append(relative)
+                    if prior_text is not None:
+                        files[relative] = prior_text
+                    continue
+                self._pending_scan_reads = [thread for thread in self._pending_scan_reads if thread.is_alive()]
+                if len(self._pending_scan_reads) >= self._active_pending_limit:
+                    self._partial.append(relative)
+                    if prior_text is not None:
+                        files[relative] = prior_text
+                    continue
+                self._scan_read_remaining -= 1
+                self._scan_read_this_run += 1
+                if self._scan_read_this_run % 50 == 0:
+                    self._progress(progress_stage + '_read', self._scan_read_this_run)
+                try:
+                    read_state, value = self._timed_stable_read(relative, target)
+                    if read_state != 'ok':
+                        if read_state in {'saturated', 'budget'}:
+                            self._scan_read_remaining += 1
+                            self._scan_read_this_run -= 1
+                        if read_state == 'timeout':
+                            self._scan_timeout_count += 1
+                        self._partial.append(relative)
+                        continue
+                    text, after = value
+                    if text is None:
+                        self._partial.append(relative); continue
+                    if text == '' and prior_text not in (None, ''):
+                        self._partial.append(relative); continue
+                    if after != stamp:
+                        self._partial.append(relative); continue
+                    self._scan_index_work['entries'][relative] = {
+                        'stamp': after, 'hash': byte_hash(text), 'verified_at': time.time()}
+                    self._scan_verified_this_cycle.add(relative)
+                    files[relative] = text
+                except (OSError, UnicodeError, FileNotFoundError):
                     self._partial.append(relative)
                 except ProductError as exc:
                     if exc.code in {'folder_limit', 'folder_partial_file'}:
@@ -440,6 +762,10 @@ class Folder:
                     else:
                         raise
         validate_files(files)
+        if incremental:
+            self._scan_seen = seen
+        if hasattr(self, '_sync_phase'):
+            self._progress(progress_stage, scanned)
         return files
 
     def _baseline(self):
@@ -487,21 +813,65 @@ class Folder:
     def _load_events(self, cache):
         records, deferred, invalid, total = {}, [], [], 0
         self._history_copies = []
+        self._provider_duplicate_bytes_unverified = 0
+        validated_private = {}
         locations = [self.state / 'events', self.shared / 'events']
         for directory in locations:
-            safe(directory)
-            if not directory.exists():
-                continue
-            for path in sorted(directory.iterdir()):
+            source = 'private' if directory == self.state / 'events' else 'provider'
+            if cache:
+                self._progress('sync_load_history_' + source, 0)
+            scanned = 0
+            if cache and source == 'provider':
+                def enumerate_events():
+                    safe(directory)
+                    return sorted(directory.iterdir()) if directory.exists() else []
+                completed, paths = bounded_read_only(
+                    enumerate_events, SCAN_METADATA_SECONDS, self._pending_metadata_reads)
+                if not completed:
+                    deferred.append({'reason': 'provider-history-enumeration-timeout'})
+                    continue
+            else:
+                safe(directory)
+                paths = sorted(directory.iterdir()) if directory.exists() else []
+            for path in paths:
+                scanned += 1
+                if cache and scanned % 100 == 0:
+                    self._progress('sync_load_history_' + source, scanned)
                 if path.name.startswith('.folder-write-'):
                     continue
-                safe(path)
-                if not path.is_file() or path.suffix != '.json':
-                    deferred.append({'file': path.name, 'reason': 'incomplete-history-entry'}); continue
                 if len(records) >= MAX_EVENTS and path.stem not in records:
                     fail('limit', 'History event count exceeds the supported bound.')
                 try:
-                    raw = read_bytes(path)
+                    if cache and source == 'provider':
+                        expected_size = validated_private.get(path.name)
+                        def inspect_event(selected=path, expected=expected_size):
+                            safe(selected)
+                            if not selected.is_file() or selected.suffix != '.json':
+                                return 'incomplete', None
+                            if expected is not None and selected.stat().st_size == expected:
+                                return 'duplicate', None
+                            return 'raw', read_bytes(selected)
+                        completed, inspected = bounded_read_only(
+                            inspect_event, SCAN_EVENT_SECONDS, self._pending_metadata_reads)
+                        if not completed:
+                            deferred.append({'file': path.name, 'reason': 'provider-history-read-timeout'})
+                            continue
+                        kind, raw = inspected
+                        if kind == 'incomplete':
+                            deferred.append({'file': path.name, 'reason': 'incomplete-history-entry'}); continue
+                        if kind == 'duplicate':
+                            self._provider_duplicate_bytes_unverified += 1
+                            continue
+                    else:
+                        safe(path)
+                        if not path.is_file() or path.suffix != '.json':
+                            deferred.append({'file': path.name, 'reason': 'incomplete-history-entry'}); continue
+                        raw = read_bytes(path)
+                    # History is content-addressed and immutable. For routine
+                    # sync, a provider entry with the same canonical name and
+                    # byte size cannot add a new valid event when the private
+                    # canonical copy was already validated. A full status call
+                    # still rereads the provider bytes to audit duplicate copies.
                     total += len(raw)
                     if total > MAX_HISTORY_BYTES:
                         fail('limit', 'History exceeds the supported scan byte bound.')
@@ -514,12 +884,26 @@ class Folder:
                     if path.stem != actual_id:
                         self._history_copies.append({'file': path.name, 'event': actual_id, 'reason': 'validated-provider-copy'})
                     records[actual_id] = value
+                    if directory == self.state / 'events' and path.name == actual_id + '.json':
+                        validated_private[path.name] = len(raw)
                     if cache and directory == self.shared / 'events':
-                        atomic(self.state / 'events' / (actual_id + '.json'), raw, immutable=True)
+                        if actual_id + '.json' not in validated_private:
+                            atomic(self.state / 'events' / (actual_id + '.json'), raw, immutable=True)
+                            validated_private[actual_id + '.json'] = len(raw)
                 except (ValueError, UnicodeError, TypeError, KeyError, ProductError) as exc:
                     if isinstance(exc, ProductError) and exc.code == 'folder_limit':
                         raise
+                    if isinstance(exc, ProductError) and exc.code == 'folder_partial_file':
+                        deferred.append({'file': path.name, 'reason': 'unstable-history-entry'}); continue
                     invalid.append({'file': path.name, 'reason': 'incomplete-or-invalid-event'})
+                except OSError:
+                    if cache and source == 'provider':
+                        deferred.append({'file': path.name, 'reason': 'provider-history-io-unavailable'}); continue
+                    raise
+            if cache:
+                self._progress('sync_load_history_' + source, scanned)
+        if cache:
+            self._progress('sync_order_history', 0)
         ready = {}
         remaining = dict(records)
         while remaining:
@@ -534,19 +918,35 @@ class Folder:
                     del remaining[event_id]; advanced = True; continue
                 ready[event_id] = event
                 del remaining[event_id]; advanced = True
+                if cache and len(ready) % 100 == 0:
+                    self._progress('sync_order_history', len(ready))
             if not advanced:
                 break
         for event_id in sorted(remaining):
             deferred.append({'event': event_id, 'reason': 'missing-or-cyclic-parents'})
+        if cache:
+            self._progress('sync_order_history', len(ready))
         return ready, deferred, invalid
 
     def _capture(self, baseline):
-        local = self._scan(set(baseline))
+        local = self._scan(set(baseline), incremental=True, baseline=baseline)
         changed = {p: text for p, text in local.items() if p not in baseline or baseline[p]['text'] != text}
         if changed:
+            self._progress('sync_capture_emit', len(changed))
             event = self._event('edit', changed, baseline, 'Captured observed local bytes against the saved device baseline; origin may be an editor or provider')
-            event_id = self._emit(event)
+            try:
+                event_id = self._emit(event)
+            except ProductError as error:
+                if error.code != 'folder_partial_file':
+                    raise
+                # The private outbox may already contain this exact event;
+                # leave the old baseline and visible files intact until the
+                # provider copy can be checked on a later cycle.
+                self._partial.extend(changed)
+                self._capture_deferred.update(changed)
+                return local
             baseline.update({p: {'heads': [event_id], 'text': text} for p, text in changed.items()})
+            self._progress('sync_capture_baseline', len(changed))
             self._save_baseline(baseline)
         return local
 
@@ -578,7 +978,12 @@ class Folder:
             # The temporary old inode belongs to this journal and is kept until
             # its actual post-crash/editor bytes are safely preserved privately.
             if evacuated.exists():
-                actual_old = read_bytes(evacuated, MAX_FILE_BYTES).decode('utf-8')
+                try:
+                    actual_old = read_bytes(evacuated, MAX_FILE_BYTES).decode('utf-8')
+                except ProductError as error:
+                    if error.code not in {'folder_partial_file', 'folder_limit'}:
+                        raise
+                    pending[path] = operation; deferred.append(path); continue
                 self._backup(actual_old)
                 if actual_old != before:
                     # Preserve a writer that retained the evacuated inode.
@@ -598,7 +1003,12 @@ class Folder:
             if readonly:
                 pending[path] = operation
                 deferred.append(path); continue
-            current = self._read(path)
+            try:
+                current = self._read(path)
+            except ProductError as error:
+                if error.code not in {'folder_partial_file', 'folder_limit'}:
+                    raise
+                pending[path] = operation; deferred.append(path); continue
             if current == desired:
                 baseline[path] = {'heads': operation['heads'], 'text': desired}
                 self._save_baseline(baseline)
@@ -614,7 +1024,12 @@ class Folder:
                 os.rename(destination, evacuated)
                 fsync_dir(destination.parent)
                 # A newer file moved by the race is never discarded or replaced.
-                moved = read_bytes(evacuated, MAX_FILE_BYTES).decode('utf-8')
+                try:
+                    moved = read_bytes(evacuated, MAX_FILE_BYTES).decode('utf-8')
+                except ProductError as error:
+                    if error.code not in {'folder_partial_file', 'folder_limit'}:
+                        raise
+                    pending[path] = operation; deferred.append(path); continue
                 if moved != before:
                     self._backup(moved)
                     if not destination.exists():
@@ -667,8 +1082,9 @@ class Folder:
 
     def _materialize(self, baseline, current, resolved):
         operations, protected = {}, []
+        partial = set(self._partial)
         for path, value in resolved.items():
-            if value['conflict'] or path in self._partial:
+            if value['conflict'] or path in partial:
                 continue
             desired = value['text']
             before = current.get(path)
@@ -736,6 +1152,7 @@ class Folder:
                 'path_collisions': collisions, 'history_copies': getattr(self, '_history_copies', []),
                 'rename_divergences': rename_divergences,
                 'skipped_paths': skipped,
+                'provider_duplicate_bytes_unverified': getattr(self, '_provider_duplicate_bytes_unverified', 0),
                 'warnings': ([{'code': 'untracked_nonportable_paths', 'message':
                     str(skipped['count']) + ' untracked paths were excluded from history because their names are not portable; local files remain unchanged.'}]
                     if skipped['count'] else []) + ([{'code': 'rename_intent_divergence', 'message':
@@ -750,33 +1167,89 @@ class Folder:
                 'limitation': LIMITATION}
 
     def _sync_locked(self):
-        baseline = self._baseline()
+        self._progress('sync_read_baseline')
+        with io_phase('sync_read_baseline'):
+            baseline = self._baseline()
+        self._scan_index_work = self._load_scan_index()
+        self._scan_read_remaining = SCAN_READ_LIMIT
+        self._scan_read_this_run = 0
+        self._scan_deadline = time.monotonic() + SCAN_WALL_SECONDS
+        self._scan_timeout_count = 0
+        self._scan_pass = 0
+        self._scan_verified_this_cycle = set()
+        self._capture_deferred = set()
+        if not hasattr(self, '_pending_scan_reads'):
+            self._pending_scan_reads = []
+        if not hasattr(self, '_pending_metadata_reads'):
+            self._pending_metadata_reads = []
         # Recovery preserves raced bytes before it can replace any path. Then
         # capture changes using the old private causal ancestry, not incoming heads.
-        raced = self._recover()
-        baseline = self._baseline()
-        current = self._capture(baseline)
-        events, deferred, invalid = self._load_events(cache=True)
-        resolved = views(events)
+        self._progress('sync_recover')
+        with io_phase('sync_recover'):
+            raced = self._recover()
+        self._progress('sync_read_baseline')
+        with io_phase('sync_read_baseline'):
+            baseline = self._baseline()
+        self._progress('sync_capture_local')
+        with io_phase('sync_capture_local'):
+            current = self._capture(baseline)
+        self._progress('sync_load_history_private')
+        with io_phase('sync_load_history'):
+            events, deferred, invalid = self._load_events(cache=True)
+        self._progress('sync_merge_history')
+        with io_phase('sync_merge_history'):
+            resolved = views(events)
         for name, value in baseline.items():
             for head in value['heads']:
                 if head not in events:
                     deferred.append({'event': head, 'path': name, 'reason': 'saved-baseline-history-unavailable'})
         if not invalid and not deferred and not (self.state / 'journal.json').exists() and not self._path_collisions(resolved):
-            raced += self._materialize(baseline, current, resolved)
-            self._reports(resolved)
-        local = self._scan(set(baseline) | set(resolved))
+            self._progress('sync_materialize')
+            with io_phase('sync_materialize'):
+                raced += self._materialize(baseline, current, resolved)
+            self._progress('sync_reports')
+            with io_phase('sync_reports'):
+                self._reports(resolved)
+        self._progress('sync_scan_local')
+        with io_phase('sync_scan_local'):
+            local = self._scan(set(baseline) | set(resolved), incremental=True, baseline=baseline)
+        self._partial.extend(sorted(self._capture_deferred - set(self._partial)))
+        self._progress('sync_summary')
         result = self._summary(events, deferred, invalid, resolved, local)
         result['deferred_materialization'] = sorted(set(raced))
         if raced:
             result['readiness'] = 'partial'
         if (self.state / 'journal.json').exists():
             result['readiness'] = 'partial'; result['recovery_pending'] = True
+        expected = {name for name, item in baseline.items() if item['text'] is not None}
+        expected.update(name for name, item in resolved.items() if not item['conflict'] and item['text'] is not None)
+        missing_coverage = expected - self._scan_seen
+        eligible = len(self._scan_seen) + len(missing_coverage)
+        deferred_count = len(self._partial) + len(missing_coverage)
+        if (result['readiness'] == 'ready' and deferred_count == 0
+                and self._scan_index_work['audit_started_at'] is not None):
+            self._scan_index_work['full_audit_at'] = time.time()
+            self._scan_index_work['audit_started_at'] = None
+        result['scan_coverage'] = {
+            'eligible': eligible, 'covered': eligible - deferred_count,
+            'deferred': deferred_count, 'read_this_run': self._scan_read_this_run,
+            'read_limit': SCAN_READ_LIMIT,
+            'audit': ('metadata_unavailable' if not scan_metadata_reuse_allowed() and deferred_count else
+                      'in_progress' if self._scan_index_work['audit_started_at'] is not None
+                      else 'coverage_incomplete' if deferred_count else 'current'),
+            'full_audit_at': self._scan_index_work['full_audit_at'],
+            'index_rebuilt': self._scan_index_rebuilt,
+            'reuse_basis': ('baseline_sha256_and_device_inode_size_mtime_ctime' if scan_metadata_reuse_allowed()
+                            else 'none_windows_full_byte_read_required')}
+        result['scan_timeout_count'] = self._scan_timeout_count
+        self._save_scan_index(self._scan_index_work)
+        self._progress('complete')
         return result
 
     @checked
     def sync(self):
         self._writable()
+        self._progress('sync_lock_wait')
         with self._lock():
             return self._sync_locked()
 

@@ -1,6 +1,8 @@
-# Shared Memory 0.4.0 operating guide
+# Isolinear Memory 0.5.0 operating guide
 
-Shared Memory now defaults to **direct editing in a shared Markdown folder**.
+Isolinear Memory defaults to **direct editing in a shared Markdown folder**.
+The previous Shared Memory name remains a command and skill compatibility alias;
+portable `.shared-memory.json` and `.shared-memory/` paths do not change.
 Save notes in your normal editor, including offline. Run `sync` to capture the bytes
 this computer observes and reconcile visible history. The selected provider handles
 transport on reconnect. There is no mandatory proposal, integrator, coordinator
@@ -11,6 +13,42 @@ inside an existing private vault. The selected folder is the boundary; setup doe
 not register a vault or grant access to its parent. [Diagrams](DIAGRAMS.md) show
 people, agents, files, history and recovery.
 
+## Bounded recall and targeted writing
+
+Keep `AGENTS.md` and `INDEX.md` short, then search only the selected project's
+relevant Markdown. Known paths and exact symbols can use native file search. For an
+unknown location, the optional read-only interface returns source-linked excerpts
+without loading an entire note or history:
+
+```text
+isolinear-memory recall . "search terms" --text
+isolinear-memory show . --path Wiki/Note.md --sha256 SOURCE_HASH --start 10 --end 18 --text
+```
+
+`recall` returns at most five hits inside a 2 KiB default response. It searches
+`Wiki/`, `AGENTS.md` and `INDEX.md`; `--include-raw` and `--include-output` explicitly
+expand that scope. Each hit identifies a relative path, heading, exact line range
+and source hash. Agent-facing text shows a 24-hex prefix; JSON retains the full
+SHA-256. `show` recomputes the full digest and refuses changed source bytes; rerun
+recall when stale. Cached hits are checked against current source bytes, but new or
+changed nonmatching files await a miss or explicit `--refresh`. Read the reported
+coverage state; use `--refresh` when completeness matters.
+Here `.` is the selected project folder because the commands run from inside it;
+pass its actual path when invoking them elsewhere. Do not pass a project UUID.
+Both commands also return the normal JSON envelope without `--text`. Inspect the
+result's unavailable, unsearched and truncated indicators before treating a search
+as complete. Native bounded search remains available when this optional CLI cannot
+run or its index is unavailable.
+
+The private SQLite index is only a rebuildable accelerator. It lives under the
+device's private project state, not the shared folder; Markdown and captured
+history remain authoritative. No indexing LLM or hosted memory service is used.
+Agents still edit the relevant canonical note through native file tools, reading
+only the needed section. For an append-only Markdown table, `append-row` can add
+one validated row without placing the whole file in model context; check the
+note's own metadata and attribution rules afterward. Automatic capture, when
+configured and healthy, records the edit independently of the model.
+
 ## Agent-guided setup
 
 [Paste the setup prompt](../SETUP-PROMPT.md) into an agent connected to your computer,
@@ -19,9 +57,9 @@ disposable trial. Python 3.11+ and the verified package are required; the local
 folder engine uses the standard library. The optional historical coordinator's
 server dependencies are not needed for folder mode.
 
-Use the exact release at [v0.4.0](https://github.com/Kian-hdr/shared-memory/releases/tag/v0.4.0)
-only when its assets are present. The expected executable is
-`shared-memory-0.4.0.pyz`, with external `SHA256SUMS`; an explicitly supplied reviewed
+Use the [v0.5.0 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.5.0)
+only when its assets are actually present. The expected executable is
+`isolinear-memory-0.5.0.pyz`, with external `SHA256SUMS`; an explicitly supplied reviewed
 candidate is also usable. Internal package hashes do not independently authenticate
 the publisher. Compare the external SHA before executing a download:
 
@@ -74,7 +112,7 @@ does not silently widen a saved read-only binding. Requesting it for an existing
 writable binding is refused rather than silently changing or ignoring access intent.
 Creating a new project requires a writable editor.
 
-## Persistent memory layout in development builds
+## Persistent memory layout
 
 For an entirely empty selected folder, current source builds seed:
 
@@ -102,7 +140,7 @@ separate explicitly requested task, requiring preserved relative hierarchy,
 recovery, attachment and link validation, and a migration log. `migrate-folder`
 changes historical workflow format; it does not reorganize knowledge folders.
 
-This layout is supplied by 0.4.0. Earlier 0.3.0 packages do not seed it.
+This layout is supplied by 0.4.0 and later. Earlier 0.3.0 packages do not seed it.
 Use [automatic capture](AUTOMATIC-CAPTURE.md) to keep routine sync outside the model,
 or `sync PROJECT --brief` for concise manual capture. Untracked directory links are
 excluded without traversal; tracked-path and boundary links remain rejected.

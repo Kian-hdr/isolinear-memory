@@ -1,4 +1,4 @@
 interface:
-  display_name: "Shared Memory"
+  display_name: "Isolinear Memory (legacy setup)"
   short_description: "Direct shared notes and recoverable local sync"
   default_prompt: "Use $setup-shared-project-workspace to set up this folder for direct note editing and preserve offline work."

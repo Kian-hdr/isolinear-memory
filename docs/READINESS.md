@@ -1,4 +1,16 @@
-# Shared Memory readiness
+# Isolinear Memory readiness
+
+## Optional agent task continuity integration, planned 2026-09-24
+
+Isolinear Memory may serve as the durable, project-scoped checkpoint layer for an external agent orchestrator. This is a proposed optional extension, not a change to normal format-3 folder behavior. The orchestrator owns live task discovery, tool/capability inventory, runtime policy, destination choice and runtime-specific messaging. Isolinear Memory owns portable task context, causal history, explicit conflict/recovery state and evidence of checkpoint/receipt. One installation must work without the orchestrator; unrelated projects must remain isolated.
+
+1. **Reliability gate:** diagnose and repair bounded capture/status under slow provider reads and competing local sync operations. Preserve local notes/history on failure, report a useful failure state and test restart recovery before any unattended transfer depends on capture.
+2. **Checkpoint contract:** prototype a versioned, optional task packet in the selected project's existing canonical Markdown or coordination record. Include project/task identity, objective, affected targets, current owner, decisions, artifacts/checks, context reference, pending work, permissions, packet revision and idempotency key. Validate a saved/read-back packet against format-3 history and existing size/path constraints. Keep credentials, tokens, private runtime databases, account-specific telemetry and full transcripts out of portable history by default.
+3. **Acknowledged transfer:** require destination receipt for the exact revision and an explicit ownership change. A local file save, local history capture or provider upload alone is insufficient. If authoritative cross-device claims are needed, design an optional service/transport; eventual file synchronization and text merge cannot enforce exclusive live ownership. Preserve ordinary direct folder editing and the historical coordinator boundary.
+4. **Compatibility acceptance:** test two authorized agents, duplicate/delayed/out-of-order packets, offline edits, crash between save and acknowledgment, conflicting ownership, read-only members and two unrelated projects on supported platforms. Record local capture, provider delivery and independent recipient receipt separately. Verify the external orchestrator can operate locally when Shared Memory is absent or unhealthy and reports the resulting continuity limit.
+5. **Detail-preserving context efficiency:** keep complete original project Markdown and causal history. Pilot a compact, versioned source manifest plus bounded exact excerpts, with on-demand expansion and visible deferred/unavailable sources. Compare against native path search and progressive reads on paired tasks that include rare decisive facts, contradictions, approval boundaries and stale sources. Measure cached and uncached input, total resource use and accepted outcomes; do not promote a shorter context that loses relevant details. A derived index must remain private, rebuildable and invalidated on source change. `AGENT-COMPATIBILITY.md` records why the earlier FTS comparison did not justify a default index.
+
+Implement only the smallest source/API change justified by the prototype. Update `product/FOLDER-CONTRACT.md`, tests, operating guidance and versioned validation when behavior actually changes. No automatic handoff, live message bus, forced project migration or release is established by this roadmap.
 
 ## Current direction: direct folders, 0.3.0
 
@@ -31,14 +43,15 @@ acceptance or session acquisition do not govern normal format-3 folder editing.
 They remain relevant only to the explicitly retained historical workflow. Do not
 mark them passed merely because the current design removes that requirement.
 
-# Shared Memory: readiness and development roadmap
+# Isolinear Memory: readiness and development roadmap
 
 **A shared workspace for your team and its AI agents.**
 
-The product name is Shared Memory. Obsidian is optional. The product repository is
-[Kian-hdr/shared-memory](https://github.com/Kian-hdr/shared-memory); package filenames
-and protocol identifiers retain compatibility. The
-name is a product decision; trademark and domain clearance are unverified.
+Earlier releases used the Shared Memory name. Version 0.5.0 adopts
+**Isolinear Memory** in the public repository,
+[Kian-hdr/isolinear-memory](https://github.com/Kian-hdr/isolinear-memory), while
+preserving existing project identities and protocol identifiers. Obsidian is optional.
+See [the brand transition](BRAND-MIGRATION.md).
 
 ## First normal release and retained roadmap
 
@@ -79,13 +92,9 @@ provider/account delivery and sustained operator-owned deployment. The detailed
 
 ## Independent product repository, 2026-09-08
 
-Kian selected a separate repository for Shared Memory because its scope has grown
-beyond the original Obsidian workspace toolkit. This supersedes the earlier plan
-to rename the toolkit repository at first-version launch. The product uses
-`Kian-hdr/shared-memory`; the original repository remains a separate legacy toolkit
-record, with access controlled independently. The original private-until-V1 plan is
-superseded first by the experimental prerelease and then by the normal release above. Source history and attribution
-are preserved.
+Isolinear Memory has a dedicated product repository at
+`Kian-hdr/isolinear-memory`. The original Obsidian workspace toolkit remains a
+separate historical project. Source history and attribution are preserved.
 
 Current setup, clone and download navigation point to the product repository.
 Historical CI links in the validation record retain their original provenance and

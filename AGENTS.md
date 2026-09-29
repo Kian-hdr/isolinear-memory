@@ -1,4 +1,9 @@
-# Shared Memory
+# Isolinear Memory
+
+This repository is public. Publish product behavior, reproducible synthetic tests,
+and verified release evidence. Keep account-specific operations, billing, private
+workspace content, credentials, and internal task transcripts in private storage.
+Review new docs, commit messages, and release assets for disclosure before pushing.
 
 Use the selected project's instructions and current user scope. Read its index and
 relevant notes only. Ordinary memory uses native Markdown reads/edits; Obsidian is

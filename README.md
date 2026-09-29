@@ -1,9 +1,9 @@
-# Shared Memory
+# Isolinear Memory
 
 <p align="center">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/shared-memory-dark.png">
-  <img src="assets/shared-memory.png" width="96" height="96" alt="Shared Memory icon: connected pages">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/isolinear-memory-dark.png">
+  <img src="assets/isolinear-memory.png" width="96" height="96" alt="Isolinear Memory icon: connected pages">
 </picture>
 </p>
 
@@ -11,9 +11,11 @@
 
 **Shared notes for people and AI agents. Edit them normally.**
 
-Shared Memory 0.4.0 works in an ordinary Markdown folder. People and agents save
+The name is inspired by [Star Trek's isolinear chips](https://www.startrek.com/en-un/news/below-deck-with-lower-decks-403-move-along).
+
+Isolinear Memory 0.5.0 works in an ordinary Markdown folder. People and agents save
 changes directly, including offline. Your chosen folder provider transports the
-files when connected; Shared Memory records changes and reconciles the history it
+files when connected; Isolinear Memory records changes and reconciles the history it
 can see. Optional reviews happen after editing. A designated integrator, approval
 queue or always-online reviewer is not required.
 
@@ -23,11 +25,15 @@ project's boundary.
 
 ## Small context, ordinary tools
 
-Read INDEX.md and only relevant notes. Use your agent's native file tools. Shared
-Memory does not need an API key, model-specific scripts or a large MCP tool catalog.
+Read INDEX.md and only relevant notes. Use your agent's native file tools. For an
+unknown location, `isolinear-memory recall PROJECT QUERY --text` returns a small,
+source-linked packet; `show` expands an exact passage after checking its file hash.
+Direct file search and reading remain available. A private rebuildable index is a
+search accelerator, never another copy of record. Isolinear Memory does not need an
+API key, model-specific scripts or a large MCP tool catalog.
 An optional [local capture job](docs/AUTOMATIC-CAPTURE.md) records history outside
 the model, so ordinary edits need no shell call and consume no model tokens for sync.
-Without it, use `shared-memory sync PROJECT --brief` once after edits. A capture
+Without it, use `isolinear-memory sync PROJECT --brief` once after edits. A capture
 failure leaves saved Markdown usable; diagnose once instead of retrying in a loop.
 
 Empty new workspaces receive **Raw/** (sources), **Wiki/** (canonical memory),
@@ -69,7 +75,7 @@ settings stay outside the exchange; there is no approval queue between agents.
 
 ## Get started
 
-1. [Paste the v0.4.0 setup / upgrade prompt](SETUP-PROMPT.md) into an agent connected to your computer.
+1. [Paste the v0.5.0 setup / upgrade prompt](SETUP-PROMPT.md) into an agent connected to your computer.
 2. Select the folder and use its existing sharing provider, if any.
 3. Let the agent finish setup, then edit your notes normally.
 
@@ -78,12 +84,17 @@ required. For another person, grant the intended folder access through your chos
 provider and have their agent set up that local copy. Each computer keeps its own
 private baseline. Do not copy another person's private state.
 
-[Release v0.4.0](https://github.com/Kian-hdr/shared-memory/releases/tag/v0.4.0) is the
-version-specific download location. The setup prompt includes direct asset links
-and the runtime SHA-256; verify the download against the release
-`SHA256SUMS` before execution. The runtime is `shared-memory-0.4.0.pyz`; the matching full kit,
-setup prompt, optional skill and icons are separate assets. A download does not grant
+[Release v0.5.0](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.5.0) provides
+the version-specific download location. The setup prompt points to the release
+procedure; verify the runtime against its external `SHA256SUMS`.
+The runtime is `isolinear-memory-0.5.0.pyz`, with a matching full kit,
+setup prompt, setup skills and icons as separate assets. A download does not grant
 access to another person's folders.
+
+The public name changes at v0.5.0. Existing `shared-memory` launchers, the
+`setup-shared-project-workspace` skill, `.shared-memory.json`, `.shared-memory/`,
+project IDs and history remain compatible. Existing projects need no format
+migration. See [the brand transition](docs/BRAND-MIGRATION.md).
 
 ## Save, reconnect, reconcile
 
@@ -115,7 +126,7 @@ history available on each computer.
   provider absence is not silently treated as intentional deletion.
 
 Capture before reconnect when practical. A provider can overwrite a version before
-Shared Memory records it; such uncaptured work needs provider history or backups.
+Isolinear Memory records it; such uncaptured work needs provider history or backups.
 
 ## When people work offline
 

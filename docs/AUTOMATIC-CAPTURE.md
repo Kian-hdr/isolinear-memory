@@ -22,7 +22,7 @@ identity is performed. The state argument is the same one used successfully by
 ```sh
 python3 scripts/install_capture.py '/absolute/selected workspace' \
   --state-dir '/absolute/private state' \
-  --runtime '/absolute/installed/shared-memory.pyz' \
+  --runtime '/absolute/installed/isolinear-memory.pyz' \
   --python '/absolute/python3' \
   --sha256 '<independently verified runtime digest>'
 ```
@@ -32,8 +32,9 @@ install and load it. `--interval 30` through `--interval 3600` changes the caden
 60 seconds is the default. Installation requires macOS and a logged-in GUI session.
 The expected digest must come from a verified build/release record; merely hashing
 an untrusted download does not establish authenticity. Every run checks the
-runtime SHA-256 and refuses unexpected replacement. The installer also verifies the runtime's `folder-status --brief` response before
-changing configuration. Read-only bindings, wrong identities, symlink paths and
+runtime SHA-256 and refuses unexpected replacement. Installation checks the saved
+project binding and runtime integrity before changing configuration; it reports
+`capture_verified: false` until a later full capture actually succeeds. Read-only bindings, wrong identities, symlink paths and
 private state inside the selected workspace are refused. Private state must also
 stay outside other cloud-provider roots; known CloudStorage, iCloud, OneDrive, Google Drive, Dropbox, Nextcloud
 and Box path names are rejected, but arbitrary provider locations cannot be inferred automatically.
@@ -68,12 +69,27 @@ ten minutes, measured against both wall and monotonic clocks. A backwards change
 clock forces a fresh full capture. This bounds the cache's lifetime and
 checks private baseline/event state that the workspace scan does not cover.
 
+During normal sync, a provider history file whose content-addressed name and size
+match an already validated private canonical event is not reread. The bounded
+result reports `provider_duplicate_bytes_unverified`; this is a local convergence
+optimization, not verification of the provider copy's bytes or another device's
+receipt. `folder-status` remains the full provider-byte audit and can be slower on
+large cloud-backed folders. New or size-mismatched provider events are read and
+validated normally.
+
 Metadata is an idle-work hint, not proof of unchanged content against deliberate
 metadata manipulation or a broken filesystem. The periodic full runtime remains
 the authority for history validation. Run the normal `sync` command for an immediate
 full check. `duration_seconds` measures each capture invocation; `mode` distinguishes
 full `sync` from `unchanged` checks so observed performance is not confused with
 the scheduling interval. No model is involved in either mode.
+
+On Windows, creation-time `st_ctime` cannot validate an in-place edit, so folder
+sync disables metadata-only reuse. Each run attempts a bounded byte audit of at
+most 500 eligible notes; a larger workspace may remain `partial` with
+`scan_coverage.audit: metadata_unavailable` rather than claim ready. Its native
+Markdown and preserved history remain intact. A full `folder-status` audit is
+available but can take longer on cloud-backed storage.
 
 ## Inspect, repair and stop
 
@@ -86,6 +102,9 @@ completed run has been recorded. Errors are stored in `last-result.json`, whose
 error details are bounded and replaced on the next run, not appended indefinitely.
 Missing interpreter/runner failures can prevent that result from updating; inspect
 `launchctl print gui/$(id -u)/<label>` using the exact label returned by the plan.
+The last result records a bounded phase and safe OS error label on failure, without
+storing note content or raw subprocess stderr. Folder locks time out after ten
+seconds rather than waiting indefinitely.
 
 Use the same project-only command with `--uninstall` to unload the selected job and move its plist into private
 recovery. This preserves shared history, private baselines, the runner and the last
