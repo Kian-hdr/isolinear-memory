@@ -1,4 +1,4 @@
-# Direct-folder contract for Shared Memory 0.3.0
+# Direct-folder contract for Shared Memory 0.5.0
 
 This is the current default workflow. `ENGINE-CONTRACT.md` describes the explicitly
 retained historical coordinator, not the rules for ordinary folder editing.
@@ -18,6 +18,14 @@ shared immutable events and conflict observations. Private device state holds
 No SQLite, session credential or designated integration owner is required in this
 workflow. Older formats must be retained or explicitly migrated, never silently
 reinterpreted by new setup.
+
+Version 0.5.0 adds optional read-only `recall` and `show` commands. Their private
+SQLite FTS5 index is rebuildable from current Markdown, outside the shared folder;
+it does not change format 3 or become a second authority. Results include source
+path, exact line span, source hash and incomplete-coverage indicators. `show`
+refuses changed source bytes. `append-row` makes one validated atomic local table
+edit under the existing writable binding; capture records it like any other note
+edit. Native file search/read/edit remain valid without these commands.
 
 An event contains format, project ID, kind, self-asserted author labels, per-path
 parent heads/base text, changes, evidence and an optional rename descriptor. Supported
@@ -72,6 +80,11 @@ recover a never-captured version from nothing; retain provider history/backups a
 capture before reconnect where practical. Provider conflict-copy detection is a
 filename heuristic, not proof every copy is found or uploaded. The runtime does not
 provision a provider, bridge clouds, watch forever, or prove independent receipt.
+
+Normal sync may reuse a validated private canonical event when a provider event has
+the same content-addressed filename and byte size; it reports how many provider
+duplicates were not reread. This accelerates local convergence but does not verify
+those provider bytes. Full `folder-status` still rereads them for an explicit audit.
 
 ## Migration and acceptance
 

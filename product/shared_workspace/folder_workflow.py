@@ -10,7 +10,8 @@ import time
 from .errors import ProductError
 from . import workflow
 
-COMMANDS = ('sync', 'folder-status', 'history', 'resolve', 'delete', 'rename', 'migrate-folder', 'watch')
+COMMANDS = ('sync', 'folder-status', 'history', 'resolve', 'delete', 'rename', 'migrate-folder', 'watch',
+            'recall', 'show', 'append-row')
 FOLDER_PROVIDERS = ('local', 'google-drive', 'icloud', 'onedrive', 'nextcloud', 'self-hosted')
 
 
@@ -103,11 +104,35 @@ def add_commands(commands):
             'rename': 'Record an explicit recoverable rename',
             'migrate-folder': 'Plan or apply a backed-up migration from historical coordinator mode',
             'watch': 'Optional local history capture loop; no background AI or approval service',
+            'recall': 'Search current Markdown with private indexing and bounded source-linked results',
+            'show': 'Expand exact lines only when the source hash still matches',
+            'append-row': 'Atomically append one row to an existing Markdown table',
         }[name])
         command.add_argument('project', nargs='?', default='.', help='Selected folder; defaults to current directory')
-        if name != 'migrate-folder':
+        if name not in {'migrate-folder', 'recall', 'show', 'append-row'}:
             command.add_argument('--brief', action='store_true', help='Bounded summary without full per-note heads or excluded paths')
         command.add_argument('--state-dir', help='Existing private per-device state; otherwise discovered locally')
+        if name in {'recall', 'show', 'append-row'}:
+            command.add_argument('--text', action='store_true', help='Concise plain-text output instead of versioned JSON')
+        if name == 'recall':
+            command.add_argument('query', help='Search words; quote phrases with spaces')
+            command.add_argument('--include-raw', action='store_true')
+            command.add_argument('--include-output', action='store_true')
+            command.add_argument('--max-hits', type=int, default=5)
+            command.add_argument('--max-bytes', type=int, default=2048)
+            command.add_argument('--refresh', action='store_true', help='Recheck changed Markdown before searching; may wait up to five seconds')
+        if name == 'show':
+            command.add_argument('--path', required=True)
+            command.add_argument('--sha256', required=True)
+            command.add_argument('--start', type=int, required=True)
+            command.add_argument('--end', type=int, required=True)
+            command.add_argument('--max-bytes', type=int, default=8192)
+        if name == 'append-row':
+            command.add_argument('--path', required=True)
+            command.add_argument('--heading', required=True)
+            row = command.add_mutually_exclusive_group(required=True)
+            row.add_argument('--row', help='Single Markdown table row')
+            row.add_argument('--row-file', help='Existing UTF-8 file containing one reviewed table row')
         if name in {'history', 'resolve', 'delete'}:
             command.add_argument('--path', required=name != 'history')
         if name == 'resolve':
@@ -238,8 +263,38 @@ def setup(args):
 
 def dispatch(bundle, args):
     from .folder import Folder
+    if args.command in {'recall', 'show'}:
+        from . import recall as retrieval
+        def selected_read():
+            # Bound even selected-root path checks, which may call a cloud
+            # provider before the note read begins.
+            selected = workflow.selected_root(args.project)
+            if args.command == 'recall':
+                private_state = state_path(args, selected)
+                return retrieval.recall(selected, private_state, args.query,
+                                        raw=args.include_raw, output=args.include_output,
+                                        max_hits=args.max_hits, max_bytes=args.max_bytes,
+                                        refresh=args.refresh)
+            return retrieval.show(selected, args.path, args.sha256, args.start,
+                                  args.end, max_bytes=args.max_bytes)
+        return retrieval.bounded_cli(selected_read, command=args.command,
+                                     raw=getattr(args, 'include_raw', False),
+                                     output=getattr(args, 'include_output', False),
+                                     max_bytes=args.max_bytes)
     root = workflow.selected_root(args.project)
     state = state_path(args, root)
+    if args.command == 'append-row':
+        from . import recall as retrieval
+        folder = Folder(root, state)
+        folder._writable()
+        if args.row_file:
+            row_path = workflow.private_path(args.row_file, root)
+            if not row_path.is_file() or row_path.stat().st_size > 16384:
+                raise ProductError(3, 'recall_row', 'Choose an existing bounded private row file.')
+            row = row_path.read_text(encoding='utf-8').rstrip('\r\n')
+        else:
+            row = args.row
+        return retrieval.append_row(root, args.path, args.heading, row)
     if args.command == 'migrate-folder':
         from .folder_migration import migrate
         return migrate(root, state, args.backup_dir, apply=args.apply, replan=args.replan)
@@ -296,6 +351,14 @@ def brief(data):
         result['details'] = 'Run the same command without --brief for complete details.'
     if 'last' in data:
         result.update(cycles=data['cycles'], last=brief(data['last']))
+    if data.get('provider_duplicate_bytes_unverified'):
+        result['provider_duplicate_bytes_unverified'] = data['provider_duplicate_bytes_unverified']
+    if data.get('scan_timeout_count'):
+        result['scan_timeout_count'] = data['scan_timeout_count']
+    if isinstance(data.get('scan_coverage'), dict):
+        result['scan_coverage'] = {key: data['scan_coverage'][key] for key in (
+            'eligible', 'covered', 'deferred', 'read_this_run', 'read_limit',
+            'audit', 'full_audit_at', 'index_rebuilt') if key in data['scan_coverage']}
     if 'events' in data:
         result['event_count'] = len(data['events'])
         result['details'] = 'Run history without --brief to read event contents.'

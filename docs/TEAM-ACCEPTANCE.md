@@ -1,4 +1,4 @@
-# Shared Memory acceptance scenarios
+# Isolinear Memory acceptance scenarios
 
 ## Direct-folder workflow, 0.3.0
 
@@ -35,7 +35,7 @@ Its integration owner and approval flow are not requirements for direct-folder u
 Its dated results and unrun gates remain historical rather than being silently
 converted into folder-mode evidence.
 
-# Shared Memory real-device acceptance runbook
+# Isolinear Memory real-device acceptance runbook
 
 Prepared 2026-09-08. **The full three-participant/provider procedure has not been
 executed.** Partial real Mac/Linux trials and automated cross-OS checks are recorded
@@ -52,7 +52,7 @@ content. Do not use a production vault or backup drives as test fixtures.
 Name an integration owner and three actual participants on Windows, macOS and
 Linux. Record OS/Python/agent versions, distinct actor IDs, the exact reviewed
 runtime SHA-256 and bundle ID, and different selected local paths. The latest
-reviewed package/evidence is identified by the [release page](https://github.com/Kian-hdr/shared-memory/releases)
+reviewed package/evidence is identified by the [release page](https://github.com/Kian-hdr/isolinear-memory/releases)
 and [validation record](../VALIDATION.md). Verify its external
 checksum before executing it. Keep private state outside all synchronized folders.
 
