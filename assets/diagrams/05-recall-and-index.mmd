@@ -1,0 +1,25 @@
+flowchart TB
+  accTitle: Bounded recall verifies current Markdown before returning evidence
+  accDescr: Recall searches the selected project's Wiki and root routing files by default. Path matches, private FTS5 chunks and bounded direct scanning provide candidates. Every returned hit is checked against current Markdown. Show expands lines only when the source hash still matches; incomplete coverage is reported.
+  Q["Agent asks for a fact"] --> R["recall query<br/>selected project only"]
+  R --> S["Default scope<br/>AGENTS + INDEX + Wiki<br/>Raw / Output only on request"]
+  S --> C{"Find candidate passages"}
+  C --> P["Path and title matches"]
+  C --> I["Private rebuildable FTS5<br/>stores passage chunks"]
+  C --> D["Bounded direct scan<br/>when index unavailable"]
+  P --> V["Re-read current Markdown<br/>verify source + excerpt"]
+  I --> V
+  D --> V
+  V --> O["At most 5 ranked hits<br/>2 KiB default packet<br/>path + heading + lines + SHA<br/>unsearched / unavailable flags"]
+  O --> H["show with path + SHA + lines"]
+  H --> G{"Current hash matches?"}
+  G -->|"yes"| E["Return exact bounded lines"]
+  G -->|"no"| X["Refuse stale evidence<br/>recall again"]
+  classDef route fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e;
+  classDef private fill:#f1f5f9,stroke:#64748b,color:#334155;
+  classDef valid fill:#ecfdf5,stroke:#059669,color:#064e3b;
+  classDef stale fill:#fff7ed,stroke:#c2410c,color:#7c2d12;
+  class Q,R,S,C,P,D,V,O,H,G route;
+  class I private;
+  class E valid;
+  class X stale;
