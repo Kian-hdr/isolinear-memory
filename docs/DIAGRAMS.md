@@ -1,46 +1,43 @@
-# Isolinear Memory diagrams
+# Isolinear Memory system diagrams
 
-These figures explain the developing **0.3.0 folder workflow**, not the older
-format-1/2 coordinator. They are design and operating illustrations, not evidence
-of provider delivery, independent-device acceptance or a published release. Read
-the [operating guide](PRODUCT-V1.md) and [provider guidance](PROVIDERS.md) for current
-commands and limits.
+These diagrams describe the released **0.5.0 format-3 folder workflow**. They
+separate note storage, private indexing, local history capture, provider
+transport and recipient verification. The older format-1/2 coordinator has a
+[separate operating guide](COORDINATOR-WORKFLOW.md).
 
-The `.mmd` files are the editable source of truth. The Mermaid blocks below and
-SVG fallbacks are generated from those same files. GitHub and Mermaid-enabled
-Obsidian views can render the fenced blocks directly; other readers can use the
-SVGs. Edit the `.mmd` source and regenerate, rather than editing a generated block.
-The README also uses generated Mermaid blocks, with fixed color classes omitted
-so GitHub can choose light or dark presentation. The checker verifies both the
-README and this guide against the same `.mmd` sources. SVGs remain optional image
-fallbacks; do not maintain independent copies of the diagrams.
+The editable `.mmd` files under `assets/diagrams/` are the source of truth.
+Each diagram below is generated from one of those files, as are the matching
+SVG fallbacks. The [README](../README.md) uses the same sources with native
+GitHub colors. Change a source file, regenerate both Markdown documents and
+SVGs, then inspect the rendered figures. The product runtime does not depend
+on Mermaid, Node or Chrome.
 
-## 1. Separate local copies, one selected project
+## 1. Portable project and private device state
 
 <!-- BEGIN GENERATED MERMAID: 01-shared-folder.mmd -->
 ```mermaid
-flowchart LR
-  accTitle: One shared project, separate local copies
-  accDescr: People and agents edit selected project copies. A chosen provider exchanges only the project files. Private parent notes, settings and local baselines are not shared.
-  subgraph A["COMPUTER A"]
-    direction TB
-    AE["Person + agent"] -->|"read / edit / save"| AF["Selected project copy<br/>Optional vault subfolder<br/>Markdown + shared history"]
-    AF ~~~ AP
-    AP["Private parent notes / settings<br/>Private baseline outside sync"]
+flowchart TB
+  accTitle: One selected project, separate private device state
+  accDescr: Each device holds a selected Markdown project and a private baseline, recovery state and FTS5 index. Isolinear Memory reads and records only the selected project. Provider sync scope is configured separately; the private state is outside the project route.
+  subgraph A["DEVICE A"]
+    direction LR
+    AE["Person or agent<br/>native Markdown editor"] --> AF["Selected project folder<br/>AGENTS + INDEX + Raw / Wiki / Output<br/>format-3 manifest + portable events"]
+    AM["Isolinear Memory<br/>recall + sync + history"] <-->|"read and capture"| AF
+    AM <-->|"local only"| AS["Private device state<br/>baseline + recovery + FTS5 index"]
   end
-  A <-->|"selected project files only"| P["ONE chosen provider<br/>Account-backed delivery unverified"]
-  subgraph B["COMPUTER B"]
-    direction TB
-    BE["Person + agent"] -->|"read / edit / save"| BF["Selected project copy<br/>Optional vault subfolder<br/>Markdown + shared history"]
-    BF ~~~ BP
-    BP["Private parent notes / settings<br/>Private baseline outside sync"]
+  AF <-->|"project files<br/>if configured"| P["One chosen folder provider"]
+  P <-->|"project files<br/>if delivered"| BF
+  subgraph B["DEVICE B"]
+    direction LR
+    BE["Person or agent<br/>native Markdown editor"] --> BF["Authorized project copy<br/>Markdown + portable events"]
+    BM["Isolinear Memory<br/>recall + sync + history"] <-->|"read and capture"| BF
+    BM <-->|"local only"| BS["Separate private state<br/>baseline + recovery + FTS5 index"]
   end
-  P <-->|"selected project files only"| B
-  classDef private fill:#f1f5f9,stroke:#94a3b8,color:#475569;
-  classDef shared fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e;
+  classDef project fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e;
+  classDef private fill:#f1f5f9,stroke:#64748b,color:#334155;
   classDef route fill:#ecfdf5,stroke:#059669,color:#064e3b;
-  class AP,BP private;
-  class AF,BF shared;
+  class AF,BF project;
+  class AS,BS private;
   class P route;
 ```
 <!-- END GENERATED MERMAID: 01-shared-folder.mmd -->
@@ -48,181 +45,249 @@ flowchart LR
 <details>
 <summary>SVG fallback</summary>
 
-![People and agents edit selected project copies, with private parent content outside the exchange.](../assets/diagrams/01-shared-folder.svg)
+![Two devices hold copies of one selected Markdown project, but each keeps its baseline, recovery and FTS5 index private.](../assets/diagrams/01-shared-folder.svg)
 
 </details>
 
-[Editable Mermaid](../assets/diagrams/01-shared-folder.mmd)
+[Editable Mermaid source](../assets/diagrams/01-shared-folder.mmd)
 
-Each computer has its own selected project copy and private baseline. An optional
-private Obsidian vault can surround that folder. Arrows through the provider carry
-only selected project files and portable history; disconnected private boxes have
-no delivery arrow. Provider permissions still determine access. Folder selection
-does not create sharing permissions or prove that arbitrary note content is safe
-to share. No database, login credential or agent transcript belongs in the exchange.
+The selected folder contains canonical Markdown, the format-3 manifest and
+portable immutable events. Isolinear Memory reads and records that folder;
+the provider's own sync scope and access permissions are configured separately.
+Each device's private baseline, recovery material
+and FTS5 database remain outside the shared folder. The private index contains
+rebuildable passage text for faster retrieval; it never decides which note is
+authoritative. A parent Obsidian vault and nested projects stay outside the
+selected project's boundary.
 
-## 2. Direct editing and history exchange
+## 2. Bounded recall and hash-checked expansion
+
+<!-- BEGIN GENERATED MERMAID: 05-recall-and-index.mmd -->
+```mermaid
+flowchart TB
+  accTitle: Bounded recall verifies current Markdown before returning evidence
+  accDescr: Recall searches the selected project's Wiki and root routing files by default. Path matches, private FTS5 chunks and bounded direct scanning provide candidates. Every returned hit is checked against current Markdown. Show expands lines only when the source hash still matches; incomplete coverage is reported.
+  Q["Agent asks for a fact"] --> R["recall query<br/>selected project only"]
+  R --> S["Default scope<br/>AGENTS + INDEX + Wiki<br/>Raw / Output only on request"]
+  S --> C{"Find candidate passages"}
+  C --> P["Path and title matches"]
+  C --> I["Private rebuildable FTS5<br/>stores passage chunks"]
+  C --> D["Bounded direct scan<br/>when index unavailable"]
+  P --> V["Re-read current Markdown<br/>verify source + excerpt"]
+  I --> V
+  D --> V
+  V --> O["At most 5 ranked hits<br/>2 KiB default packet<br/>path + heading + lines + SHA<br/>unsearched / unavailable flags"]
+  O --> H["show with path + SHA + lines"]
+  H --> G{"Current hash matches?"}
+  G -->|"yes"| E["Return exact bounded lines"]
+  G -->|"no"| X["Refuse stale evidence<br/>recall again"]
+  classDef route fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e;
+  classDef private fill:#f1f5f9,stroke:#64748b,color:#334155;
+  classDef valid fill:#ecfdf5,stroke:#059669,color:#064e3b;
+  classDef stale fill:#fff7ed,stroke:#c2410c,color:#7c2d12;
+  class Q,R,S,C,P,D,V,O,H,G route;
+  class I private;
+  class E valid;
+  class X stale;
+```
+<!-- END GENERATED MERMAID: 05-recall-and-index.mmd -->
+
+<details>
+<summary>SVG fallback</summary>
+
+![Recall uses path matches, a private FTS5 index or bounded direct scanning, verifies current Markdown, then returns small cited hits for hash-checked expansion.](../assets/diagrams/05-recall-and-index.svg)
+
+</details>
+
+[Editable Mermaid source](../assets/diagrams/05-recall-and-index.mmd)
+
+`recall` searches root `AGENTS.md` and `INDEX.md` plus `Wiki/` by default.
+`Raw/` and `Output/` require explicit inclusion. Path and title matches,
+private FTS5 chunks and bounded direct scans supply candidate passages.
+The runtime rechecks current Markdown before returning at most five hits
+inside a 2 KiB default packet. Each hit carries a source path, heading, line
+span, exact excerpt and source hash. The packet reports unavailable,
+truncated and unsearched material. A warm cached hit may not discover a new
+nonmatching file until refresh; use `--refresh` or native targeted search
+when the coverage flag matters. `show` expands up to 80 lines only if the
+current source hash still matches. A changed file produces a stale-evidence
+refusal instead of an old quote.
+
+## 3. Save, capture, transport and verify
 
 <!-- BEGIN GENERATED MERMAID: 02-edit-and-deliver.mmd -->
 ```mermaid
 flowchart TB
-  accTitle: Save locally, capture history, reconcile arrivals
-  accDescr: Direct editing requires no approval queue. Saving is local. Sync records history; the separately configured provider delivers files. Received history is reconciled only when parents are present, with conflicts retained.
-  E["Read → edit → save<br/>Person or agent · offline is allowed"] -->|"local bytes saved"| S["Run sync<br/>Capture changes + reconcile visible history"]
-  S -->|"immutable JSON events"| H["Portable project history<br/>.shared-memory/events/"]
-  H -->|"configured provider delivers"| R["Other copy: run sync after arrival"]
-  R -->|"parents available"| C["Compatible changes merge<br/>Competing versions remain for resolution"]
-  R -->|"parent events missing"| W["Defer reconciliation<br/>Keep history; wait for missing parents"]
+  accTitle: Local save, history capture, provider delivery and recipient receipt
+  accDescr: A Markdown save is local. Manual sync or an optional macOS capture job records history and private baseline state. A separately configured provider may deliver project files. A recipient must observe and sync them; missing sources or parents remain partial.
+  E["Person or agent edits Markdown"] -->|"1. save local bytes"| S["Selected project file"]
+  S --> T{"Capture trigger"}
+  T -->|"manual on any supported OS"| M["Run Isolinear sync"]
+  T -->|"optional macOS job"| A["Scheduled local capture"]
+  A --> X["Compare with private baseline<br/>capture edits + reconcile visible arrivals"]
+  M --> X
+  X -->|"2. local history"| H["Portable immutable events<br/>in selected project folder"]
+  X --> B["Private baseline + recovery<br/>outside synced folder"]
+  X -->|"unavailable or incomplete"| Q["Partial result<br/>saved Markdown remains"]
+  H -->|"3. configured transport"| P["Chosen provider<br/>delivery checked separately"]
+  P --> R["Authorized other copy<br/>observe arriving files"]
+  R --> Y["Recipient runs sync<br/>check event parents"]
+  Y -->|"4. independent readback"| V["Recipient receipt verified"]
+  Y -->|"parents missing"| D["Defer reconciliation<br/>keep received history"]
   classDef local fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e;
+  classDef private fill:#f1f5f9,stroke:#64748b,color:#334155;
+  classDef route fill:#ecfdf5,stroke:#059669,color:#064e3b;
   classDef caution fill:#fff7ed,stroke:#c2410c,color:#7c2d12;
-  class E,S,H,R local;
-  class W,C caution;
+  class E,S,M,A,X,H,R,Y local;
+  class B private;
+  class P,V route;
+  class Q,D caution;
 ```
 <!-- END GENERATED MERMAID: 02-edit-and-deliver.mmd -->
 
 <details>
 <summary>SVG fallback</summary>
 
-![Saving is local; sync captures history and reconciles provider arrivals, deferring incomplete history.](../assets/diagrams/02-edit-and-deliver.svg)
+![A local Markdown save, history capture, provider transport and independent recipient readback are four separate events.](../assets/diagrams/02-edit-and-deliver.svg)
 
 </details>
 
-[Editable Mermaid](../assets/diagrams/02-edit-and-deliver.mmd)
+[Editable Mermaid source](../assets/diagrams/02-edit-and-deliver.mmd)
 
-People and agents save directly without an approval queue or designated integrator.
-Saving persists local bytes; history capture happens when `sync` runs. Local edits
-are captured against the private baseline before incoming history is reconciled. The chosen
-provider delivers files separately. Run `sync` again after arrivals. An inactive
-agent does not automatically wake, renew ownership or notice changes. Missing
-parent events defer the whole affected event, including multi-path changes; absence
-alone is not an intentional deletion.
-Use the explicit deletion and rename operations to record those intentions.
+An editor or agent saves Markdown directly. Manual `sync` on any supported OS,
+or an optional macOS capture job, compares observed bytes with the private
+causal baseline. It records local events before reconciling history already
+visible from the provider. Event files are portable; the baseline is not.
+The provider transports selected project files separately. A recipient
+must actually observe the intended files and run `sync` before independent
+receipt can be asserted. Missing source bytes, invalid events or missing
+parents remain explicit partial/deferred states. A partial capture preserves
+the saved note and its private recovery state.
 
-## 3. Offline work and conflicts
+| State | Evidence needed |
+| --- | --- |
+| Local save | Read back the file on this device. |
+| Local capture | Verify the new history event and private baseline. |
+| Provider delivery | Inspect the provider's actual transfer state. |
+| Recipient receipt | Read the intended content and history on the other device. |
+
+## 4. Offline ancestry and conflicts
 
 <!-- BEGIN GENERATED MERMAID: 03-offline-and-conflicts.mmd -->
 ```mermaid
 flowchart TB
-  accTitle: Offline branches retain their causal history
-  accDescr: Two edits descend from a common version. On reconnect, complete history supports a compatible merge or a retained conflict. Any authorized editor can resolve with evidence. A clean text merge does not establish factual truth.
-  B["Shared earlier version"] --> A["Copy A: edit offline<br/>Save; sync records parent + change"]
-  B --> C["Copy B: edit independently<br/>Save; sync records parent + change"]
-  A --> J["Reconnect · provider delivers<br/>Sync checks complete parent history"]
-  C --> J
-  J -->|"compatible text"| M["Merge + record history<br/>Keep ancestry; review factual meaning"]
-  J -->|"conflicting edits"| K["Retain competing versions<br/>Do not silently choose a winner"]
-  K --> R["Any authorized editor resolves<br/>Record chosen result + source evidence"]
+  accTitle: Offline edits keep ancestry and visible conflicts
+  accDescr: Two offline copies can edit from the same base. Complete parent events permit compatible text to merge. Missing parents defer reconciliation, while overlapping edits keep both versions for evidence-backed resolution. No timestamp selects a winner.
+  B["Known common version"] --> A["Copy A edits offline<br/>capture event with parent"]
+  B --> C["Copy B edits offline<br/>capture event with parent"]
+  A --> P["Provider exchanges project files<br/>when connected"]
+  C --> P
+  P --> H{"Are required parent<br/>events available?"}
+  H -->|"no"| D["Defer affected event<br/>preserve incoming history"]
+  H -->|"yes"| T{"Are text changes<br/>compatible?"}
+  T -->|"yes"| M["Merge text + record ancestry<br/>review factual meaning"]
+  T -->|"no"| K["Keep both versions<br/>write readable conflict report"]
+  K --> R["Authorized editor resolves<br/>with chosen text + evidence"]
   classDef state fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e;
   classDef merge fill:#ecfdf5,stroke:#059669,color:#064e3b;
-  classDef conflict fill:#fff7ed,stroke:#c2410c,color:#7c2d12;
-  class B,A,C,J state;
-  class M merge;
-  class K,R conflict;
+  classDef caution fill:#fff7ed,stroke:#c2410c,color:#7c2d12;
+  class B,A,C,P,H,T state;
+  class M,R merge;
+  class D,K caution;
 ```
 <!-- END GENERATED MERMAID: 03-offline-and-conflicts.mmd -->
 
 <details>
 <summary>SVG fallback</summary>
 
-![Offline changes keep their causal parents, merge when compatible, and retain conflicting versions for explicit resolution.](../assets/diagrams/03-offline-and-conflicts.svg)
+![Independent offline edits retain causal parents; complete history can merge compatible text or retain competing versions for explicit resolution.](../assets/diagrams/03-offline-and-conflicts.svg)
 
 </details>
 
-[Editable Mermaid](../assets/diagrams/03-offline-and-conflicts.mmd)
+[Editable Mermaid source](../assets/diagrams/03-offline-and-conflicts.mmd)
 
-The two branches share a known parent, not a clock-based winner. After complete
-history arrives, compatible text can merge. Competing versions remain recoverable
-in immutable history, with readable `.shared-memory/conflicts/` reports, until an
-authorized editor records an explicit resolution and its evidence.
-No special integrator role is required in normal folder mode. Read-only settings
-and provider access restrictions still apply. A clean text merge does not prove
-factual agreement; people and agents must check consequential claims against sources.
-History hashes establish content integrity, not independently authenticated human
-identity. Preserve provider conflict copies and unrelated edits.
+Both copies can descend from one known version. Capture records each change
+with its parent rather than selecting a winner by wall-clock time. If a parent
+event has not arrived, reconciliation of the affected event waits. With
+complete ancestry, compatible text can merge; overlapping or ambiguous
+changes retain both versions and a readable conflict report. An authorized
+editor supplies chosen text and evidence to resolve a conflict. A clean text
+merge is still only text convergence, not factual agreement.
 
-## 4. Provider alternatives
+Missing files alone never mean intentional deletion. `delete` and `rename`
+record explicit intent; rename does not automatically repair Markdown or
+Obsidian backlinks. Read-only bindings and provider permissions remain in
+force.
+
+## 5. Local-only use and provider choice
 
 <!-- BEGIN GENERATED MERMAID: 04-provider-options.mmd -->
 ```mermaid
-flowchart LR
-  accTitle: Choose one provider route for each physical project
-  accDescr: Google Drive, iCloud Drive, OneDrive and operator-managed Nextcloud are alternative routes, not interconnected bridges. Nextcloud is the recommended first self-hosted option, not provisioned. Account-backed Shared Memory delivery is unverified for these routes.
-  P["Selected physical project<br/>Choose ONE route"] --> G["Google Drive<br/>Account / OS route must be verified"]
-  P --> I["iCloud Drive<br/>Account / OS route must be verified"]
-  P --> O["OneDrive<br/>Account / OS route must be verified"]
-  P --> N["Nextcloud · operator managed<br/>Recommended first self-hosted option<br/>Not provisioned"]
-  G --> D["Other authorized local copies<br/>Verify delivered history + content<br/>Account-backed delivery unverified"]
-  I --> D
-  O --> D
-  N --> D
+flowchart TB
+  accTitle: Local-only use or one provider per physical project
+  accDescr: Isolinear Memory works in a local Markdown folder. To share a project, choose one configured provider for that physical folder. Google Drive, iCloud Drive, OneDrive and operator-managed Nextcloud are alternatives, not bridges. Verify files and history on each recipient device.
+  P["Selected physical project"] --> C{"Share this project?"}
+  C -->|"yes"| S["Choose one folder provider<br/>Google Drive / iCloud Drive<br/>OneDrive / operator-managed Nextcloud"]
+  C -->|"no"| L["Local only<br/>no provider required"]
+  S --> D["Authorized other copy<br/>if files arrive"]
+  D --> V["Recipient reads content<br/>and runs sync"]
   classDef state fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e;
-  classDef route fill:#f8fafc,stroke:#64748b,color:#0f172a;
-  classDef selfhost fill:#ecfdf5,stroke:#059669,color:#064e3b;
-  class P,D state;
-  class G,I,O route;
-  class N selfhost;
+  classDef provider fill:#f8fafc,stroke:#64748b,color:#0f172a;
+  classDef verified fill:#ecfdf5,stroke:#059669,color:#064e3b;
+  class P,C,D state;
+  class S provider;
+  class L,V verified;
 ```
 <!-- END GENERATED MERMAID: 04-provider-options.mmd -->
 
 <details>
 <summary>SVG fallback</summary>
 
-![Google Drive, iCloud Drive, OneDrive and operator-managed Nextcloud are alternative routes for a selected project.](../assets/diagrams/04-provider-options.svg)
+![One project may stay local or use exactly one configured provider; another copy verifies files after arrival.](../assets/diagrams/04-provider-options.svg)
 
 </details>
 
-[Editable Mermaid](../assets/diagrams/04-provider-options.mmd)
+[Editable Mermaid source](../assets/diagrams/04-provider-options.mmd)
 
-The four branches are alternatives: choose **one provider for each physical project
-folder**. They are not bridges between providers. Nextcloud is the recommended first
-self-hosted option in this design; no service is provisioned by this diagram or by
-ordinary local setup. Account type, client, OS, offline availability and provider
-conflict behavior need their own validation. Account-backed delivery tests for this
-folder workflow are not yet available. No identical provider/OS support is claimed.
-Local-only use remains possible without any provider or server.
+A project needs no provider for local-only use. For sharing, choose one
+provider for each physical folder: Google Drive, iCloud Drive, OneDrive or an
+operator-managed Nextcloud service. These are alternatives, not bridges.
+Account permissions, desktop-client behavior, offline availability and
+conflict copies vary by setup. The provider must be configured separately;
+Isolinear Memory does not provision it or grant another person access.
+See [provider guidance](PROVIDERS.md). Recipient readback is the final
+acceptance check for delivery.
 
-## Regenerate and review
+## Regenerate and inspect
 
-Check or regenerate the fenced Markdown blocks with standard-library Python only:
+The standard-library checker compares all generated Mermaid blocks in both
+the README and this guide against the `.mmd` sources:
 
-```sh
+```bash
 python3 scripts/render_diagrams.py --check-markdown
 python3 scripts/render_diagrams.py --update-markdown
 ```
 
-The check exits nonzero if any generated block differs from its source or its
-markers are missing/duplicated. It does not run Node, launch a browser or write files.
-The update changes only the marked regions, preserving captions and SVG fallbacks.
+The checker does not validate SVG freshness. To render SVGs and optional PNG
+previews, use pinned Mermaid CLI **11.17.0**, Node.js and an existing
+Chrome/Chromium executable. Install development-only tooling outside the
+repository:
 
-Rendering is a documentation-development step, not a runtime dependency. Use
-Mermaid CLI **11.17.0**, Node.js and an existing compatible Chrome/Chromium:
+```bash
+PUPPETEER_SKIP_DOWNLOAD=true npm install \
+  --prefix /tmp/isolinear-memory-diagram-tools \
+  --no-save --ignore-scripts --no-audit --no-fund \
+  @mermaid-js/mermaid-cli@11.17.0
 
-```sh
-# Install development-only tooling in a private temporary directory.
-PUPPETEER_SKIP_DOWNLOAD=true npm install --prefix /tmp/shared-memory-diagram-tools --no-audit --no-fund @mermaid-js/mermaid-cli@11.17.0
-
-# Run from this repository. Replace the browser path for the actual computer.
 python3 scripts/render_diagrams.py \
-  --mmdc /tmp/shared-memory-diagram-tools/node_modules/.bin/mmdc \
+  --mmdc /tmp/isolinear-memory-diagram-tools/node_modules/.bin/mmdc \
   --chrome "/path/to/Chrome-or-Chromium" \
-  --png-dir /tmp/shared-memory-diagram-previews
+  --png-dir /tmp/isolinear-memory-diagram-previews
 ```
 
-The renderer processes each `.mmd` with Mermaid, rejecting syntax/render failures,
-and writes the matching SVG. After successful rendering it also updates the generated
-Markdown blocks. `--output-dir` can target a fresh SVG comparison directory.
-PNG previews are optional and stay outside the repository. Inspect all figures for
-readable text, clipping, arrow direction and faithful boundaries after changing a
-source. Font/browser differences can affect layout; generated output is reviewed
-artwork, not a promise of identical bytes on every renderer host.
-
-For a surface that needs an image fallback, use the existing export:
-
-```markdown
-![Shared project copies for people and agents](assets/diagrams/01-shared-folder.svg)
-
-[Workflow, offline conflicts and provider diagrams](docs/DIAGRAMS.md)
-```
-
-Each SVG includes a title and description from Mermaid's accessibility fields. The
-captions above supply the meaning and limitations without relying on color alone.
+The renderer processes every `.mmd` source, writes corresponding SVGs,
+optionally creates PNG previews outside the repository and updates both
+Markdown documents. Inspect every figure for readable labels, clipping,
+arrow direction, contrast and accurate privacy boundaries. The SVGs carry
+Mermaid accessibility titles and descriptions; surrounding prose explains
+the same relationships without relying on color.

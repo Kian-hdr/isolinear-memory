@@ -1,12 +1,25 @@
 flowchart TB
-  accTitle: Save locally, capture history, reconcile arrivals
-  accDescr: Direct editing requires no approval queue. Saving is local. Sync records history; the separately configured provider delivers files. Received history is reconciled only when parents are present, with conflicts retained.
-  E["Read → edit → save<br/>Person or agent · offline is allowed"] -->|"local bytes saved"| S["Run sync<br/>Capture changes + reconcile visible history"]
-  S -->|"immutable JSON events"| H["Portable project history<br/>.shared-memory/events/"]
-  H -->|"configured provider delivers"| R["Other copy: run sync after arrival"]
-  R -->|"parents available"| C["Compatible changes merge<br/>Competing versions remain for resolution"]
-  R -->|"parent events missing"| W["Defer reconciliation<br/>Keep history; wait for missing parents"]
+  accTitle: Local save, history capture, provider delivery and recipient receipt
+  accDescr: A Markdown save is local. Manual sync or an optional macOS capture job records history and private baseline state. A separately configured provider may deliver project files. A recipient must observe and sync them; missing sources or parents remain partial.
+  E["Person or agent edits Markdown"] -->|"1. save local bytes"| S["Selected project file"]
+  S --> T{"Capture trigger"}
+  T -->|"manual on any supported OS"| M["Run Isolinear sync"]
+  T -->|"optional macOS job"| A["Scheduled local capture"]
+  A --> X["Compare with private baseline<br/>capture edits + reconcile visible arrivals"]
+  M --> X
+  X -->|"2. local history"| H["Portable immutable events<br/>in selected project folder"]
+  X --> B["Private baseline + recovery<br/>outside synced folder"]
+  X -->|"unavailable or incomplete"| Q["Partial result<br/>saved Markdown remains"]
+  H -->|"3. configured transport"| P["Chosen provider<br/>delivery checked separately"]
+  P --> R["Authorized other copy<br/>observe arriving files"]
+  R --> Y["Recipient runs sync<br/>check event parents"]
+  Y -->|"4. independent readback"| V["Recipient receipt verified"]
+  Y -->|"parents missing"| D["Defer reconciliation<br/>keep received history"]
   classDef local fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e;
+  classDef private fill:#f1f5f9,stroke:#64748b,color:#334155;
+  classDef route fill:#ecfdf5,stroke:#059669,color:#064e3b;
   classDef caution fill:#fff7ed,stroke:#c2410c,color:#7c2d12;
-  class E,S,H,R local;
-  class W,C caution;
+  class E,S,M,A,X,H,R,Y local;
+  class B private;
+  class P,V route;
+  class Q,D caution;
