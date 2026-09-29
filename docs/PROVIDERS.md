@@ -1,10 +1,10 @@
 # One provider for one shared folder
 
-Use the provider already chosen for the project. Shared Memory records and reconciles
+Use the provider already chosen for the project. Isolinear Memory records and reconciles
 local Markdown history; the provider moves files between authorized computers.
 It does not translate accounts, bridge clouds, replace provider permissions or
 provision a service automatically. The checks below were researched on 2026-09-10;
-they are provider guidance, not a record of completed Shared Memory device trials.
+they are provider guidance, not a record of completed Isolinear Memory device trials.
 
 ## Supported route to evaluate
 
@@ -42,13 +42,13 @@ alternative and has no existing suitable provider.** This is a fit decision, not
 claim that it is faster, safer or already deployed. Its documented desktop clients
 cover Windows, macOS and Linux, with folder sync connections, sharing controls and
 visible connection/ignore status. An existing Nextcloud operator can expose one
-selected project share without adding a Shared Memory coordinator.
+selected project share without adding an Isolinear Memory coordinator.
 [Desktop and server requirements](https://docs.nextcloud.com/server/stable/admin_manual/installation/system_requirements.html),
 [desktop folder synchronization](https://docs.nextcloud.com/server/stable/user_manual/en/desktop/usage.html).
 
 Operating Nextcloud still requires a maintained server, appropriate database/storage,
 HTTPS, backups and updates. Those are a chosen service's operational responsibilities;
-local Shared Memory setup does not silently create them. A hosted Nextcloud provider
+local Isolinear Memory setup does not silently create them. A hosted Nextcloud provider
 is also a possible delivery choice. Exact account terms, capacity and support need
 the selected operator's current information, not an invented free hosting promise.
 

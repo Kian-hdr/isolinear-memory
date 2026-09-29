@@ -1,16 +1,19 @@
 flowchart TB
-  accTitle: Offline branches retain their causal history
-  accDescr: Two edits descend from a common version. On reconnect, complete history supports a compatible merge or a retained conflict. Any authorized editor can resolve with evidence. A clean text merge does not establish factual truth.
-  B["Shared earlier version"] --> A["Copy A: edit offline<br/>Save; sync records parent + change"]
-  B --> C["Copy B: edit independently<br/>Save; sync records parent + change"]
-  A --> J["Reconnect · provider delivers<br/>Sync checks complete parent history"]
-  C --> J
-  J -->|"compatible text"| M["Merge + record history<br/>Keep ancestry; review factual meaning"]
-  J -->|"conflicting edits"| K["Retain competing versions<br/>Do not silently choose a winner"]
-  K --> R["Any authorized editor resolves<br/>Record chosen result + source evidence"]
+  accTitle: Offline edits keep ancestry and visible conflicts
+  accDescr: Two offline copies can edit from the same base. Complete parent events permit compatible text to merge. Missing parents defer reconciliation, while overlapping edits keep both versions for evidence-backed resolution. No timestamp selects a winner.
+  B["Known common version"] --> A["Copy A edits offline<br/>capture event with parent"]
+  B --> C["Copy B edits offline<br/>capture event with parent"]
+  A --> P["Provider exchanges project files<br/>when connected"]
+  C --> P
+  P --> H{"Are required parent<br/>events available?"}
+  H -->|"no"| D["Defer affected event<br/>preserve incoming history"]
+  H -->|"yes"| T{"Are text changes<br/>compatible?"}
+  T -->|"yes"| M["Merge text + record ancestry<br/>review factual meaning"]
+  T -->|"no"| K["Keep both versions<br/>write readable conflict report"]
+  K --> R["Authorized editor resolves<br/>with chosen text + evidence"]
   classDef state fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e;
   classDef merge fill:#ecfdf5,stroke:#059669,color:#064e3b;
-  classDef conflict fill:#fff7ed,stroke:#c2410c,color:#7c2d12;
-  class B,A,C,J state;
-  class M merge;
-  class K,R conflict;
+  classDef caution fill:#fff7ed,stroke:#c2410c,color:#7c2d12;
+  class B,A,C,P,H,T state;
+  class M,R merge;
+  class D,K caution;
