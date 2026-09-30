@@ -1,15 +1,15 @@
-# Install or update Isolinear Memory 0.5.1
+# Install or update Isolinear Memory 0.5.2
 
 This is setup reference, not routine agent context. Preserve the selected workspace,
 private state and previous runtime. Python 3.11+ is required. Download the versioned
-runtime and SHA256SUMS from the [v0.5.1 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.5.1).
+runtime and SHA256SUMS from the [v0.5.2 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.5.2).
 Verify the runtime SHA-256 against its external SHA256SUMS entry before execution.
 If unavailable or mismatched, stop installation; do not substitute an unverified asset.
 
 Use the verified package's `version` and `install-package --help`, then:
 
 ```text
-python3 isolinear-memory-0.5.1.pyz install-package isolinear-memory-0.5.1.pyz --sha256 VERIFIED_SHA --tools-dir PRIVATE_TOOLS
+python3 isolinear-memory-0.5.2.pyz install-package isolinear-memory-0.5.2.pyz --sha256 VERIFIED_SHA --tools-dir PRIVATE_TOOLS
 ```
 
 Substitute actual discovered paths and checksum. Use the returned immutable package

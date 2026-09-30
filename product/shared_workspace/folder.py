@@ -606,6 +606,10 @@ class Folder:
         safe(self.root)
         for directory, dirs, names in os.walk(self.root, followlinks=False):
             safe(directory)
+            if Path(directory) != self.root and any(name.casefold() == MANIFEST for name in names):
+                excluded.append(Path(directory).relative_to(self.root).as_posix())
+                dirs.clear()
+                continue
             for name in list(dirs):
                 relative = (Path(directory) / name).relative_to(self.root).as_posix()
                 reserved = any(part.casefold() == 'coordination' or part.casefold() in PRIVATE or part.startswith('.')
@@ -643,6 +647,46 @@ class Folder:
                 candidates.append((relative, Path(directory) / name))
         return candidates, excluded, skipped, scanned
 
+    def _known_scan_candidates(self, required):
+        """Recover bounded capture from known paths when broad provider listing stalls.
+
+        This is deliberately incomplete: an unlisted new file cannot be inferred
+        absent. Check each parent for a nested project before inspecting a known
+        path, and defer that path if the provider cannot answer the check.
+        """
+        candidates, unavailable = [], []
+        parent_state = {}
+        known = sorted(set(required) | set(self._scan_index_work['entries']))
+        for relative in known:
+            path_name(relative)
+            parts = Path(relative).parts
+            blocked = False
+            for depth in range(1, len(parts)):
+                parent = self.root.joinpath(*parts[:depth])
+                if parent not in parent_state:
+                    def inspect(directory=parent):
+                        safe(directory)
+                        with os.scandir(directory) as children:
+                            return any(child.name.casefold() == MANIFEST for child in children)
+                    remaining = self._scan_deadline - time.monotonic()
+                    if remaining <= 0:
+                        parent_state[parent] = None
+                    else:
+                        try:
+                            complete, nested = bounded_read_only(
+                                inspect, min(SCAN_STAT_SECONDS, remaining), self._pending_metadata_reads)
+                            parent_state[parent] = nested if complete else None
+                        except OSError:
+                            parent_state[parent] = None
+                if parent_state[parent] is not False:
+                    blocked = True
+                    break
+            if blocked:
+                unavailable.append(relative)
+            else:
+                candidates.append((relative, self.root / relative))
+        return candidates, unavailable
+
     def _scan(self, required, *, incremental=False, baseline=None):
         self._partial = []
         files = {}
@@ -654,7 +698,13 @@ class Folder:
             completed, enumeration = bounded_read_only(
                 lambda: self._enumerate_scan(required), SCAN_METADATA_SECONDS, self._pending_metadata_reads)
             if not completed:
-                fail('scan_timeout', 'Provider metadata traversal exceeded its bound; history and scan index were not advanced.', 5)
+                self._scan_enumeration_incomplete = True
+                self._scan_timeout_count += 1
+                if self._scan_index_work['audit_started_at'] is None:
+                    self._scan_index_work['audit_started_at'] = time.time()
+                known, unavailable = self._known_scan_candidates(required)
+                enumeration = known, [], {'count': 0, 'samples': []}, len(known)
+                self._partial.extend(unavailable)
         else:
             enumeration = self._enumerate_scan(required)
         candidates, self._excluded, self._skipped_paths, scanned = enumeration
@@ -680,6 +730,9 @@ class Folder:
             ordered = []
             audit = self._scan_index_work['audit_started_at']
             for relative, _ in candidates:
+                if self._scan_enumeration_incomplete and time.monotonic() >= self._scan_deadline:
+                    self._partial.append(relative)
+                    continue
                 try:
                     def inspect(name=relative):
                         target = self._target(name)
@@ -1177,6 +1230,7 @@ class Folder:
         self._scan_timeout_count = 0
         self._scan_pass = 0
         self._scan_verified_this_cycle = set()
+        self._scan_enumeration_incomplete = False
         self._capture_deferred = set()
         if not hasattr(self, '_pending_scan_reads'):
             self._pending_scan_reads = []
@@ -1203,7 +1257,8 @@ class Folder:
             for head in value['heads']:
                 if head not in events:
                     deferred.append({'event': head, 'path': name, 'reason': 'saved-baseline-history-unavailable'})
-        if not invalid and not deferred and not (self.state / 'journal.json').exists() and not self._path_collisions(resolved):
+        if (not invalid and not deferred and not self._scan_enumeration_incomplete
+                and not (self.state / 'journal.json').exists() and not self._path_collisions(resolved)):
             self._progress('sync_materialize')
             with io_phase('sync_materialize'):
                 raced += self._materialize(baseline, current, resolved)
@@ -1224,15 +1279,16 @@ class Folder:
         expected = {name for name, item in baseline.items() if item['text'] is not None}
         expected.update(name for name, item in resolved.items() if not item['conflict'] and item['text'] is not None)
         missing_coverage = expected - self._scan_seen
-        eligible = len(self._scan_seen) + len(missing_coverage)
-        deferred_count = len(self._partial) + len(missing_coverage)
-        if (result['readiness'] == 'ready' and deferred_count == 0
+        eligible = len(self._scan_seen | expected | set(self._partial))
+        deferred_count = len(set(self._partial) | missing_coverage)
+        if (result['readiness'] == 'ready' and not self._scan_enumeration_incomplete and deferred_count == 0
                 and self._scan_index_work['audit_started_at'] is not None):
             self._scan_index_work['full_audit_at'] = time.time()
             self._scan_index_work['audit_started_at'] = None
         result['scan_coverage'] = {
             'eligible': eligible, 'covered': eligible - deferred_count,
             'deferred': deferred_count, 'read_this_run': self._scan_read_this_run,
+            'enumeration_complete': not self._scan_enumeration_incomplete,
             'read_limit': SCAN_READ_LIMIT,
             'audit': ('metadata_unavailable' if not scan_metadata_reuse_allowed() and deferred_count else
                       'in_progress' if self._scan_index_work['audit_started_at'] is not None
@@ -1242,6 +1298,8 @@ class Folder:
             'reuse_basis': ('baseline_sha256_and_device_inode_size_mtime_ctime' if scan_metadata_reuse_allowed()
                             else 'none_windows_full_byte_read_required')}
         result['scan_timeout_count'] = self._scan_timeout_count
+        if self._scan_enumeration_incomplete:
+            result['readiness'] = 'partial'
         self._save_scan_index(self._scan_index_work)
         self._progress('complete')
         return result

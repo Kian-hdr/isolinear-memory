@@ -9,7 +9,7 @@
 
 **Persistent Markdown memory for people and AI agents. Edit notes normally; retrieve only the evidence a task needs.**
 
-Isolinear Memory 0.5.1 works inside one selected folder. Markdown remains the source
+Isolinear Memory 0.5.2 works inside one selected folder. Markdown remains the source
 of truth. The runtime records recoverable change history, reconciles the project
 files visible on each device, and returns small, source-linked passages to agents.
 Obsidian is optional. No memory-extraction model, vector service, MCP server or
@@ -195,6 +195,9 @@ unavailable files, missing history or other incomplete work. A configured
 capture job does not imply a successful run; inspect its latest result. A
 provider can overwrite a version before local capture records it, so retain
 provider history or backups for uncaptured work.
+If a cloud-backed folder listing stalls, sync can still capture changed notes
+already known to its private baseline. It marks the scan incomplete and waits
+for a later complete listing to discover new paths.
 
 ## Work offline and preserve disagreements
 
@@ -255,7 +258,7 @@ and conflict handling. Check actual delivery on each recipient device. See
 
 ## Install or update
 
-1. Download the [v0.5.1 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.5.1) and verify the runtime against its external `SHA256SUMS`.
+1. Download the [v0.5.2 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.5.2) and verify the runtime against its external `SHA256SUMS`.
 2. [Give the setup prompt](SETUP-PROMPT.md) to an agent with local file access, or follow the [installation guide](docs/INSTALL.md).
 3. Select the intended folder. A wholly empty folder can receive `Raw/`, `Wiki/`, `Output/`, `AGENTS.md` and `INDEX.md`. A populated folder retains its hierarchy, instructions and attachments; add the memory rule to its existing agent instructions when appropriate.
 4. Have the agent confirm the installed version, make one small edit, and verify local history capture. For requested sharing, it checks provider and recipient delivery separately.

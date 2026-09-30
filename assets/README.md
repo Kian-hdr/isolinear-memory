@@ -1,11 +1,12 @@
 # Isolinear Memory artwork
 
-The icon is a connected memory lattice: three colored nodes meet at a central
-retrieval point inside an open orbit. It represents persistent, source-linked
-memory without using a document or folder silhouette. Teal, blue and violet
-carry the symbol; Apple's Icon Composer supplies the system light and dark
-backgrounds, rounded mask and native edge treatment. The README selects the
-PNG matching the viewer's preferred color scheme.
+The icon is a balanced memory lattice: four equally spaced nodes connect to
+a central retrieval point inside a circular orbit. Opposite nodes share a
+color, preserving the symbol's symmetry. It represents persistent,
+source-linked memory without using a document or folder silhouette. Teal
+and periwinkle carry the symbol; Apple's Icon Composer supplies the system
+light and dark backgrounds, rounded mask and native edge treatment. The
+README selects the PNG matching the viewer's preferred color scheme.
 
 | Asset | Standard / light background | Dark appearance / background |
 |---|---|---|
