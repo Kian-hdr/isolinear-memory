@@ -103,3 +103,16 @@ On Windows, `st_ctime` is creation time in the tested Python versions, so a
 cache miss or explicit refresh rereads eligible files instead of trusting an
 unchanged metadata stamp. A large vault can reach the five-second partial
 deadline; use bounded native file search when it does.
+
+## v0.5.1 automatic-documentation check, 2026-09-30
+
+Two fresh synthetic OpenCode 1.18.30 sessions using `zai-coding-plan/glm-5.3`
+received substantive generation tasks without a separate request to save memory.
+In both, the agent updated the existing Wiki handoff, read back the saved note,
+and kept capture and provider details out of its task-focused final reply. The
+second task also generated and tested a small code artifact. With a synthetic
+project instruction explicitly stating that local automatic capture was active,
+the agent made no manual sync call. Without that signal in the first task, it ran
+one unnecessary manual sync. These checks used disposable local files, not live
+provider delivery or either real Vault. They show the tested host behavior; they
+do not imply that every agent or future session will follow the same instructions.

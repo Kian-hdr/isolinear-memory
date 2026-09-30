@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.5.1
+
+- Seed new projects and update agent guidance so durable task documentation can be
+  the default: update a canonical Wiki note with sourced findings, decisions,
+  artifact links and status, then read back the edit. Existing projects retain
+  their instructions and can adopt this rule through a targeted edit. Keep
+  transient chat and duplicate progress logs out of memory.
+- Add a bounded local capture-health summary for agents. Routine capture and
+  provider diagnostics stay in the background; material save or requested-delivery
+  gaps remain explicit. The existing file and provider boundaries are unchanged.
+- Replace the connected-pages artwork with a colored memory lattice. Icon Composer
+  supplies Apple system light/dark backgrounds with separate foreground palettes;
+  public PNG, SVG, ICNS and wordmark assets use the same motif.
+
 ## 0.5.0
 
 - Adopt **Isolinear Memory** as the public source/release name. Preserve

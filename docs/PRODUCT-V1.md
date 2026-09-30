@@ -1,4 +1,4 @@
-# Isolinear Memory 0.5.0 operating guide
+# Isolinear Memory 0.5.1 operating guide
 
 Isolinear Memory defaults to **direct editing in a shared Markdown folder**.
 The previous Shared Memory name remains a command and skill compatibility alias;
@@ -49,6 +49,17 @@ one validated row without placing the whole file in model context; check the
 note's own metadata and attribution rules afterward. Automatic capture, when
 configured and healthy, records the edit independently of the model.
 
+For substantive work, agents should make the memory update part of task completion:
+save durable findings, decisions, generated-artifact links, status and next steps
+in the authorized existing Wiki note, then read back the touched files. Do this
+without waiting for an extra memory request. Keep citations and uncertainty;
+skip transient tool output and duplicate session summaries. `AGENTS.md` sets the
+project's privacy and routing rules. Isolinear captures saved files, but does not
+observe conversations or autonomously extract their contents. Routine capture
+and provider diagnostics remain internal; user-facing completion can name the
+saved note briefly. Raise an issue when the current result is at risk, requested
+delivery cannot be verified or the user must act.
+
 ## Agent-guided setup
 
 [Paste the setup prompt](../SETUP-PROMPT.md) into an agent connected to your computer,
@@ -57,9 +68,9 @@ disposable trial. Python 3.11+ and the verified package are required; the local
 folder engine uses the standard library. The optional historical coordinator's
 server dependencies are not needed for folder mode.
 
-Use the [v0.5.0 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.5.0)
+Use the [v0.5.1 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.5.1)
 only when its assets are actually present. The expected executable is
-`isolinear-memory-0.5.0.pyz`, with external `SHA256SUMS`; an explicitly supplied reviewed
+`isolinear-memory-0.5.1.pyz`, with external `SHA256SUMS`; an explicitly supplied reviewed
 candidate is also usable. Internal package hashes do not independently authenticate
 the publisher. Compare the external SHA before executing a download:
 

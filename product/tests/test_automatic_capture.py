@@ -200,6 +200,98 @@ class CaptureTests(unittest.TestCase):
             self.assertEqual(code, 2)
             self.assertFalse(report['healthy'])
 
+    def test_brief_status_is_bounded_and_preserves_failure_truth(self):
+        import contextlib
+        import io
+        import time
+        from argparse import Namespace
+        from subprocess import CompletedProcess
+        args = Namespace(project=str(self.project), state_dir=str(self.state), python=self.config['python'],
+                         runtime=str(self.runtime), interval=60, sha256=self.config['sha256'])
+        with patch.object(Path, 'home', return_value=self.base):
+            config, _, _ = capture.plan(args)
+            directory = Path(config['capture']); directory.mkdir(parents=True)
+            (directory / 'config.json').write_text(json.dumps(config))
+            result_file = directory / 'last-result.json'
+            secret = 'private note text must not appear'
+            def status(loaded=True):
+                output = io.StringIO()
+                with patch.object(sys, 'argv', [str(SCRIPT), str(self.project), '--status', '--brief']), \
+                     patch.object(sys, 'platform', 'darwin'), patch.object(capture.os, 'getuid', return_value=42, create=True), \
+                     patch.object(capture, 'launchctl', return_value=CompletedProcess([], 0 if loaded else 3)), \
+                     contextlib.redirect_stdout(output):
+                    code = capture.main()
+                self.assertNotIn(secret, output.getvalue())
+                self.assertLess(len(output.getvalue()), 160)
+                return code, json.loads(output.getvalue())
+            result_file.write_text(json.dumps({'ok': True, 'readiness': 'ready', 'checked_at': time.time(),
+                                               'capture_signature': capture.capture_signature(config),
+                                               'secret': secret}))
+            self.assertEqual(status(), (0, {'local_capture': 'ready', 'attention_required': False}))
+            self.assertEqual(status(loaded=False)[1]['local_capture'], 'unloaded')
+            result_file.write_text(json.dumps({'ok': True, 'readiness': 'partial', 'checked_at': time.time(),
+                                               'secret': secret}))
+            self.assertEqual(status()[1]['local_capture'], 'partial')
+            result_file.write_text(json.dumps({'ok': False, 'readiness': 'partial', 'checked_at': time.time(),
+                                               'error': secret}))
+            self.assertEqual(status()[1]['local_capture'], 'failed')
+            result_file.write_text(json.dumps({'ok': True, 'readiness': 'ready', 'checked_at': 'malformed',
+                                               'secret': secret}))
+            self.assertEqual(status()[1]['local_capture'], 'stale')
+            result_file.write_text('{broken json')
+            self.assertEqual(status()[1]['local_capture'], 'no_result')
+
+    def test_background_configuration_errors_do_not_enter_launchd_logs(self):
+        import contextlib
+        import io
+        secret = 'private-path-and-note-text'
+        path = self.base / secret / 'config.json'
+        output = io.StringIO()
+        with patch.object(sys, 'argv', [str(SCRIPT), '--run-config', str(path)]), \
+             contextlib.redirect_stderr(output):
+            self.assertEqual(capture.main(), 1)
+        self.assertNotIn(secret, output.getvalue())
+        self.assertEqual(json.loads(output.getvalue())['error_code'], 'os_ENOENT')
+
+    def test_brief_status_missing_or_invalid_config_is_path_free(self):
+        import contextlib
+        import io
+        from argparse import Namespace
+        args = Namespace(project=str(self.project), state_dir=str(self.state), python=self.config['python'],
+                         runtime=str(self.runtime), interval=60, sha256=self.config['sha256'])
+        with patch.object(Path, 'home', return_value=self.base):
+            config, _, _ = capture.plan(args)
+            config_path = Path(config['capture']) / 'config.json'
+            def check(expected):
+                stdout, stderr = io.StringIO(), io.StringIO()
+                with patch.object(sys, 'argv', [str(SCRIPT), str(self.project), '--status', '--brief']), \
+                     contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                    code = capture.main()
+                self.assertEqual(code, 2)
+                self.assertEqual(stderr.getvalue(), '')
+                self.assertNotIn(str(self.base), stdout.getvalue())
+                self.assertLess(len(stdout.getvalue()), 160)
+                self.assertEqual(json.loads(stdout.getvalue()),
+                                 {'local_capture': expected, 'attention_required': True})
+            check('unconfigured')
+            config_path.parent.mkdir(parents=True)
+            config_path.write_text('{broken json')
+            check('configuration_invalid')
+            config_path.write_text('[]')
+            check('configuration_invalid')
+            config_path.write_text(json.dumps(config))
+            stdout, stderr = io.StringIO(), io.StringIO()
+            with patch.object(sys, 'argv', [str(SCRIPT), str(self.project), '--status', '--brief']), \
+                 patch.object(sys, 'platform', 'darwin'), \
+                 patch.object(capture.os, 'getuid', return_value=42, create=True), \
+                 patch.object(capture, 'launchctl', side_effect=FileNotFoundError('private path in OS failure')), \
+                 contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+                self.assertEqual(capture.main(), 2)
+            self.assertEqual(stderr.getvalue(), '')
+            self.assertEqual(json.loads(stdout.getvalue()),
+                             {'local_capture': 'unavailable', 'attention_required': True})
+            self.assertNotIn('private path', stdout.getvalue())
+
     def test_known_provider_roots_are_refused_outside_selected_workspace(self):
         for folder in ('OneDrive - Example', 'Google Drive', 'GoogleDrive-user', 'Dropbox', 'CloudStorage', 'Mobile Documents', 'Nextcloud', 'Box'):
             with self.subTest(folder=folder), self.assertRaises(ValueError):

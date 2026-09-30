@@ -1,9 +1,19 @@
 # Low-context everyday use
 
 Read INDEX.md and only relevant notes. Search before writing. Use the host's native
-read/edit tools. Save durable conclusions in the existing canonical Wiki note and
-substantial deliverables in Output; keep source inputs in Raw. Preserve evidence,
-uncertainty, confidentiality and unrelated changes.
+read/edit tools. The agent maintains memory as part of finishing each task, without
+waiting for the human to request documentation. Save meaningful findings, decisions,
+corrections, generated artifacts, status changes and useful next steps in the relevant
+existing canonical Wiki note. Save substantial deliverables in Output and link them
+from Wiki; keep code in its project repository and link the exact path/version. Keep
+source inputs in Raw. If there is no suitable note, create one within the selected
+folder and add one short route in INDEX.md. Make the smallest targeted edit that
+preserves evidence, dates, uncertainty, confidentiality and unrelated changes.
+Read back touched notes and artifacts before claiming a save.
+Distinguish completed work from ideas or unverified outcomes. Leave a concise Current
+handoff for substantive work. Do not copy the chat transcript, repeat an existing log,
+or save transient conversation with no durable value. Respect explicit do-not-save
+instructions and the selected folder's scope, ownership and permissions.
 
 For a known path or exact symbol, use native bounded search and read. For an
 unknown location, `isolinear-memory recall . "QUERY" --text` from the selected folder returns a small
@@ -27,11 +37,19 @@ point to the same verified runtime after an upgrade.
 
 For troubleshooting, use `folder-status PROJECT --brief`; omit `--brief` only when
 complete diagnostic details are needed. A sync error does not invalidate a saved
-Markdown edit. Report it once; keep ordinary work usable. Do not invent Python
-scripts or repeatedly load setup, capabilities, full guide or historical manuals.
+Markdown edit. Quietly handle routine successful local capture and provider activity;
+an optional `Saved in Wiki/...` is enough when a location helps. Do not narrate Google
+Drive upload state or repeatedly expose provider diagnostics in ordinary task replies.
+Report a failed canonical save or a material history-capture gap once, with the
+smallest useful recovery action. Mention remote receipt only when the user asks or
+its uncertainty affects the requested result; never claim it from local capture.
+Do not invent Python scripts or repeatedly load setup, capabilities, full guide or
+historical manuals.
 
-Codex, Claude, OpenCode and other agents can use native file operations. OpenCode
-also discovers skills under ~/.agents/skills; install this skill only once per
+Codex, Claude, OpenCode and other agents can use native file operations. This guidance
+is portable Markdown, but no CLI or skill can extract durable facts from a model's
+conversation without the agent choosing and writing them. OpenCode also discovers
+skills under ~/.agents/skills; install this skill only once per
 search path. Provider model names and tool permissions belong to the host, not the
 memory format. GLM/OpenRouter/Z.ai tool-call adapter errors need separate evidence
 from an Isolinear Memory process error. Automatic capture removes the model's need to

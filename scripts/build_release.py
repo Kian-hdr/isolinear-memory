@@ -100,7 +100,12 @@ def release(output: Path, version: str) -> dict:
     source_revision, sources = committed_source()
     verify_checkout(source_revision, sources)
     required = {"LICENSE", "SETUP-PROMPT.md", "assets/isolinear-memory.svg", "assets/isolinear-memory.png",
-                "assets/isolinear-memory.icns", "assets/README.md", "skills/setup-shared-project-workspace/SKILL.md",
+                "assets/isolinear-memory.icns", "assets/isolinear-memory-dark.png",
+                "assets/isolinear-memory-dark.icns", "assets/IsolinearMemory.icon/icon.json",
+                "assets/IsolinearMemory.icon/Assets/foreground.svg",
+                "assets/IsolinearMemory.icon/Assets/foreground-dark.svg",
+                "assets/README.md", "scripts/render_icon_marks.py",
+                "skills/setup-shared-project-workspace/SKILL.md",
                 "skills/setup-isolinear-memory/SKILL.md", "docs/BRAND-MIGRATION.md",
                 "assets/isolinear-memory-wordmark-dark.svg", "assets/isolinear-memory-wordmark-light.svg",
                 "assets/isolinear-memory-wordmark-dark.png", "assets/isolinear-memory-wordmark-light.png",
