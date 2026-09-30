@@ -1,9 +1,9 @@
 # Product runtime and format routing
 
-Isolinear Memory 0.5.0, formerly Shared Memory, defaults to direct shared-folder editing. Use Python 3.11+ and
+Isolinear Memory 0.5.1, formerly Shared Memory, defaults to direct shared-folder editing. Use Python 3.11+ and
 an exact verified `.pyz`. The version-specific release is
-[v0.5.0](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.5.0); execute
-`isolinear-memory-0.5.0.pyz` only when actually supplied/present and verified against
+[v0.5.1](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.5.1); execute
+`isolinear-memory-0.5.1.pyz` only when actually supplied/present and verified against
 external `SHA256SUMS`. An explicitly provided reviewed candidate is separate from
 a published release. Verify before execution, then check `version` and the command help needed. Install it in private immutable tools storage using `install-package`.
 This skill is not the runtime and must not silently substitute the advisory tracker.
@@ -20,7 +20,7 @@ These flags record intent and local binding, not account authentication or recei
 Current source builds seed `Raw/`, `Wiki/`, `Output/`, `AGENTS.md` and `INDEX.md`
 only when the selected folder is entirely empty. The seed notes enter ordinary
 initial history and recover through the existing materialization path. The planned
-0.5.0 source supplies this layout for new empty workspaces. Existing content, including hidden files and
+0.5.1 source supplies this layout for new empty workspaces. Existing content, including hidden files and
 empty directories, prevents automatic scaffolding. Setup does not reorganize
 existing workspaces. Join and resume retain their content and instructions.
 

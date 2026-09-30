@@ -93,6 +93,27 @@ available but can take longer on cloud-backed storage.
 
 ## Inspect, repair and stop
 
+Agents can check local capture health privately with `--status --brief`. It emits
+only `local_capture` (`ready`, `partial`, `failed`, `stale`, `no_result`,
+`configuration_changed`, `unloaded`, `unconfigured`, `configuration_invalid`,
+or `unavailable`) and `attention_required`. Missing or malformed private
+configuration also returns only these bounded fields, without a path. A ready result
+requires no routine message to the person. If capture is incomplete, preserve
+the saved Markdown and any existing history, then record the failure for private
+recovery. Surface it to the person only when the current saved result is at risk,
+requested cross-device delivery remains unresolved, or an action from them is
+needed. Never describe provider delivery as verified from local capture alone.
+Use full `--status` only when diagnosing a problem. The scheduled runner itself
+prints nothing on a normal run, and its early configuration errors use a safe
+code in launchd logs without private path or note text.
+
+After a job is verified ready, a device-local agent instruction may identify
+automatic capture as active for that selected project. Keep this device-specific
+signal out of synchronized `AGENTS.md`, and refresh it when job health changes.
+Without a current signal, one bounded agent-run sync is the safe fallback. In a
+synthetic GLM 5.3 check, an active watch loop alone did not tell the agent to
+skip a redundant manual sync; an explicit project instruction did.
+
 Run `python3 scripts/install_capture.py '/absolute/selected workspace' --status` to inspect whether launchd has loaded the job
 and read the latest result. A loaded job does not prove the last sync succeeded;
 check `last_result.ok`, its timestamp, and readiness. Status exits zero only when

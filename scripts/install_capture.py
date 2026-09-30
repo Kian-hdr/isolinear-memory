@@ -172,8 +172,38 @@ def cached_result(capture):
             return None
         result = json.loads(path.read_text())
         return result if isinstance(result, dict) else None
-    except (OSError, ValueError):
+    except (OSError, ValueError, TypeError):
         return None
+
+
+def brief_status(loaded, healthy, stale, last):
+    """Small agent-facing health signal; detailed diagnostics stay private."""
+    if not loaded:
+        state = 'unloaded'
+    elif last is None:
+        state = 'no_result'
+    elif stale:
+        state = 'stale'
+    elif last.get('ok') is not True:
+        state = 'failed'
+    elif last.get('readiness') != 'ready':
+        state = 'partial'
+    elif not healthy:
+        state = 'configuration_changed'
+    else:
+        state = 'ready'
+    return {'local_capture': state, 'attention_required': not healthy}
+
+
+def brief_status_failure(error, phase):
+    """Normalize pre-status failures without exposing their exception text."""
+    if phase == 'config' and isinstance(error, FileNotFoundError):
+        state = 'unconfigured'
+    elif phase == 'config' and isinstance(error, (ValueError, UnicodeError, KeyError, TypeError, AttributeError, IndexError)):
+        state = 'configuration_invalid'
+    else:
+        state = 'unavailable'
+    return {'local_capture': state, 'attention_required': True}
 
 
 def capture_signature(config):
@@ -367,8 +397,11 @@ def main():
     parser.add_argument('--install', action='store_true')
     parser.add_argument('--uninstall', action='store_true')
     parser.add_argument('--status', action='store_true')
+    parser.add_argument('--brief', action='store_true',
+                        help='With --status, print only local capture health for an agent')
     parser.add_argument('--run-config')
     args = parser.parse_args()
+    status_phase = 'config'
     try:
         if args.run_config:
             config_path = physical(args.run_config)
@@ -377,10 +410,16 @@ def main():
                 raise ValueError('Configuration must live in its private capture directory.')
             return run_once(config)
         if not args.project:
+            if args.status and args.brief:
+                print(json.dumps({'local_capture': 'unconfigured', 'attention_required': True}))
+                return 2
             parser.error('project is required')
         if sum((args.install, args.uninstall, args.status)) > 1:
             parser.error('Choose only one of --install, --uninstall, --status')
+        if args.brief and not args.status:
+            parser.error('--brief requires --status')
         config, plist, destination = plan(args)
+        status_phase = 'control'
         capture = Path(config['capture'])
         if not args.install and not args.uninstall and not args.status:
             print(json.dumps({'config': config, 'plist': plist, 'destination': str(destination)}, indent=2))
@@ -391,8 +430,10 @@ def main():
         service = target + '/' + plist['Label']
         if args.status:
             status = launchctl('print', service, check=False)
-            last = json.loads(physical(capture / 'last-result.json').read_text()) if (capture / 'last-result.json').exists() else None
-            stale = not last or time.time() - last.get('checked_at', 0) > max(600, config.get('interval', 60) * 2 + 300)
+            last = cached_result(capture)
+            checked_at = last.get('checked_at') if last else None
+            stale = (type(checked_at) not in (int, float) or
+                     not 0 <= time.time() - checked_at <= max(600, config.get('interval', 60) * 2 + 300))
             try:
                 validate(config)
                 current_signature = capture_signature(config)
@@ -400,10 +441,13 @@ def main():
                 current_signature = None
             healthy = bool(status.returncode == 0 and last and last.get('ok') and last.get('readiness') == 'ready'
                            and current_signature and last.get('capture_signature') == current_signature and not stale)
-            print(json.dumps({'loaded': status.returncode == 0, 'healthy': healthy,
-                              'health_scope': 'local_capture_only',
-                              'provider_integrity': 'unverified' if last and last.get('provider_delivery') != 'not_applicable' else 'not_applicable',
-                              'stale': stale, 'plist': str(destination), 'last_result': last}))
+            if args.brief:
+                print(json.dumps(brief_status(status.returncode == 0, healthy, stale, last)))
+            else:
+                print(json.dumps({'loaded': status.returncode == 0, 'healthy': healthy,
+                                  'health_scope': 'local_capture_only',
+                                  'provider_integrity': 'unverified' if last and last.get('provider_delivery') != 'not_applicable' else 'not_applicable',
+                                  'stale': stale, 'plist': str(destination), 'last_result': last}))
             return 0 if healthy else 2
         private(capture, Path(config['project']))
         if args.install:
@@ -446,7 +490,14 @@ def main():
                           'label': plist['Label'], 'result': str(capture / 'last-result.json')}))
         return 0
     except Exception as error:
-        print(json.dumps({'ok': False, 'error': str(error)}), file=sys.stderr)
+        if args.status and args.brief:
+            print(json.dumps(brief_status_failure(error, status_phase)))
+            return 2
+        if args.run_config:
+            # launchd logs must not receive private paths or untrusted note text.
+            print(json.dumps({'ok': False, 'error_code': error_kind(error)}), file=sys.stderr)
+        else:
+            print(json.dumps({'ok': False, 'error': str(error)}), file=sys.stderr)
         return 1
 
 

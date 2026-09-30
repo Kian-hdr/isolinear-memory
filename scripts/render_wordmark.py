@@ -37,16 +37,15 @@ def render(font_path: Path, output: Path, renderer_module: Path) -> None:
     widths = font['hmtx'].metrics
     glyphs = font.getGlyphSet()
     title = 'Isolinear Memory'
-    template = ET.parse(ROOT / 'assets/isolinear-memory-mark-dark.svg').getroot()
-    mark = template[1]
     for appearance, color in (('dark', '#323232'), ('light', '#F3F3F3')):
+        template = ET.parse(ROOT / f'assets/isolinear-memory-mark-{appearance}.svg').getroot()
+        mark = template[1]
         svg = ET.Element(f'{{{NS}}}svg', {'width': '1024', 'height': '220',
                                         'viewBox': '0 0 1024 220', 'role': 'img'})
         ET.SubElement(svg, f'{{{NS}}}title').text = title
-        icon = deepcopy(mark)
-        icon.set('transform', 'translate(-12 -8) scale(.23)')
-        icon.set('color', color)
-        svg.append(icon)
+        icon = ET.SubElement(svg, f'{{{NS}}}g', {
+            'transform': 'translate(-12 -8) scale(.23)'})
+        icon.append(deepcopy(mark))
         text = ET.SubElement(svg, f'{{{NS}}}g', {'fill': color,
             'transform': 'translate(230 141) scale(0.0435 -0.0435)'})
         position = 0

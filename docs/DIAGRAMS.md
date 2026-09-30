@@ -1,6 +1,6 @@
 # Isolinear Memory system diagrams
 
-These diagrams describe the released **0.5.0 format-3 folder workflow**. They
+These diagrams describe the **0.5.1 format-3 folder workflow**. They
 separate note storage, private indexing, local history capture, provider
 transport and recipient verification. The older format-1/2 coordinator has a
 [separate operating guide](COORDINATOR-WORKFLOW.md).

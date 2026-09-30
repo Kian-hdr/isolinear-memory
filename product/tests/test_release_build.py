@@ -15,7 +15,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = '0.5.0'
+VERSION = '0.5.1'
 
 
 class ReleaseBuildTests(unittest.TestCase):
@@ -31,7 +31,8 @@ class ReleaseBuildTests(unittest.TestCase):
                   'docs/BRAND-MIGRATION.md',
                   'assets/isolinear-memory-wordmark-dark.svg', 'assets/isolinear-memory-wordmark-light.svg',
                   'assets/isolinear-memory-wordmark-dark.png', 'assets/isolinear-memory-wordmark-light.png',
-                  'scripts/render_wordmark.py', 'product/shared_workspace/recall.py',
+                  'scripts/render_icon_marks.py', 'scripts/render_wordmark.py',
+                  'product/shared_workspace/recall.py',
                   'product/tests/test_recall_cli.py']
         names += [path.relative_to(ROOT).as_posix()
                   for path in (ROOT / 'assets').glob('isolinear-memory*') if path.is_file()]
@@ -133,6 +134,15 @@ class ReleaseBuildTests(unittest.TestCase):
         self.assertNotIn(f'shared-memory-{VERSION}.pyz', assets)
         with zipfile.ZipFile(io.BytesIO(assets[f'isolinear-memory-icons-{VERSION}.zip'])) as artwork:
             names = set(artwork.namelist())
+            icon_source = json.loads(artwork.read('IsolinearMemory.icon/icon.json'))
+            referenced = {
+                entry['value']
+                for group in icon_source['groups'] for layer in group['layers']
+                for entry in layer.get('image-name-specializations', [])
+            }
+            self.assertEqual(referenced, {'foreground.svg', 'foreground-dark.svg'})
+            for name in referenced:
+                self.assertIn('IsolinearMemory.icon/Assets/' + name, names)
             for appearance in ('dark', 'light'):
                 stem = f'isolinear-memory-wordmark-{appearance}'
                 self.assertIn(stem + '.svg', names)
@@ -145,6 +155,7 @@ class ReleaseBuildTests(unittest.TestCase):
                          'isolinear-memory.icns', 'isolinear-memory-dark.icns'):
                 self.assertIn(icon, names)
         with zipfile.ZipFile(io.BytesIO(assets[f'isolinear-memory-{VERSION}.zip'])) as kit:
+            self.assertIn('scripts/render_icon_marks.py', kit.namelist())
             committed = self.git('ls-tree', '-r', '--name-only', '-z', 'HEAD').decode().split('\0')
             for name in filter(None, committed):
                 self.assertEqual(kit.read(name), self.git('show', 'HEAD:' + name), name)

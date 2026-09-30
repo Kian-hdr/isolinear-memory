@@ -67,6 +67,14 @@ class FolderCLITests(unittest.TestCase):
         first = self.setup(project=empty)
         expected = {'AGENTS.md', 'INDEX.md', 'Raw/README.md', 'Wiki/README.md', 'Output/README.md'}
         self.assertEqual({p.relative_to(empty).as_posix() for p in empty.rglob('*.md')}, expected)
+        instructions = (empty / 'AGENTS.md').read_text()
+        self.assertIn('Memory upkeep is part of completing a task.', instructions)
+        self.assertIn('Without waiting to be asked', instructions)
+        self.assertIn('read back touched notes and artifacts before claiming a save', instructions)
+        self.assertIn('No transcript', instructions)
+        self.assertIn('Never put private material in a company', instructions)
+        self.assertIn('narrate capture, Google Drive uploads or provider checks', instructions)
+        self.assertIn('local save/capture does not prove it', instructions)
         self.assertEqual(first['readiness'], 'ready')
         events = self.cli('history', empty, '--state-dir', self.state)['events']
         self.assertEqual(len(events), 1)
