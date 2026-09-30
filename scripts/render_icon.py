@@ -32,6 +32,14 @@ def main():
         for size in SIZES:
             icon.resize((size, size), Image.Resampling.LANCZOS).save(
                 args.output / (stem + '-' + str(size) + '.png'))
+    preview = Image.new('RGB', (1600, 800))
+    preview.paste((231, 236, 245), (0, 0, 800, 800))
+    preview.paste((23, 30, 43), (800, 0, 1600, 800))
+    for x, stem in ((50, 'isolinear-memory'), (850, 'isolinear-memory-dark')):
+        icon = Image.open(args.output / (stem + '.png')).convert('RGBA')
+        icon = icon.resize((700, 700), Image.Resampling.LANCZOS)
+        preview.paste(icon, (x, 50), icon)
+    preview.save(args.output / 'light-dark-preview.png')
     print(args.output)
 
 

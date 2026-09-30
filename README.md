@@ -3,13 +3,13 @@
 <p align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/isolinear-memory-dark.png">
-  <img src="assets/isolinear-memory.png" width="96" height="96" alt="Isolinear Memory icon: connected pages">
+  <img src="assets/isolinear-memory.png" width="96" height="96" alt="Isolinear Memory icon: connected memory lattice">
 </picture>
 </p>
 
 **Persistent Markdown memory for people and AI agents. Edit notes normally; retrieve only the evidence a task needs.**
 
-Isolinear Memory 0.5.0 works inside one selected folder. Markdown remains the source
+Isolinear Memory 0.5.1 works inside one selected folder. Markdown remains the source
 of truth. The runtime records recoverable change history, reconciles the project
 files visible on each device, and returns small, source-linked passages to agents.
 Obsidian is optional. No memory-extraction model, vector service, MCP server or
@@ -113,14 +113,34 @@ file whose hash changed since recall. Search again after a stale result. The
 CLI also offers a versioned JSON envelope for integrations; `--text` gives
 agents a concise plain-text view.
 
+## Remember useful work automatically
+
+An agent with access to the selected folder reads its short `AGENTS.md` and
+`INDEX.md`, does the requested work, then updates the relevant canonical Wiki
+note without a separate “remember this” prompt. It records durable findings,
+decisions, artifact links, current status and next steps with their sources and
+uncertainty. Substantial generated files belong in `Output/`; their Wiki note
+links the result. The agent reads back its edits before finishing. Routine
+intermediate steps and conversation transcripts do not need separate notes.
+
+The agent performs this knowledge write through native file tools. New projects
+receive this rule in their seeded `AGENTS.md`; existing projects keep their own
+instructions and can adopt the rule through a targeted edit. Isolinear
+Memory captures the resulting file changes locally; it does not watch a chat or
+use another model to decide what is important. A healthy macOS capture job runs
+outside the agent, while the agent can run one bounded sync when no job is
+available. Normal success needs at most a short saved-location confirmation.
+Capture diagnostics and provider state stay in the background unless they affect
+the current result, a requested delivery check or an action the person must take.
+
 ## Save normally, then capture history
 
 People and agents edit ordinary Markdown directly. A file save persists bytes
 locally. `sync` compares observed files with the device's private causal
 baseline, records immutable events in the selected project, and reconciles
 history already visible from the provider. The optional **macOS local capture
-job** can run this work outside the model; on any supported OS, run one bounded
-manual sync after material edits and after provider arrivals.
+job** can run this work outside the model. Without that job, the agent runs one
+bounded manual sync after material edits and provider arrivals.
 
 ```bash
 isolinear-memory sync "/path/to/project" --brief
@@ -235,10 +255,10 @@ and conflict handling. Check actual delivery on each recipient device. See
 
 ## Install or update
 
-1. Download the [v0.5.0 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.5.0) and verify the runtime against its external `SHA256SUMS`.
+1. Download the [v0.5.1 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.5.1) and verify the runtime against its external `SHA256SUMS`.
 2. [Give the setup prompt](SETUP-PROMPT.md) to an agent with local file access, or follow the [installation guide](docs/INSTALL.md).
-3. Select the intended folder. A wholly empty folder can receive `Raw/`, `Wiki/`, `Output/`, `AGENTS.md` and `INDEX.md`. A populated folder retains its hierarchy, instructions and attachments.
-4. Confirm the installed version, make one small edit, and verify local history capture. Check provider and recipient delivery separately when sharing.
+3. Select the intended folder. A wholly empty folder can receive `Raw/`, `Wiki/`, `Output/`, `AGENTS.md` and `INDEX.md`. A populated folder retains its hierarchy, instructions and attachments; add the memory rule to its existing agent instructions when appropriate.
+4. Have the agent confirm the installed version, make one small edit, and verify local history capture. For requested sharing, it checks provider and recipient delivery separately.
 
 The runtime requires Python 3.11 or newer. The verified `.pyz` works on macOS,
 Linux and Windows. The stable POSIX launcher is available on macOS/Linux;
@@ -257,9 +277,9 @@ backed-up migration. See the [brand transition](docs/BRAND-MIGRATION.md) and
 
 ## Validation and limits
 
-The v0.5.0 release was built from one clean source commit and passed the
+Release assets are built from one clean source commit and checked by the
 [macOS, Linux and Windows CI matrix](https://github.com/Kian-hdr/isolinear-memory/actions).
-The release includes SHA-256 checksums and a source manifest. The
+Each release includes SHA-256 checksums and a source manifest. The
 [synthetic benchmarks](benchmarks/README.md) and
 [agent compatibility evidence](docs/AGENT-COMPATIBILITY.md) distinguish
 measured task results from interface compatibility.

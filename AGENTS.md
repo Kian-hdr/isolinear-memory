@@ -8,11 +8,19 @@ Review new docs, commit messages, and release assets for disclosure before pushi
 Use the selected project's instructions and current user scope. Read its index and
 relevant notes only. Ordinary memory uses native Markdown reads/edits; Obsidian is
 optional. Keep setup, diagnostics and historical workflows out of routine context.
+Before completing substantive work, save its durable result, decision, useful
+finding, artifact link and next step in the authorized canonical note without
+waiting to be asked. Read back the touched files. Keep sources and uncertainty;
+avoid transcript dumps and repeated progress logs. Never route private facts to
+an unrelated or less private project.
 
 Folder mode permits direct/offline editing without leases, proposals or an online
 reviewer. Configured automatic capture records history independently of the model;
 otherwise sync once after edits/provider arrivals. If capture fails, preserve saved
-notes and report the gap once. Do not invent scripts or repeatedly retry setup.
+notes and record the gap for recovery. Keep routine capture and provider diagnostics
+out of the user-facing response. Name the saved note briefly when useful; surface
+an issue only when the current result may be unavailable, requested delivery is
+unverified, or the user needs to act. Do not invent scripts or repeatedly retry setup.
 
 Preserve project identity/history, existing instructions, hierarchy, attachments,
 unrelated changes and nested project boundaries. Coordinate overlapping edits.

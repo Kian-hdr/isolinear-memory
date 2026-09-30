@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 import platform
 import stat
+import urllib.error
 import urllib.request
 import zipfile
 
@@ -34,12 +35,22 @@ def prepare(output):
     target = system + '-' + machine
     expected = HASHES[target]
     name = 'rclone-v' + VERSION + '-' + target
-    url = 'https://downloads.rclone.org/v' + VERSION + '/' + name + '.zip'
+    release = '/v' + VERSION + '/' + name + '.zip'
+    urls = ('https://downloads.rclone.org' + release,
+            'https://github.com/rclone/rclone/releases/download/v' + VERSION + '/' + name + '.zip')
     output = Path(output).absolute()
     if output.exists() or not output.parent.is_dir() or any(p.is_symlink() for p in (output, *output.parents)):
         raise ValueError('Choose a fresh output below an existing physical directory.')
-    with urllib.request.urlopen(url, timeout=30) as response:
-        archive = response.read(LIMIT + 1)
+    # rclone documents GitHub as its release mirror. Keep the same pinned
+    # archive digest, and never use a mirror to excuse a byte/hash mismatch.
+    for url in urls:
+        try:
+            with urllib.request.urlopen(url, timeout=30) as response:
+                archive = response.read(LIMIT + 1)
+            break
+        except (urllib.error.HTTPError, urllib.error.URLError):
+            if url == urls[-1]:
+                raise
     if len(archive) > LIMIT or hashlib.sha256(archive).hexdigest() != expected:
         raise ValueError('Official archive did not match the reviewed byte/hash bounds.')
     binary = 'rclone.exe' if system == 'windows' else 'rclone'

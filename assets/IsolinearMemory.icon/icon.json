@@ -1,14 +1,18 @@
 {
-  "fill": {
-    "automatic-gradient": "extended-srgb:1.00000,1.00000,1.00000,1.00000"
-  },
+  "fill-specializations": [
+    { "value": "system-light" },
+    { "appearance": "dark", "value": "system-dark" }
+  ],
   "groups": [
     {
-      "name": "Shared folio",
+      "name": "Memory lattice",
       "layers": [
         {
-          "image-name": "foreground.svg",
-          "name": "Connected pages"
+          "image-name-specializations": [
+            { "value": "foreground.svg" },
+            { "appearance": "dark", "value": "foreground-dark.svg" }
+          ],
+          "name": "Connected memory nodes"
         }
       ]
     }

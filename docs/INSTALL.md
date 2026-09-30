@@ -1,15 +1,15 @@
-# Install or update Isolinear Memory 0.5.0
+# Install or update Isolinear Memory 0.5.1
 
 This is setup reference, not routine agent context. Preserve the selected workspace,
 private state and previous runtime. Python 3.11+ is required. Download the versioned
-runtime and SHA256SUMS from the [v0.5.0 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.5.0).
+runtime and SHA256SUMS from the [v0.5.1 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.5.1).
 Verify the runtime SHA-256 against its external SHA256SUMS entry before execution.
 If unavailable or mismatched, stop installation; do not substitute an unverified asset.
 
 Use the verified package's `version` and `install-package --help`, then:
 
 ```text
-python3 isolinear-memory-0.5.0.pyz install-package isolinear-memory-0.5.0.pyz --sha256 VERIFIED_SHA --tools-dir PRIVATE_TOOLS
+python3 isolinear-memory-0.5.1.pyz install-package isolinear-memory-0.5.1.pyz --sha256 VERIFIED_SHA --tools-dir PRIVATE_TOOLS
 ```
 
 Substitute actual discovered paths and checksum. Use the returned immutable package
@@ -37,6 +37,18 @@ path, preserving any prior copy. The same ZIP includes
 `setup-shared-project-workspace` for existing agents. Codex uses ~/.codex/skills; OpenCode also supports
 ~/.agents/skills. Do not duplicate the same name across its discovery paths.
 The skill is for setup/repair, not a prerequisite for ordinary note edits.
+
+For an existing populated project, preserve its `AGENTS.md` and add the compact
+automatic-memory rule through a targeted edit: after substantive work, the agent
+saves durable findings, decisions, artifact links, status and next steps in the
+authorized Wiki note and reads the edit back. New empty projects receive this
+rule during setup. Tasks started outside the selected folder also need a small
+host-local routing instruction. Codex uses `~/.codex/AGENTS.md`, OpenCode uses
+[`~/.config/opencode/AGENTS.md`](https://opencode.ai/docs/rules/), and older
+Claude Code versions use [`~/.claude/CLAUDE.md`](https://code.claude.com/docs/en/memory).
+Route only to projects the agent is authorized to open; keep device paths and
+capture-job status out of synchronized project instructions. Verify the rule
+with a nonprivate task that produces a Wiki update without a memory prompt.
 
 The default command locations are ~/.local/bin/isolinear-memory and
 ~/.local/bin/shared-memory. Both run the same verified package. An intentional
