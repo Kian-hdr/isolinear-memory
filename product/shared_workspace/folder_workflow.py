@@ -27,29 +27,36 @@ def new_workspace_files(root):
     return {
         'AGENTS.md': '''# Shared workspace
 
-Read INDEX.md, then only the Wiki pages relevant to the task. Search by topic/path;
-read bounded sections before whole files. Do not load the entire workspace.
+Read INDEX.md, then only relevant Wiki sections; search by topic/path with bounded
+reads. Raw/ holds sources, Wiki/ canonical knowledge, Output/ substantial deliverables.
 
-- Raw/: original, unprocessed sources. Read only when needed; retain useful evidence.
-- Wiki/: canonical knowledge, decisions and current project state. Update existing
-  notes after durable discoveries or changes; preserve dates, sources and uncertainty.
-- Output/: generated deliverables. Link durable conclusions from their Wiki note.
+Memory upkeep is part of completing a task. Without waiting to be asked, update the
+relevant existing Wiki note for durable findings, decisions, corrections, generated
+artifacts, status changes and next steps. Keep substantial deliverables in Output/
+and code in its project repository; link their exact paths/versions from Wiki. If no
+note fits, create one in the selected scope and add a short INDEX.md route. Use
+targeted edits, then read back touched notes and artifacts before claiming a save.
+Record source/date, uncertainty and completed versus planned status; leave a concise
+Current handoff after substantive work. No transcript, duplicate log or fleeting
+chat. Respect explicit do-not-save instructions.
 
-Keep INDEX.md short. Preserve existing hierarchy, attachments, instructions and
-unrelated edits. Coordinate overlapping writes; retain competing versions. Record
-explicit renames/deletions through Shared Memory and check links. Missing files alone
-are not deletion. A clean text merge does not establish factual agreement.
+Use native file tools within selected-folder permissions; do not ask the human to
+manage routine memory. Never put private material in a company folder or expand
+project access. Preserve hierarchy, attachments, instructions and unrelated edits;
+coordinate overlapping writes. Retain conflicts and review factual disagreements.
+Record explicit renames/deletions through Isolinear Memory and check links; missing
+files alone are not deletions.
 
-Use native file tools to read and edit. Configured automatic capture records history
-outside the agent; otherwise use the installed shared-memory command once after edits.
-If unavailable or failing, keep the saved notes and report the capture gap once.
-Do not invent scripts, reinstall, or repeatedly retry during ordinary note work.
+Configured automatic capture records history independently. Otherwise run the
+installed isolinear-memory sync once after material edits. If capture fails, keep
+saved Markdown and report a material history gap once, without repeated retries.
+Routine success is quiet; an optional short saved-note location is enough. Do not
+narrate capture, Google Drive uploads or provider checks. Mention remote receipt
+only when requested or consequential; local save/capture does not prove it.
 
-Keep private state, credentials and recovery outside shared storage. Respect selected
-folder scope, confidentiality, read-only grants and OS/provider controls. One provider
-per folder; local capture does not prove remote delivery. Preserve .shared-memory/
-and .shared-memory.json. For substantive work, leave a concise Current handoff in
-the existing project note: result, evidence, blockers and next steps.
+Keep private state, credentials and recovery outside shared storage. Respect
+confidentiality, read-only grants and OS/provider controls. One provider per folder.
+Preserve .shared-memory/ and .shared-memory.json.
 ''',
         'INDEX.md': '''# Workspace index
 

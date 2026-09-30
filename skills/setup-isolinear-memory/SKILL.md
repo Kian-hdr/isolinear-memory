@@ -25,7 +25,24 @@ owns each physical folder; local capture does not establish remote receipt.
 
 Routine agents read INDEX.md and only the relevant canonical notes, then edit
 Markdown directly. Use `recall` for bounded source-linked discovery and `show`
-for a hash-checked passage. An installed capture job records history outside
-the model; otherwise run one `sync` after material edits. On capture failure,
-preserve the saved Markdown and report the gap once. Keep personal and company
-folder boundaries, read-only grants, credentials, and private indexes intact.
+for a hash-checked passage. Treat durable memory upkeep as part of task completion:
+record meaningful findings, decisions, corrections, generated deliverables, changed
+status and next steps in the correct existing Wiki note without a separate user
+request. Keep substantial artifacts in Output/ and code in its own repository;
+link exact paths or versions from Wiki. Create a new note and short INDEX route only
+when there is no suitable canonical note. Preserve source, date, uncertainty and
+completed-versus-planned status. Do not dump conversations or save fleeting chatter.
+Read back touched notes and artifacts before confirming they were saved.
+This is an agent instruction, not an automatic conversation-extraction service;
+each host agent must perform the native edit within its selected folder permissions.
+
+An installed capture job records history outside the model; otherwise run one `sync`
+after material edits. Once `--status --brief` confirms a job is ready, record its
+active status only in device-local host guidance for that selected project; recheck
+and clear that signal if health changes. Never put device-specific status in shared
+`AGENTS.md`. Ordinary successful capture and provider activity should not
+appear in the user-facing reply. Optionally give the saved note's short location when
+it helps the user; report a failed canonical save or material capture gap once. Discuss
+remote receipt only when requested or consequential to the requested outcome, and do
+not imply local capture proves it. Keep personal and company folder boundaries,
+read-only grants, credentials, and private indexes intact.

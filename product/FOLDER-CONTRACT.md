@@ -1,4 +1,4 @@
-# Direct-folder contract for Shared Memory 0.5.0
+# Direct-folder contract for Isolinear Memory 0.5.1
 
 This is the current default workflow. `ENGINE-CONTRACT.md` describes the explicitly
 retained historical coordinator, not the rules for ordinary folder editing.
@@ -19,7 +19,7 @@ No SQLite, session credential or designated integration owner is required in thi
 workflow. Older formats must be retained or explicitly migrated, never silently
 reinterpreted by new setup.
 
-Version 0.5.0 adds optional read-only `recall` and `show` commands. Their private
+Version 0.5.0 introduced optional read-only `recall` and `show` commands. Their private
 SQLite FTS5 index is rebuildable from current Markdown, outside the shared folder;
 it does not change format 3 or become a second authority. Results include source
 path, exact line span, source hash and incomplete-coverage indicators. `show`
