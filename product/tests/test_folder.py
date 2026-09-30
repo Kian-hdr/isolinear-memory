@@ -343,22 +343,135 @@ print(json.dumps({'readiness': result['readiness'], 'timeouts': result['scan_tim
         self.assertEqual(second['scan_coverage']['audit'], 'metadata_unavailable')
         self.assertEqual(second['scan_coverage']['reuse_basis'], 'none_windows_full_byte_read_required')
 
-    def test_bounded_enumeration_fails_safely_and_releases_lock(self):
+    def test_bounded_enumeration_captures_known_edit_then_recovers_full_scan(self):
         import threading
         one = self.create()
-        baseline = (one.state / 'baseline.json').read_bytes()
-        index = (one.state / 'scan-index.json').read_bytes()
+        one.root.joinpath('Note.md').write_bytes(b'changed known note\n')
+        one.root.joinpath('Fresh.md').write_bytes(b'new note not yet enumerated\n')
+        gate = threading.Event()
+        with patch.object(one, '_enumerate_scan', side_effect=lambda required: gate.wait()), \
+             patch.object(one, '_materialize', wraps=one._materialize) as materialize, \
+             patch.object(module, 'SCAN_METADATA_SECONDS', 0.01):
+            result = one.sync()
+        gate.set()
+        self.assertEqual(result['readiness'], 'partial')
+        self.assertFalse(result['scan_coverage']['enumeration_complete'])
+        self.assertGreaterEqual(result['scan_timeout_count'], 1)
+        self.assertIsNotNone(json.loads((one.state / 'scan-index.json').read_text())['audit_started_at'])
+        materialize.assert_not_called()
+        self.assertIn('changed known note\n',
+                      [event['changes'].get('Note.md') for event in one.history('Note.md')['events']])
+        self.assertFalse(one.history('Fresh.md')['events'])
+        self.assertEqual(one.root.joinpath('Fresh.md').read_text(), 'new note not yet enumerated\n')
+        with one._lock():
+            pass
+        recovered = one.sync()
+        self.assertEqual(recovered['readiness'], 'ready')
+        self.assertTrue(recovered['scan_coverage']['enumeration_complete'])
+        self.assertIn('new note not yet enumerated\n',
+                      [event['changes'].get('Fresh.md') for event in one.history('Fresh.md')['events']])
+
+    def test_scan_fallback_and_full_walk_never_capture_nested_project(self):
+        import threading
+        one = self.create(files={'Note.md': 'root\n', 'Child/Inside.md': 'child initial\n'})
+        nested = one.root / 'Child'
+        (nested / module.MANIFEST).write_text('{"separate":"project"}')
+        (nested / 'Inside.md').write_bytes(b'child changed\n')
+        (one.root / 'Note.md').write_bytes(b'root changed\n')
+        gate = threading.Event()
+        with patch.object(one, '_enumerate_scan', side_effect=lambda required: gate.wait()), \
+             patch.object(module, 'SCAN_METADATA_SECONDS', 0.01):
+            result = one.sync()
+        gate.set()
+        self.assertEqual(result['readiness'], 'partial')
+        self.assertFalse(result['scan_coverage']['enumeration_complete'])
+        self.assertGreaterEqual(result['scan_coverage']['deferred'], 1)
+        self.assertIn('root changed\n',
+                      [event['changes'].get('Note.md') for event in one.history('Note.md')['events']])
+        self.assertNotIn('child changed\n',
+                         [event['changes'].get('Child/Inside.md') for event in one.history('Child/Inside.md')['events']])
+        full = one.sync()
+        self.assertEqual(full['readiness'], 'partial')
+        self.assertTrue(full['scan_coverage']['enumeration_complete'])
+        self.assertNotIn('child changed\n',
+                         [event['changes'].get('Child/Inside.md') for event in one.history('Child/Inside.md')['events']])
+        self.assertEqual((nested / 'Inside.md').read_text(), 'child changed\n')
+
+    def test_incomplete_enumeration_detects_casefolded_nested_manifest(self):
+        import threading
+        one = self.create(files={'Note.md': 'root\n', 'Child/Inside.md': 'child initial\n'})
+        nested = one.root / 'Child'
+        (nested / module.MANIFEST.upper()).write_text('{"separate":"project"}')
+        (nested / 'Inside.md').write_bytes(b'child changed\n')
+        gate = threading.Event()
+        with patch.object(one, '_enumerate_scan', side_effect=lambda required: gate.wait()), \
+             patch.object(module, 'SCAN_METADATA_SECONDS', 0.01):
+            result = one.sync()
+        gate.set()
+        self.assertEqual(result['readiness'], 'partial')
+        self.assertFalse(result['scan_coverage']['enumeration_complete'])
+        self.assertGreaterEqual(result['scan_coverage']['deferred'], 1)
+        self.assertNotIn('child changed\n',
+                         [event['changes'].get('Child/Inside.md') for event in one.history('Child/Inside.md')['events']])
+        full = one.sync()
+        self.assertEqual(full['readiness'], 'partial')
+        self.assertNotIn('child changed\n',
+                         [event['changes'].get('Child/Inside.md') for event in one.history('Child/Inside.md')['events']])
+
+    def test_incomplete_enumeration_defers_unknown_nested_boundary(self):
+        import threading
+        one = self.create(files={'Note.md': 'root\n', 'Child/Inside.md': 'child initial\n'})
+        nested = one.root / 'Child'
+        (nested / 'Inside.md').write_bytes(b'child changed\n')
+        walk_gate, child_gate = threading.Event(), threading.Event()
+        real_scandir = module.os.scandir
+        def stalled_child(path):
+            if Path(path) == nested:
+                child_gate.wait()
+            return real_scandir(path)
+        with patch.object(one, '_enumerate_scan', side_effect=lambda required: walk_gate.wait()), \
+             patch.object(module.os, 'scandir', side_effect=stalled_child), \
+             patch.object(module, 'SCAN_METADATA_SECONDS', 0.01), \
+             patch.object(module, 'SCAN_STAT_SECONDS', 0.01):
+            result = one.sync()
+        walk_gate.set(); child_gate.set()
+        self.assertEqual(result['readiness'], 'partial')
+        self.assertFalse(result['scan_coverage']['enumeration_complete'])
+        self.assertGreaterEqual(result['scan_coverage']['deferred'], 1)
+        self.assertNotIn('child changed\n',
+                         [event['changes'].get('Child/Inside.md') for event in one.history('Child/Inside.md')['events']])
+
+    def test_incomplete_enumeration_does_not_delete_missing_known_file(self):
+        import threading
+        one = self.create()
+        one.root.joinpath('Note.md').unlink()
+        before = one.status()['event_count']
+        gate = threading.Event()
+        with patch.object(one, '_enumerate_scan', side_effect=lambda required: gate.wait()), \
+             patch.object(module, 'SCAN_METADATA_SECONDS', 0.01):
+            result = one.sync()
+        gate.set()
+        self.assertEqual(result['readiness'], 'partial')
+        self.assertFalse(result['scan_coverage']['enumeration_complete'])
+        self.assertGreaterEqual(result['scan_coverage']['deferred'], 1)
+        self.assertEqual(one.status()['event_count'], before)
+        self.assertFalse(any(event['kind'] == 'delete' for event in one.history('Note.md')['events']))
+
+    def test_incomplete_enumeration_refuses_known_symlink_target(self):
+        import threading
+        one = self.create()
+        outside = self.base / 'outside.md'
+        outside.write_text('outside private bytes\n')
+        one.root.joinpath('Note.md').unlink()
+        one.root.joinpath('Note.md').symlink_to(outside)
         gate = threading.Event()
         with patch.object(one, '_enumerate_scan', side_effect=lambda required: gate.wait()), \
              patch.object(module, 'SCAN_METADATA_SECONDS', 0.01):
             with self.assertRaises(ProductError) as caught:
                 one.sync()
         gate.set()
-        self.assertEqual(caught.exception.code, 'folder_scan_timeout')
-        with one._lock():
-            pass
-        self.assertEqual((one.state / 'baseline.json').read_bytes(), baseline)
-        self.assertEqual((one.state / 'scan-index.json').read_bytes(), index)
+        self.assertEqual(caught.exception.code, 'folder_unsafe_path')
+        self.assertNotIn('outside private bytes', json.dumps(one.history('Note.md')))
 
     def test_bounded_stat_defers_one_file_without_index_or_materialization(self):
         import threading

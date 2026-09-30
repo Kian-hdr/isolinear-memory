@@ -1,20 +1,30 @@
 {
   "fill-specializations": [
-    { "value": "system-light" },
-    { "appearance": "dark", "value": "system-dark" }
+    {
+      "value": "system-light"
+    },
+    {
+      "appearance": "dark",
+      "value": "system-dark"
+    }
   ],
   "groups": [
     {
-      "name": "Memory lattice",
       "layers": [
         {
           "image-name-specializations": [
-            { "value": "foreground.svg" },
-            { "appearance": "dark", "value": "foreground-dark.svg" }
+            {
+              "value": "foreground.svg"
+            },
+            {
+              "appearance": "dark",
+              "value": "foreground-dark.svg"
+            }
           ],
-          "name": "Connected memory nodes"
+          "name": "Memory symbol"
         }
-      ]
+      ],
+      "name": "Symmetric neural lattice"
     }
   ],
   "supported-platforms": {
