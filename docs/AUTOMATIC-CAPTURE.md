@@ -69,6 +69,12 @@ ten minutes, measured against both wall and monotonic clocks. A backwards change
 clock forces a fresh full capture. This bounds the cache's lifetime and
 checks private baseline/event state that the workspace scan does not cover.
 
+If broad provider metadata traversal times out, the runtime attempts bounded
+capture of paths already known to the private baseline or scan index. The result
+stays partial with `scan_coverage.enumeration_complete: false`; materialization
+and full-audit promotion wait for a later complete traversal. New paths cannot
+be discovered in this fallback, and an unseen file is never treated as a delete.
+
 During normal sync, a provider history file whose content-addressed name and size
 match an already validated private canonical event is not reread. The bounded
 result reports `provider_duplicate_bytes_unverified`; this is a local convergence

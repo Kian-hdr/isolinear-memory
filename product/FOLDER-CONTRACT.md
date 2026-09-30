@@ -1,4 +1,4 @@
-# Direct-folder contract for Isolinear Memory 0.5.1
+# Direct-folder contract for Isolinear Memory 0.5.2
 
 This is the current default workflow. `ENGINE-CONTRACT.md` describes the explicitly
 retained historical coordinator, not the rules for ordinary folder editing.
@@ -47,6 +47,11 @@ missing parents and invalid events remain explicit; incomplete delivery does not
 justify replacing them with a guessed latest version. The baseline/history and
 journal support restarting after interrupted local materialization without discarding
 raced edits.
+
+If broad metadata enumeration stalls, a bounded known-path fallback can capture
+changed paths from the private baseline or scan index. It reports incomplete
+enumeration and partial readiness, does not materialize incoming history, and
+does not infer deletion or discover new files until a complete listing succeeds.
 
 Identical versions converge. Independent line edits with one usable common base may
 merge. Overlap, conflicting creation/deletion or ambiguous ancestry preserves a
