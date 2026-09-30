@@ -28,6 +28,7 @@ prior verified runtime and does not downgrade history.
 The v0.5.0 release introduced a connected-pages icon and outlined
 `assets/isolinear-memory-wordmark-{dark,light}.{svg,png}` spelling the new name.
 Version 0.5.1 replaces that icon with a colored memory lattice on Apple system
-light and dark backgrounds. Historical `shared-memory*` icon files remain in the
+light and dark backgrounds. Version 0.5.2 centers four equally spaced nodes for
+a balanced mark in both appearances. Historical `shared-memory*` icon files remain in the
 complete source kit but are excluded from the public icons ZIP. The name is inspired by
 [Star Trek's isolinear chips](https://www.startrek.com/en-un/news/below-deck-with-lower-decks-403-move-along).

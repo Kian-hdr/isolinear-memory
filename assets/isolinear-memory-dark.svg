@@ -1,12 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img"><title>Isolinear Memory lattice</title><g transform="translate(-170.667 -170.667) scale(1.33333)"><path d="M300 507C300 390 394 300 510 300C624 300 718 390 718 507C718 624 624 718 510 718C394 718 300 624 300 507Z" fill="none" stroke="#283B51" stroke-width="38" />
-  <path d="M374 369C420 326 470 304 520 301" fill="none" stroke="#43CED8" stroke-width="48" stroke-linecap="round" />
-  <path d="M641 344C690 377 716 431 718 496" fill="none" stroke="#8A9EFF" stroke-width="48" stroke-linecap="round" />
-  <path d="M675 628C629 691 557 719 488 717" fill="none" stroke="#B395FF" stroke-width="48" stroke-linecap="round" />
-  <path d="M359 650C321 610 302 558 300 508" fill="none" stroke="#39D3BB" stroke-width="48" stroke-linecap="round" />
-  <path d="M418 418L512 510L626 415M512 510L512 642" fill="none" stroke="#9DD8EA" stroke-width="40" stroke-linecap="round" stroke-linejoin="round" />
-  <circle cx="418" cy="418" r="55" fill="#43CED8" />
-  <circle cx="626" cy="415" r="55" fill="#8A9EFF" />
-  <circle cx="512" cy="642" r="55" fill="#B395FF" />
-  <circle cx="512" cy="510" r="88" fill="#70B9D5" />
-  <circle cx="512" cy="510" r="39" fill="#12202E" />
-</g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img"><title>Isolinear Memory lattice</title><g transform="translate(-0 -0) scale(1)"><circle cx="512" cy="512" r="264" fill="none" stroke="#31485C" stroke-width="36" /><path d="M512 417L512 252" fill="none" stroke="#4ED4D1" stroke-width="44" stroke-linecap="round" /><path d="M607 512L772 512" fill="none" stroke="#A3A7FF" stroke-width="44" stroke-linecap="round" /><path d="M512 607L512 772" fill="none" stroke="#4ED4D1" stroke-width="44" stroke-linecap="round" /><path d="M417 512L252 512" fill="none" stroke="#A3A7FF" stroke-width="44" stroke-linecap="round" /><circle cx="512" cy="248" r="65" fill="#4ED4D1" /><circle cx="776" cy="512" r="65" fill="#A3A7FF" /><circle cx="512" cy="776" r="65" fill="#4ED4D1" /><circle cx="248" cy="512" r="65" fill="#A3A7FF" /><circle cx="512" cy="512" r="101" fill="#79B8D6" /><circle cx="512" cy="512" r="39" fill="#14202D" /></g></svg>

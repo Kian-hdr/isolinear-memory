@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.2
+
+- Replace the initial lattice artwork with a centered, four-node memory emblem.
+  Equal spacing and opposing color pairs keep the native icon balanced in Apple
+  system light and dark appearances, including small sizes.
+- When a slow provider stalls broad file listing, continue bounded capture of
+  previously known note paths. Mark the scan incomplete, defer materialization
+  and full-audit claims, and discover new files after a later complete listing.
+
 ## 0.5.1
 
 - Seed new projects and update agent guidance so durable task documentation can be

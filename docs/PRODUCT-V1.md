@@ -1,4 +1,4 @@
-# Isolinear Memory 0.5.1 operating guide
+# Isolinear Memory 0.5.2 operating guide
 
 Isolinear Memory defaults to **direct editing in a shared Markdown folder**.
 The previous Shared Memory name remains a command and skill compatibility alias;
@@ -68,9 +68,9 @@ disposable trial. Python 3.11+ and the verified package are required; the local
 folder engine uses the standard library. The optional historical coordinator's
 server dependencies are not needed for folder mode.
 
-Use the [v0.5.1 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.5.1)
+Use the [v0.5.2 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.5.2)
 only when its assets are actually present. The expected executable is
-`isolinear-memory-0.5.1.pyz`, with external `SHA256SUMS`; an explicitly supplied reviewed
+`isolinear-memory-0.5.2.pyz`, with external `SHA256SUMS`; an explicitly supplied reviewed
 candidate is also usable. Internal package hashes do not independently authenticate
 the publisher. Compare the external SHA before executing a download:
 
