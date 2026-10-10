@@ -66,7 +66,7 @@ class HybridRecallCLITests(unittest.TestCase):
 
     def assert_sources(self, result):
         for hit in result['data']['hits']:
-            content = (self.root / hit['path']).read_text(encoding='utf-8')
+            content = (self.root / hit['path']).read_bytes().decode('utf-8')
             self.assertEqual(hit['excerpt'], '\n'.join(content.splitlines()[hit['start'] - 1:hit['end']]))
             self.assertEqual(hit['sha256'], hashlib.sha256(content.encode()).hexdigest())
 
@@ -77,6 +77,15 @@ class HybridRecallCLITests(unittest.TestCase):
         self.assertIn('Wiki/Quartz.md', {h['path'] for h in answer['data']['hits']})
         self.assert_sources(answer)
         self.assertFalse(answer['data']['retrieval']['semantic_model'])
+
+    def test_crlf_source_hash_matches_original_bytes(self):
+        content = b'# Windows Source\r\nThe crimson kestrel is ready.\r\n'
+        note = self.root / 'Wiki/Windows Source.md'
+        note.write_bytes(content)
+        answer = self.cli('crimson kestrel', '--refresh')
+        hit = next(item for item in answer['data']['hits'] if item['path'] == 'Wiki/Windows Source.md')
+        self.assertEqual(hit['sha256'], hashlib.sha256(content).hexdigest())
+        self.assert_sources(answer)
 
     def test_explicit_link_neighbor_without_query_words(self):
         answer = self.cli('quartz')
