@@ -1,5 +1,65 @@
 # Isolinear Memory readiness
 
+## 0.6.0 release scope
+
+This release includes vault profiles, profile-aware recall/show and optional hybrid
+retrieval. Source Markdown and recoverable causal history remain authoritative.
+Shared project vaults retain person/agent contribution metadata; profile selection
+does not create permissions or authenticate authorship. Existing vaults are preserved.
+The historical development records below describe their dated acceptance evidence;
+current release validation is recorded in VALIDATION.md.
+
+
+## Hindsight selective assimilation, development candidate 2026-10-02
+
+Local rollout acceptance is recorded in [validation](../VALIDATION.md#local-two-vault-rollout-2026-10-02). That dated local rollout preceded public distribution; the reviewed hybrid feature is included in the 0.6.0 release scope above.
+
+Source: [vectorize-io/hindsight](https://github.com/vectorize-io/hindsight) at
+`f7dd3f4fd7420f7beec60c32c965e5e5cf7be066`. The actual search implementation is
+under `hindsight-api-slim/hindsight_api/engine/search/`. Inspected upstream code,
+representative tests and the full official `skills/hindsight-docs/SKILL.md` before
+implementation. The latter is a generated documentation navigator; the installed
+Assimilate workflow fits source adaptation better, so no extra skill or Hindsight
+runtime was installed. Existing agent-evaluation guidance informs synthetic evidence
+checks, without claiming model-answer quality from retrieval matches.
+
+| Capability | Pinned source evidence | Isolinear destination and adaptation | Acceptance check |
+| --- | --- | --- | --- |
+| Ranked search fusion | [fusion.py](https://github.com/vectorize-io/hindsight/blob/f7dd3f4fd7420f7beec60c32c965e5e5cf7be066/hindsight-api-slim/hindsight_api/engine/search/fusion.py), `reciprocal_rank_fusion` | Original standard-library RRF implementation, `hybrid_recall.py`; lexical OR, titles, explicit wikilinks; k=60, stable ties and passage deduplication | Partial-query and linked-note evidence, deterministic repeats |
+| Per-arm candidate limits | Same source, `cap_per_source` | Bounded local candidates, scan bytes and outer recall deadline | Budget, truncation and deadline tests |
+| Explicit temporal controls | `engine/search/retrieval.py`; `tests/test_recall_temporal_window.py` | Inclusive CLI ISO-date filter on dates in returned excerpts; no natural-language date parsing | Valid, empty, malformed, inverted and out-of-window dates |
+| Filter propagation to graph neighbors | `tests/test_recall_time_range_graph.py` | Every expanded note/excerpt retains selected-root scope and date eligibility | Raw/Output opt-in, private/nested/link exclusions and neighbor date leakage |
+| Evidence-first output | `engine/reflect/agent.py` allowed citation IDs | Existing exact-line/hash `recall`/`show` contract retained; no generated answer promoted to memory | Changed/deleted source checks and exact source assertions |
+
+Reuse method: independently authored code informed by inspected behavior. No upstream
+code, assets, branding, prompts or dependencies copied. Upstream is
+[MIT licensed](https://github.com/vectorize-io/hindsight/blob/f7dd3f4fd7420f7beec60c32c965e5e5cf7be066/LICENSE),
+Copyright (c) 2025 Vectorize AI, Inc. Preserve this attribution when maintaining
+this adaptation; any future copying of substantial upstream material must also
+retain its complete MIT permission and warranty notice. Isolinear's license is unchanged.
+
+The optional `--strategy hybrid` does not replace exact search, canonical Markdown,
+causal history or private state. It deliberately does not import semantic embeddings,
+LLM extraction, automatic consolidation, generated beliefs, hosted storage or reflection.
+This is a selective assimilation, not Hindsight API compatibility. Date filtering
+matches ISO dates in evidence spans, not proven event time or filesystem timestamps;
+upstream's temporal arm and database metadata filters have different semantics.
+Link expansion follows explicit one-hop wikilinks and abstains from ambiguous targets.
+Warm cloud routing uses only root-qualified link paths; a root prefix always means
+the project root in both warm and refreshed retrieval.
+Fusion ranks indicate retrieval relevance, not factual confidence. Loose queries may
+return partial matches; use `show` and read sources before making a claim.
+
+Update/removal: compare the pinned upstream search contracts and their tests before
+adopting future behavior. Roll back by omitting `--strategy hybrid`; remove the
+`hybrid_recall.py` module and CLI dispatch/options to remove the feature entirely.
+No provider configuration, source migration, history conversion or index-schema change
+is required. Private derived indexes remain rebuildable. Local acceptance passed: full product suite 568 collected (21 skips), final hybrid
+suite 13 passed, workspace 58 passed and doctor 7 passed. The eight paired fixtures
+returned exact 6/8 both before/after and hybrid 8/8; see
+[validation](../VALIDATION.md#hindsight-inspired-hybrid-recall-development-candidate-2026-10-02).
+Mixed-OS CI, live-vault performance and model-token savings require separate evidence. No release or live installation is implied.
+
 ## Optional agent task continuity integration, planned 2026-09-24
 
 Isolinear Memory may serve as the durable, project-scoped checkpoint layer for an external agent orchestrator. This is a proposed optional extension, not a change to normal format-3 folder behavior. The orchestrator owns live task discovery, tool/capability inventory, runtime policy, destination choice and runtime-specific messaging. Isolinear Memory owns portable task context, causal history, explicit conflict/recovery state and evidence of checkpoint/receipt. One installation must work without the orchestrator; unrelated projects must remain isolated.

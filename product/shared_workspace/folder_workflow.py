@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import getpass
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import secrets
 import time
 
@@ -15,7 +15,86 @@ COMMANDS = ('sync', 'folder-status', 'history', 'resolve', 'delete', 'rename', '
 FOLDER_PROVIDERS = ('local', 'google-drive', 'icloud', 'onedrive', 'nextcloud', 'self-hosted')
 
 
-def new_workspace_files(root):
+VAULT_TYPES = ('team', 'personal', 'project')
+
+
+def validate_project_folders(folders):
+    """Portable relative domain directories, never filesystem or markup syntax."""
+    import re
+    result = []
+    reserved = {'CON', 'PRN', 'AUX', 'NUL', *(f'COM{i}' for i in range(1, 10)), *(f'LPT{i}' for i in range(1, 10))}
+    for value in folders or ():
+        if not isinstance(value, str) or len(value) > 160 or not value:
+            raise ProductError(2, 'project_folder_unsafe', 'Project folders must be bounded relative directory names.')
+        parts = value.split('/')
+        if any(not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9 _-]{0,63}', part)
+               or part.endswith(' ') or part.upper() in reserved for part in parts):
+            raise ProductError(2, 'project_folder_unsafe', 'Use portable relative folders without traversal, hidden names, reserved names or markup.')
+        folded = value.casefold()
+        if folded in {'agents', 'index'} or any(folded == old.casefold() or
+                folded.startswith(old.casefold() + '/') or old.casefold().startswith(folded + '/') for old in result):
+            raise ProductError(2, 'project_folder_unsafe', 'Project folders must be distinct non-overlapping directories.')
+        result.append(value)
+    if len(result) > 32:
+        raise ProductError(2, 'project_folder_unsafe', 'Choose at most 32 project folders.')
+    return result
+
+
+def profile_workspace_files(vault_type, folders):
+    if vault_type == 'personal':
+        title = 'Personal vault'
+        routes = [('Notes', 'Personal knowledge, decisions and useful notes'),
+                  ('Resources', 'Reference material and original sources')]
+        guidance = ('This is a single-person vault. Use simple natural notes. Do not require manual\n'
+                    'person-agent attribution, change registers, evidence labels, verification templates\n'
+                    'or team audit reports. Keep factual accuracy, useful source links, uncertainty when\n'
+                    'material, conflict recovery and confidentiality. Runtime causal history remains\n'
+                    'available for synchronization and recovery; it is not a manual writing task.\n')
+    else:
+        title = 'Project vault'
+        routes = [(name, 'Project material for ' + name) for name in folders]
+        guidance = ('This vault is scoped to this project and usually shared by its team. Choose domain\n'
+                    'folders from the actual project purpose, deliverables and working process before\n'
+                    'initialization; the generic Knowledge/Planning/Deliverables fallback is only a\n'
+                    'starting point. Preserve established folders and do not reorganize existing work\n'
+                    'during setup. Retain person/agent contribution attribution in recoverable history.\n'
+                    'Use actual --person and --agent labels and a distinct --actor when binding a teammate;\n'
+                    'labels record asserted capture provenance, not authenticated authorship.\n'
+                    'Coordinate overlapping writes and preserve source links and factual\n'
+                    'uncertainty where they matter. A vault profile does not change access permissions.\n')
+    agents = f'''# {title}
+
+Read INDEX.md, then only relevant notes using bounded topic/path searches.
+
+{guidance}
+Memory upkeep is part of completing a task. Without waiting to be asked, update the
+appropriate existing note with useful durable decisions, findings, corrections,
+artifact links and next steps. Create and index a note only when no existing home
+fits. Read back touched notes before claiming a save. Keep handoffs concise and
+useful; avoid transcripts, duplicate logs and routine tool narration. Respect
+explicit do-not-save instructions and keep private material in its authorized vault.
+
+Use native file tools. Preserve existing instructions, hierarchy, attachments and
+unrelated edits. Retain conflicts; resolve factual disagreements against evidence.
+Record explicit renames/deletions through Isolinear Memory and check links; missing
+files alone are not deletions. Configured automatic capture records history;
+otherwise run the installed isolinear-memory sync once after material edits.
+Local save/capture does not prove remote receipt. Report material capture failures
+once, preserve saved notes and avoid repeated retries or routine provider narration.
+Keep credentials, private runtime state and recovery outside the vault. Respect
+read-only grants and OS/provider controls. Preserve .shared-memory/ and
+.shared-memory.json. One provider per folder.
+'''
+    index = f'# {title} index\n\nRead [[AGENTS]] first.\n\n| Need | Location |\n| --- | --- |\n'
+    files = {'AGENTS.md': agents}
+    for name, purpose in routes:
+        index += f'| {purpose} | [[{name}/README|{name}/]] |\n'
+        files[name + '/README.md'] = f'# {PurePosixPath(name).name}\n\n{purpose}. Add useful subfolders and canonical notes as needed.\nPreserve originals and link relevant decisions and deliverables from the vault index.\n'
+    files['INDEX.md'] = index + '\nAdd links to canonical notes here as the vault grows.\n'
+    return files
+
+
+def new_workspace_files(root, vault_type='team', project_folders=None):
     """Seed only an empty selected folder; never classify or move existing work.
 
     The normal initialization intent, immutable event and materialization journal
@@ -24,6 +103,8 @@ def new_workspace_files(root):
     """
     if any(root.iterdir()):
         return None
+    if vault_type != 'team':
+        return profile_workspace_files(vault_type, project_folders or ['Knowledge', 'Planning', 'Deliverables'])
     return {
         'AGENTS.md': '''# Shared workspace
 
@@ -128,6 +209,10 @@ def add_commands(commands):
             command.add_argument('--max-hits', type=int, default=5)
             command.add_argument('--max-bytes', type=int, default=2048)
             command.add_argument('--refresh', action='store_true', help='Recheck changed Markdown before searching; may wait up to five seconds')
+            command.add_argument('--strategy', choices=('exact', 'hybrid'), default='exact',
+                                 help='Exact terms (default) or fused lexical/title/explicit-link retrieval')
+            command.add_argument('--after', help='Hybrid only: inclusive YYYY-MM-DD lower bound on dates in excerpts')
+            command.add_argument('--before', help='Hybrid only: inclusive YYYY-MM-DD upper bound on dates in excerpts')
         if name == 'show':
             command.add_argument('--path', required=True)
             command.add_argument('--sha256', required=True)
@@ -179,14 +264,34 @@ def state_path(args, root):
 
 
 def setup(args):
-    from .folder import Folder
+    from .folder import Folder, validate_vault_profile
     if not args.project.strip():
         raise ProductError(2, 'usage_error', 'Select a nonempty project path.')
     if getattr(args, 'content_mode', None) not in (None, 'markdown'):
         raise ProductError(3, 'content_mode', 'Direct folder workflow uses Markdown discovery; legacy content mode belongs to historical coordinator setup.')
+    requested_type = getattr(args, 'vault_type', None)
+    requested_folders = validate_project_folders(getattr(args, 'project_folder', None))
+    if requested_folders and requested_type != 'project':
+        raise ProductError(2, 'vault_profile', '--project-folder requires --vault-type project.')
     root = workflow.selected_root(args.project)
     state = state_path(args, root)
     item = metadata(root)
+    pending_profile = workflow.json_file(state / 'initialization.json') if (state / 'initialization.json').exists() else None
+    for profile_source in (item, pending_profile):
+        if profile_source:
+            validate_vault_profile(profile_source.get('vault_profile'))
+    retained = (item or pending_profile or {}).get('vault_profile')
+    if retained:
+        if requested_type and requested_type != retained['type']:
+            raise ProductError(3, 'vault_profile_mismatch', 'Existing vault profile is preserved; setup does not reclassify it.')
+        if requested_folders and requested_folders != retained.get('project_folders', []):
+            raise ProductError(3, 'vault_profile_mismatch', 'Existing project folders are preserved; setup does not reorganize them.')
+    elif (item or pending_profile) and (requested_type not in (None, 'team') or requested_folders):
+        raise ProductError(3, 'vault_profile_mismatch', 'Existing unclassified history is preserved; profile changes require an explicit separate migration.')
+    vault_type = retained['type'] if retained else requested_type or 'team'
+    project_folders = retained.get('project_folders', []) if retained else (
+        (requested_folders or ['Knowledge', 'Planning', 'Deliverables']) if vault_type == 'project' else [])
+    vault_profile = retained or {'type': vault_type, 'project_folders': project_folders}
     if item and args.expected_project_id and args.expected_project_id != item.get('project_id'):
         raise ProductError(3, 'identity_mismatch', 'The selected folder differs from the explicitly expected project identity.')
     if item and item.get('workflow') != 'folder':
@@ -256,13 +361,15 @@ def setup(args):
                 raise ProductError(4, 'folder_not_delivered', 'Expected project metadata/history has not arrived. Do not create a new project identity.')
             if any((base / name).exists() for base in (state, state.parent) for name in ('connection.json', 'setup-intent.json')):
                 raise ProductError(4, 'existing_history', 'Existing private coordinator history needs reviewed migration, not fresh setup.')
-            seeds = new_workspace_files(root) if not pending else None
+            seeds = new_workspace_files(root, vault_type, project_folders) if not pending else None
             folder = Folder.initialize(root, state, provider=args.provider or (pending['provider'] if pending else 'local'), readonly=readonly,
                                        project_id=pending['project_id'] if pending else None,
-                                       initial_files=seeds, materialize_initial=seeds is not None, **identity)
+                                       initial_files=seeds, materialize_initial=seeds is not None,
+                                       vault_profile=vault_profile if not pending else pending.get('vault_profile'), **identity)
             route = 'new_folder'
     result = folder.status()
     return {'workflow': 'folder', 'route': route, 'project_id': result['project_id'],
+            'vault_type': vault_type, 'project_folders': project_folders,
             'state_dir': str(state), 'status': result, 'readiness': result.get('readiness', 'inspect_status'),
             'next': 'Edit local notes directly, then sync to preserve/reconcile history. Reviews are optional.',
             'provider_delivery': 'unverified', 'coordinator_required': False, 'approval_queue': False}
@@ -281,7 +388,8 @@ def dispatch(bundle, args):
                 return retrieval.recall(selected, private_state, args.query,
                                         raw=args.include_raw, output=args.include_output,
                                         max_hits=args.max_hits, max_bytes=args.max_bytes,
-                                        refresh=args.refresh)
+                                        refresh=args.refresh, strategy=args.strategy,
+                                        after=args.after, before=args.before)
             return retrieval.show(selected, args.path, args.sha256, args.start,
                                   args.end, max_bytes=args.max_bytes)
         return retrieval.bounded_cli(selected_read, command=args.command,

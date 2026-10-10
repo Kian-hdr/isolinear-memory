@@ -275,12 +275,25 @@ def evidence_text(value):
     return value
 
 
+def validate_vault_profile(profile):
+    if profile is None:
+        return
+    from .folder_workflow import VAULT_TYPES, validate_project_folders
+    if (not isinstance(profile, dict) or set(profile) != {'type', 'project_folders'}
+            or profile.get('type') not in VAULT_TYPES or not isinstance(profile.get('project_folders'), list)):
+        fail('vault_profile', 'Invalid vault profile metadata.')
+    validate_project_folders(profile['project_folders'])
+    if profile['type'] != 'project' and profile['project_folders']:
+        fail('vault_profile', 'Custom project folders require a project vault.')
+
+
 def validate_manifest(value):
     if (not isinstance(value, dict) or value.get('format_version') != 3 or value.get('workflow') != 'folder'
             or value.get('provider') not in PROVIDERS):
         fail('format', 'This folder requires the matching format-3 direct-folder runtime.')
     if str(uuid.UUID(value.get('project_id'))) != value.get('project_id'):
         fail('identity', 'Project identity must be a canonical UUID.')
+    validate_vault_profile(value.get('vault_profile'))
     return value
 
 
@@ -342,9 +355,10 @@ class Folder:
     @classmethod
     @checked
     def initialize(cls, root, state, actor, person, agent, provider='local', project_id=None,
-                   readonly=False, initial_files=None, migration_origin=None, materialize_initial=False):
+                   readonly=False, initial_files=None, migration_origin=None, materialize_initial=False, vault_profile=None):
         root = safe(Path(root).expanduser()); state = private_path(state, root)
         author = identity(actor, person, agent)
+        validate_vault_profile(vault_profile)
         if readonly:
             fail('readonly', 'Read-only devices may attach to an existing project, not initialize history.', 4)
         if provider not in PROVIDERS:
@@ -353,6 +367,8 @@ class Folder:
             fail('missing', 'Choose an existing physical project folder.', 5)
         if (root / MANIFEST).exists():
             existing = cls(root, state)
+            if vault_profile is not None and existing.manifest.get('vault_profile') != vault_profile:
+                fail('binding', 'Existing vault profile cannot be replaced during initialization.')
             if existing.config['author'] != author or existing.manifest['provider'] != provider or (project_id and project_id != existing.project_id):
                 fail('binding', 'Existing project and author binding cannot be replaced.')
             if (state / 'baseline.json').exists():
@@ -366,8 +382,11 @@ class Folder:
             if not pending.is_file():
                 fail('state_exists', 'Existing private state cannot be adopted as a new project.')
             intent = parse(read_bytes(pending))
+            validate_vault_profile(intent.get('vault_profile'))
             if intent['root'] != str(root) or intent['author'] != author or intent['provider'] != provider or (project_id and intent['project_id'] != project_id):
                 fail('binding', 'Retry the original initialization inputs.')
+            if vault_profile is not None and intent.get('vault_profile') != vault_profile:
+                fail('binding', 'Retry the original initialization vault profile.')
         else:
             identifier = project_id or str(uuid.uuid4())
             if str(uuid.UUID(identifier)) != identifier:
@@ -391,10 +410,13 @@ class Folder:
                 if any(k.endswith('hash') and (not isinstance(v, str) or not HASH.fullmatch(v)) for k, v in origin.items()):
                     fail('migration', 'Migration digests must be SHA-256 values.')
             intent = {'root': str(root), 'project_id': identifier, 'author': author, 'provider': provider,
-                      'files': files, 'migration_origin': origin, 'materialize_initial': materialize_initial}
+                      'files': files, 'migration_origin': origin, 'materialize_initial': materialize_initial,
+                      'vault_profile': vault_profile}
             atomic(state / 'initialization.json', canonical(intent), immutable=True)
         manifest = {'format_version': 3, 'product_version': PRODUCT_VERSION, 'workflow': 'folder',
                     'project_id': intent['project_id'], 'provider': provider}
+        if intent.get('vault_profile') is not None:
+            manifest['vault_profile'] = intent['vault_profile']
         if intent['migration_origin'] is not None:
             manifest['migration_origin'] = intent['migration_origin']
         config = {'format': VERSION, 'root': str(root), 'project_id': intent['project_id'], 'author': author, 'readonly': False}

@@ -1,5 +1,74 @@
 # Validation record
 
+## Local two-vault rollout, 2026-10-02
+
+The user authorized live local installation after selective assimilation. Real
+cloud-backed acceptance exposed broad-scan timeouts, stalled candidate reads and
+frequency-heavy archive ranking. Warm hybrid routing now reads private-index
+candidates first, caps individual source validation/reads at 0.15 seconds, total
+reading at three seconds and pending timed-out readers at three. Checked partial
+results remain usable. Warm graph paths require canonical Wiki/Raw/Output root
+prefixes; relative/basename links wait for full inventory. Exact current-note title
+routing preserves a compact body-evidence span before archival references, while
+all spans/hashes/date filters and post-fit deduplication stay enforced.
+
+The broader warm-routing product regression collected 572 tests with 21 skips and
+zero failures. After subsequent read/link/ranking refinements, final affected
+packaged acceptance passed 36 tests; independent synthetic review verified body
+content at max-hits1, duplicate suppression, current sources, date filters and
+root semantics. This distinguishes broad regression from the later targeted checks.
+The v2 paired corpus uses explicit project-root links for warm graph semantics;
+corpus/case hashes expose that deliberate fixture revision. It is not a benchmark
+against Hindsight itself or model-token measurement.
+
+Both locally configured vaults passed installed hybrid recall and hash-checked
+show. Updated selected docs were read back and matched current local capture
+baselines. Shared commands and existing capture jobs point to the same immutable
+reviewed dirty-source build, with prior runtime versions retained. Private local
+receipts contain actual digest/config/coverage evidence; no account-specific vault
+content or absolute provider paths are copied here. Full-vault capture remains
+partial for unrelated unavailable/provider-delayed sources. Mixed-OS CI, independent
+recipient delivery, hosted service rollout and a public release were not performed.
+
+## Hindsight-inspired hybrid recall development candidate, 2026-10-02
+
+Base source: `a0f512847fd32b2bbd5d0222625de5c85d8e97d4`, locally modified and
+uncommitted. This evidence describes the development checkout, not released v0.5.2.
+The selective [source-to-target map](docs/READINESS.md#hindsight-selective-assimilation-development-candidate-2026-10-02)
+records inspected Hindsight source and reuse/license boundaries.
+
+On macOS with Python 3.13:
+
+- Full `product/tests` run: 568 collected, 547 passed, 21 skipped, zero failures.
+  Two additional boundary fixtures were added while that discovery run was already
+  active; the final dedicated hybrid suite passed all 13 cases afterward.
+- Existing and new retrieval acceptance initially passed 28 combined tests; final
+  hybrid acceptance verifies current/deleted excerpts, source hashes, loose-query
+  recall, explicit links, unavailable duplicate basenames, unsafe paths, private/
+  nested scope, Raw/Output opt-in, ISO dates including linked-neighbor filters,
+  maintenance-stamp exclusion, output budgets, fallback and deadlines.
+- Existing workspace toolkit: 58 passed; doctor: 7 passed. The initial system Python
+  invocation was rejected by the >=3.11 runtime gate; corrected to Python 3.13.
+  The separate workspace toolkit first lacked PyYAML, then passed in a disposable
+  venv with the existing development requirement. No runtime dependency was added.
+- Ten generated Markdown diagram blocks, relative documentation target existence
+  (46 before the result link was added) and `git diff --check` passed.
+- A final dirty-source development zipapp passed packaged `version`, hybrid `recall`
+  and current-hash `show` against synthetic fixtures. The build records the base
+  revision and `source_dirty=true`; it is not a clean-source release.
+- [Eight paired synthetic cases](benchmarks/HINDSIGHT-ASSIMILATION-RESULTS.json):
+  frozen baseline exact 6/8, candidate exact 6/8, candidate hybrid 8/8, with unchanged
+  original Markdown and exact-span/source-hash validation. Corpus, case and package
+  hashes are recorded. Gains are the loose-query and linked-answer cases.
+- Independent read-only review and separate CLI probes found no actionable defect
+  in date/scope/ambiguity/freshness/fusion/budget handling.
+
+This is bounded local synthetic evidence. Cross-platform CI, live Vault speed,
+provider delivery, model-token savings and generated-answer accuracy were not tested.
+The implementation contains no semantic embeddings, LLM extraction, consolidation
+or Hindsight reflection service. No installed-runtime replacement, push or release
+was performed. Exact search remains the default.
+
 ## 0.3.0 evidence boundary
 
 The first candidate `d440e87` was withheld after Windows CI exposed incompatible
@@ -911,3 +980,32 @@ checks passed. Runtime scripts and dashboard assets were unchanged.
 The revised skill guidance was also synchronized to the maintainer's installed
 skill after preserving its previous instruction files. No fresh-machine installer,
 administrator/authentication flow, or recipient app launch was executed for this update.
+
+## Vault profiles development acceptance, 2026-10-10
+
+New folder setup supports team, personal and project profiles with safe custom
+project directories. Optional format-3 profile metadata preserves joining and
+crash recovery; populated folders are not reorganized. Personal instruction
+seeds omit manual contributor logs and mandatory verification templates while
+retaining useful sources, accuracy and recovery. Profile-aware exact/hybrid recall
+and source-hash-checked show search personal Notes (Resources opt-in) or declared
+project directories, preserving private/nested project/path boundaries.
+
+Python 3.13 acceptance: 11 profile setup tests, 11 existing folder CLI tests,
+17 setup recovery tests and 41 retrieval tests passed. A legacy timeout-coverage
+regression identified during the first retrieval run was corrected and all
+41 retrieval tests then passed. Packaged synthetic acceptance passed setup, sync,
+resume, exact recall, hybrid recall and hash-checked show across all three profiles.
+Ten generated Mermaid blocks and diff whitespace checked successfully. These
+results establish local behavior, not provider receipt, disclosure permission,
+measured token savings or a published release. Full integrated regression and
+local installation status are recorded in the private task receipt.
+
+Integrated regression ran 592 tests with 21 skips. Two failures were identified:
+a deadline-coverage assertion used pre-fix code loaded at suite start, and the
+synthetic release checkout omitted the newly required runtime modules. The latter
+fixture now explicitly includes those modules and the profile guide without
+relaxing assertions. All 46 retrieval/release tests then passed on final source.
+The full suite was not repeated after those narrow corrections. The checksum-bound
+development runtime and both local command aliases were updated, retaining prior
+versions and existing capture-job bindings. This is a local development update.

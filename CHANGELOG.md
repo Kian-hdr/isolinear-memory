@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.6.0
+
+- Add team, personal and project vault profiles. Team vaults retain Raw/Wiki/Output;
+  personal notes omit manual contributor audit and verification boilerplate; project
+  vaults use domain-specific folders while retaining shared contributor history.
+- Persist optional profile metadata through joining and interrupted initialization.
+  Preserve existing manifests, populated layouts, identities and causal history.
+- Make exact and optional hybrid recall plus hash-checked source expansion honor
+  personal and declared project folders with existing private/nested-project boundaries.
+- Add dependency-free lexical/title/explicit-link ranked hybrid retrieval with
+  optional ISO-date excerpt filters, source checks and bounded partial coverage.
+- Refresh the setup prompt, skills and installation guidance for profile-aware use.
+
+
 ## 0.5.2
 
 - Replace the initial lattice artwork with a centered, four-node memory emblem.

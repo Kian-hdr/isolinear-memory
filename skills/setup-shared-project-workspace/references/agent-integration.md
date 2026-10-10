@@ -4,9 +4,9 @@ Read INDEX.md and only relevant notes. Search before writing. Use the host's nat
 read/edit tools. The agent maintains memory as part of finishing each task, without
 waiting for the human to request documentation. Save meaningful findings, decisions,
 corrections, generated artifacts, status changes and useful next steps in the relevant
-existing canonical Wiki note. Save substantial deliverables in Output and link them
-from Wiki; keep code in its project repository and link the exact path/version. Keep
-source inputs in Raw. If there is no suitable note, create one within the selected
+existing canonical note. Save substantial deliverables in the selected layout's deliverable folder and link them
+from canonical notes; keep code in its project repository and link the exact path/version. Keep
+source inputs in the selected layout's source/resource folder. If there is no suitable note, create one within the selected
 folder and add one short route in INDEX.md. Make the smallest targeted edit that
 preserves evidence, dates, uncertainty, confidentiality and unrelated changes.
 Read back touched notes and artifacts before claiming a save.
@@ -57,3 +57,6 @@ launch the capture process; it cannot repair a provider's malformed native edits
 
 See the source repository's docs/AUTOMATIC-CAPTURE.md for deterministic installation,
 status and removal. No MCP server, API key or extra tool schemas are required.
+
+Use [vault profiles](vault-profiles.md): personal vaults omit manual contributor logs
+and mandatory verification templates; project vaults use a domain-specific layout.
