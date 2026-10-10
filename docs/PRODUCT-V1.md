@@ -1,4 +1,4 @@
-# Isolinear Memory 0.5.2 operating guide
+# Isolinear Memory 0.6.0 operating guide
 
 Isolinear Memory defaults to **direct editing in a shared Markdown folder**.
 The previous Shared Memory name remains a command and skill compatibility alias;
@@ -26,8 +26,10 @@ isolinear-memory show . --path Wiki/Note.md --sha256 SOURCE_HASH --start 10 --en
 ```
 
 `recall` returns at most five hits inside a 2 KiB default response. It searches
-`Wiki/`, `AGENTS.md` and `INDEX.md`; `--include-raw` and `--include-output` explicitly
-expand that scope. Each hit identifies a relative path, heading, exact line range
+`AGENTS.md` and `INDEX.md` plus the profile's canonical directories. Team/unclassified
+vaults search `Wiki/`; `--include-raw` and `--include-output` add Raw/Output. Personal
+vaults search `Notes/`, with Resources opt-in through `--include-raw`. Project vaults
+search their declared domain folders. Each hit identifies a relative path, heading, exact line range
 and source hash. Agent-facing text shows a 24-hex prefix; JSON retains the full
 SHA-256. `show` recomputes the full digest and refuses changed source bytes; rerun
 recall when stale. Cached hits are checked against current source bytes, but new or
@@ -51,7 +53,7 @@ configured and healthy, records the edit independently of the model.
 
 For substantive work, agents should make the memory update part of task completion:
 save durable findings, decisions, generated-artifact links, status and next steps
-in the authorized existing Wiki note, then read back the touched files. Do this
+in the authorized existing canonical note, then read back the touched files. Do this
 without waiting for an extra memory request. Keep citations and uncertainty;
 skip transient tool output and duplicate session summaries. `AGENTS.md` sets the
 project's privacy and routing rules. Isolinear captures saved files, but does not
@@ -59,6 +61,40 @@ observe conversations or autonomously extract their contents. Routine capture
 and provider diagnostics remain internal; user-facing completion can name the
 saved note briefly. Raise an issue when the current result is at risk, requested
 delivery cannot be verified or the user must act.
+
+### Optional hybrid retrieval
+
+```bash
+isolinear-memory recall . "quartz maintenance" --strategy hybrid --text
+isolinear-memory recall . "quartz" --strategy hybrid --after 2026-10-01 --before 2026-10-03 --text
+```
+
+Hybrid recall combines lexical matches (any query term), note titles and explicit
+one-hop wikilinks using reciprocal rank fusion. It can find a linked schedule even
+when that schedule does not repeat the project name. Each result remains an exact
+source excerpt with a current hash; relevance does not prove that it answers every
+part of a question. There is no semantic embedding or extraction model.
+
+`--after` and `--before` are inclusive, validated `YYYY-MM-DD` bounds on ISO dates
+in returned excerpts, available only with `--strategy hybrid`. Undated excerpts
+are excluded when a bound is supplied. A date mentioned in a span is not proof of
+its event time; filesystem modification dates are not used. Filters apply to linked
+neighbors too. Ambiguous links are not silently resolved. Inspect the `retrieval`,
+`unsearched`, `unavailable` and `truncated` fields for coverage and fallback limits.
+Exact search remains the default. Use explicit Raw/Output flags for those scopes.
+[Source and adaptation record](READINESS.md#hindsight-selective-assimilation-development-candidate-2026-10-02).
+
+Routine hybrid calls use bounded candidates from the private index before reading
+cloud files. They report `changes_since_index` and `uncaptured_paths`; newly opted-in
+Raw/Output scope is hydrated on its first bounded query. Warm graph expansion accepts
+explicit project-root profile directories (`Wiki/Raw/Output`, `Notes/Resources`,
+or declared project folders). Those prefixes always mean
+the project root, including during refresh. Basename/other relative links wait for
+full inventory because new competing paths cannot be ruled out from a cache.
+Cloud candidate validation/reads are bounded at 0.15 seconds each, three seconds
+total and three unfinished readers. A slow source yields partial coverage while
+already verified hits remain usable; use native reads or refresh for broader coverage.
+
 
 ## Agent-guided setup
 
@@ -68,9 +104,9 @@ disposable trial. Python 3.11+ and the verified package are required; the local
 folder engine uses the standard library. The optional historical coordinator's
 server dependencies are not needed for folder mode.
 
-Use the [v0.5.2 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.5.2)
+Use the [v0.6.0 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.6.0)
 only when its assets are actually present. The expected executable is
-`isolinear-memory-0.5.2.pyz`, with external `SHA256SUMS`; an explicitly supplied reviewed
+`isolinear-memory-0.6.0.pyz`, with external `SHA256SUMS`; an explicitly supplied reviewed
 candidate is also usable. Internal package hashes do not independently authenticate
 the publisher. Compare the external SHA before executing a download:
 
@@ -125,23 +161,15 @@ Creating a new project requires a writable editor.
 
 ## Persistent memory layout
 
-For an entirely empty selected folder, current source builds seed:
-
-```text
-PROJECT/
-├── Raw/README.md
-├── Wiki/README.md
-├── Output/README.md
-├── AGENTS.md
-└── INDEX.md
-```
-
-`Raw/` is the source inbox, `Wiki/` is durable canonical knowledge, and `Output/`
-is the default for substantial generated deliverables. Agents read `AGENTS.md`,
-`INDEX.md` and relevant Wiki pages, then automatically maintain durable project
-state and decisions. The same knowledge structure applies across devices; private
-runtime baselines remain separate. The README notes keep the three directories
-portable through file synchronization and record their purpose.
+Version 0.6.0 seeds only an entirely empty selected folder. The default
+`--vault-type team` keeps Raw/Wiki/Output; `personal` uses Notes/Resources with concise
+single-owner instructions; `project` accepts repeatable `--project-folder` inputs
+for a domain-specific structure (fallback Knowledge/Planning/Deliverables).
+Each includes AGENTS.md, INDEX.md and folder README routes. Agents infer the project
+layout from its brief and record meaningful project-specific guidance. Personal
+instructions omit manual contributor registers and mandatory verification templates;
+factual accuracy and recoverable causal history remain. Existing old releases keep
+their legacy seed. See [vault profiles](../skills/setup-shared-project-workspace/references/vault-profiles.md).
 
 The seed notes use the existing initialization history and recovery path. Setup
 never overwrites existing notes or reorganizes populated folders, including ones

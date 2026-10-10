@@ -1,9 +1,9 @@
 # Product runtime and format routing
 
-Isolinear Memory 0.5.2, formerly Shared Memory, defaults to direct shared-folder editing. Use Python 3.11+ and
+Isolinear Memory 0.6.0, formerly Shared Memory, defaults to direct shared-folder editing. Use Python 3.11+ and
 an exact verified `.pyz`. The version-specific release is
-[v0.5.2](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.5.2); execute
-`isolinear-memory-0.5.2.pyz` only when actually supplied/present and verified against
+[v0.6.0](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.6.0); execute
+`isolinear-memory-0.6.0.pyz` only when actually supplied/present and verified against
 external `SHA256SUMS`. An explicitly provided reviewed candidate is separate from
 a published release. Verify before execution, then check `version` and the command help needed. Install it in private immutable tools storage using `install-package`.
 This skill is not the runtime and must not silently substitute the advisory tracker.
@@ -17,12 +17,12 @@ optional inputs include `--state-dir`, `--actor`, `--person`, `--agent`,
 Google Drive, iCloud, OneDrive, Nextcloud or an explicitly selected self-hosted route.
 These flags record intent and local binding, not account authentication or receipt.
 
-Current source builds seed `Raw/`, `Wiki/`, `Output/`, `AGENTS.md` and `INDEX.md`
-only when the selected folder is entirely empty. The seed notes enter ordinary
-initial history and recover through the existing materialization path. The planned
-0.5.2 source supplies this layout for new empty workspaces. Existing content, including hidden files and
-empty directories, prevents automatic scaffolding. Setup does not reorganize
-existing workspaces. Join and resume retain their content and instructions.
+Version 0.6.0 seeds team, personal or project layouts only in an
+entirely empty folder. See [vault profiles](vault-profiles.md) for selection and
+custom project folders. Older releases retain their Raw/Wiki/Output empty-folder
+seed; inspect setup help and pre-create the designed notes before legacy setup.
+Existing content, hidden files or empty directories prevent automatic scaffolding.
+Setup never reorganizes existing workspaces. Join and resume retain their content.
 
 Metadata/history lives in `.shared-memory.json` and `.shared-memory/` with the
 project. Per-device baseline/config/recovery stays private outside shared storage.

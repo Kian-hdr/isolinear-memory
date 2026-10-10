@@ -1,4 +1,4 @@
-# Direct-folder contract for Isolinear Memory 0.5.2
+# Direct-folder contract for Isolinear Memory 0.6.0
 
 This is the current default workflow. `ENGINE-CONTRACT.md` describes the explicitly
 retained historical coordinator, not the rules for ordinary folder editing.
@@ -32,6 +32,13 @@ parent heads/base text, changes, evidence and an optional rename descriptor. Sup
 kinds are initial, edit, resolve, delete and rename. Content-derived event identifiers
 and validation detect malformed or changed records; they do not authenticate a human
 or make history resistant to every hostile actor with direct folder access.
+
+Optional `recall --strategy hybrid` fuses checked lexical, title and
+explicit one-hop wikilink evidence without an extraction model or external service.
+Exact search remains the default. Inclusive ISO-date bounds apply to returned spans
+and graph neighbors; they do not establish event time. Partial-match ranking is not
+factual authority. The same selected-folder, source-hash, deadline and output-budget
+boundaries apply. See [source-to-target map](../docs/READINESS.md#hindsight-selective-assimilation-development-candidate-2026-10-02).
 
 ## Capture and reconciliation
 
@@ -119,3 +126,20 @@ with a fresh private backup directory, unchanged project identity and an editing
 historical member. Applying it preserves the old intent and backup. Once the
 format changes or new folder state exists, only the original recovery path can
 resume; replan cannot reset that history.
+
+## Vault profiles
+
+Version 0.6.0 setup chooses team, personal or project scaffolding only
+for empty roots. Profiles guide writing and folder layout; they do not grant access,
+remove causal event metadata, or reorganize existing folders. Custom project
+folders must be portable relative paths. See the setup skill's
+[vault profile policy](../skills/setup-shared-project-workspace/references/vault-profiles.md).
+
+Profile-aware recall searches personal Notes by default (Resources with
+`--include-raw`) and all declared custom project folders. Exact and hybrid results
+and hash-checked show use the same selected-root/private-path boundaries. Older
+unclassified/team manifests retain Wiki with opt-in Raw/Output. Profile selection
+does not include arbitrary parent folders or nested Isolinear projects.
+
+Atomic `append-row` remains limited to existing Wiki tables. Personal and custom
+project tables use native edits followed by normal capture.

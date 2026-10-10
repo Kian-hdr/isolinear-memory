@@ -19,7 +19,9 @@ notes with durable facts, decisions and progress; retain evidence and uncertaint
 Read [runtime setup](references/product-runtime.md). Discover the selected folder,
 existing format, installed runtime and private state. Verify release checksums before
 execution. Preserve project identity, history, instructions and unrelated files.
-Only an empty new workspace receives Raw/, Wiki/, Output/, AGENTS.md and INDEX.md.
+Choose team, personal or project guidance from
+[the vault profile policy](references/vault-profiles.md). Only an entirely empty
+workspace receives the selected profile's folders, AGENTS.md and INDEX.md.
 Never reorganize a populated workspace automatically.
 
 Install stable `isolinear-memory` and `shared-memory` launchers for the same runtime,

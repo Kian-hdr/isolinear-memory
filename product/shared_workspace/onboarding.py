@@ -27,6 +27,8 @@ def add_commands(commands):
         setup.add_argument('--' + name)
     setup.add_argument('--provider', choices=tuple(dict.fromkeys((*workflow.PROVIDERS, 'nextcloud'))))
     setup.add_argument('--workflow', choices=('folder', 'coordinator'), default='folder', help='Direct shared-folder editing by default; coordinator is historical compatibility')
+    setup.add_argument('--vault-type', choices=('team', 'personal', 'project'), help='New vault profile; defaults to team, existing profile is retained')
+    setup.add_argument('--project-folder', action='append', help='Repeatable relative domain folder for a new project vault; never reorganizes existing content')
     setup.add_argument('--read-only', action='store_true', help='Preserve an explicit read-only local binding; provider/OS permissions remain authoritative')
     setup.add_argument('--content-mode', choices=CONTENT_MODES, help='Opt in to Markdown-only discovery for a new project; existing mode is retained')
     setup.add_argument('--expected-project-id')
@@ -155,6 +157,8 @@ def dispatch(bundle, args):
     if getattr(args, 'workflow', 'folder') == 'folder':
         from .folder_workflow import setup
         return setup(args)
+    if getattr(args, 'vault_type', None) or getattr(args, 'project_folder', None):
+        raise ProductError(2, 'vault_profile', 'Vault profiles apply to the direct folder workflow only.')
     for field in ('state_dir', *IDENTITY, 'provider', 'content_mode', *JOIN):
         value = getattr(args, field)
         if value is not None and not value.strip():

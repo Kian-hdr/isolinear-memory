@@ -21,6 +21,7 @@ from .errors import ProductError
 from .folder import fsync_dir, private_path, read_bytes, safe
 from .knowledge import PRIVATE, PRIVATE_FILES
 from .path_safety import is_link_or_reparse
+from .profile_scope import scope as _profile_scope, contains as _scope_contains
 
 MAX_FILE = 2 * 1024 * 1024
 MAX_SCAN_FILES = 10000
@@ -57,16 +58,14 @@ def _source_names(*groups):
 
 def _eligible(root, *, raw=False, output=False):
     """Yield only in-scope regular Markdown; report excluded/unavailable counts."""
-    roots = ['Wiki'] + (['Raw'] if raw else []) + (['Output'] if output else [])
+    roots, excluded = _profile_scope(root, raw=raw, output=output)
     paths = []
     meta = {'unavailable': 0, 'unavailable_sources': [],
-            'unsearched': ['Raw'] if not raw else []}
+            'unsearched': excluded}
     def unavailable(name=None):
         meta['unavailable'] += 1
         if name:
             meta['unavailable_sources'] = _source_names(meta['unavailable_sources'], [name])
-    if not output:
-        meta['unsearched'].append('Output')
     for name in ('AGENTS.md', 'INDEX.md'):
         path = root / name
         if path.exists() and not is_link_or_reparse(path) and path.is_file():
@@ -78,7 +77,12 @@ def _eligible(root, *, raw=False, output=False):
         if not base.exists():
             unavailable(name)
             continue
-        if is_link_or_reparse(base) or not base.is_dir():
+        ancestors = [base, *base.parents]
+        if (any(part.casefold() in PRIVATE or part.casefold() in PRIVATE_FILES or
+                part.casefold() == 'coordination' for part in name.split('/')) or
+                is_link_or_reparse(base) or not base.is_dir() or
+                any(is_link_or_reparse(parent) or (parent / '.shared-memory.json').exists()
+                    for parent in ancestors[:ancestors.index(root)])):
             unavailable(name)
             continue
         def walk_error(error):
@@ -86,7 +90,7 @@ def _eligible(root, *, raw=False, output=False):
             try:
                 candidate = Path(error.filename).relative_to(root)
                 parts = candidate.parts
-                if (parts and parts[0] == name and
+                if (parts and candidate.as_posix().startswith(name + '/') and
                         not any(part.startswith('.') or part.casefold() in PRIVATE or
                                 part.casefold() in PRIVATE_FILES or part.casefold() == 'coordination'
                                 for part in parts)):
@@ -337,15 +341,15 @@ def _cached(db, root, terms, *, raw, output):
     rows = db.execute("SELECT path FROM chunks WHERE chunks MATCH ? "
                       "ORDER BY (instr(lower(path), '/archive/') > 0), bm25(chunks) LIMIT 30",
                       (expression,)).fetchall()
+    roots, _ = _profile_scope(root, raw=raw, output=output)
     paths = []
     unavailable = 0
     sources = []
     for (name,) in rows:
-        if not (name in {'AGENTS.md', 'INDEX.md'} or name.startswith('Wiki/') or
-                (raw and name.startswith('Raw/')) or (output and name.startswith('Output/'))):
+        if not _scope_contains(name, roots):
             continue
         try:
-            paths.append((name, _relative(root, name)))
+            paths.append((name, _relative(root, name, allowed_roots=roots)))
         except ProductError as error:
             unavailable += 1
             if error.code not in {'recall_nested_project', 'recall_path'}:
@@ -444,6 +448,7 @@ def _fit(result, max_bytes):
 def _recall_impl(root, state, terms, *, raw, output, max_hits, max_bytes, refresh):
     # A previously indexed current hit can be returned without walking a slow
     # provider. Source bytes are checked by _fts before any hit is emitted.
+    roots, excluded = _profile_scope(root, raw=raw, output=output)
     index = _index_path(state, root)
     if index.exists() and not refresh:
         try:
@@ -452,7 +457,7 @@ def _recall_impl(root, state, terms, *, raw, output, max_hits, max_bytes, refres
             if hits:
                 return _fit({'hits': hits[:max_hits], 'method': 'fts5_cached',
                              'unavailable': unavailable, 'unavailable_sources': sources,
-                             'unsearched': (["Raw"] if not raw else []) + (["Output"] if not output else []) + ['changes_since_index'],
+                             'unsearched': excluded + ['changes_since_index'],
                              'truncated': len(hits) > max_hits}, max_bytes - 300)
         except (sqlite3.Error, OSError, ProductError):
             pass
@@ -471,7 +476,7 @@ def _recall_impl(root, state, terms, *, raw, output, max_hits, max_bytes, refres
             return _fit({'hits': quick, 'method': 'path_first',
                          'unavailable': meta['unavailable'] + unavailable,
                          'unavailable_sources': _source_names(meta['unavailable_sources'], sources),
-                         'unsearched': meta['unsearched'] + ['other Wiki content'],
+                         'unsearched': meta['unsearched'] + ['other ' + ', '.join(roots) + ' content'],
                          'truncated': True}, max_bytes - 300)
         if seeded:
             try:
@@ -528,11 +533,10 @@ def _bounded(operation, deadline, on_timeout):
     return outcome['value']
 
 
-def deadline_result(*, raw=False, output=False, max_bytes=2048):
+def deadline_result(*, raw=False, output=False, max_bytes=2048, selected_scope=None):
     return _fit({'hits': [], 'method': 'deadline', 'unavailable': 'unknown',
                  'unavailable_sources': [],
-                 'unsearched': ['Wiki', 'AGENTS.md', 'INDEX.md'] +
-                               (['Raw'] if not raw else []) + (['Output'] if not output else []),
+                 'unsearched': (selected_scope or ['selected_memory_scope']) + ['AGENTS.md', 'INDEX.md'],
                  'truncated': True}, max_bytes - 300)
 
 
@@ -546,7 +550,7 @@ def bounded_cli(operation, *, command, raw=False, output=False, max_bytes=2048):
 
 
 def recall(root, state, query, *, raw=False, output=False, max_hits=5, max_bytes=2048,
-           refresh=False, deadline=5.0):
+           refresh=False, deadline=5.0, strategy="exact", after=None, before=None):
     if not 1 <= max_hits <= 5 or not 512 <= max_bytes <= 65536:
         _error('bounds', 'Use 1–5 hits and a 512–65536 byte output budget.')
     if len(query) > 1024:
@@ -554,15 +558,41 @@ def recall(root, state, query, *, raw=False, output=False, max_hits=5, max_bytes
     terms = list(dict.fromkeys(TOKEN.findall(query)))[:12]
     if not terms:
         _error('query', 'Provide at least one search word.')
-    return _bounded(lambda: _recall_impl(root, state, terms, raw=raw, output=output,
-                                         max_hits=max_hits, max_bytes=max_bytes, refresh=refresh),
-                    deadline, lambda: deadline_result(raw=raw, output=output, max_bytes=max_bytes))
+    if strategy not in {'exact', 'hybrid'}:
+        _error('strategy', 'Choose exact or hybrid recall.')
+    if strategy == 'exact' and (after is not None or before is not None):
+        _error('date', 'Date filters require --strategy hybrid.')
+    timeout_scope = {}
+
+    def scoped_operation(operation):
+        # Resolve coverage inside the worker deadline. The timeout callback
+        # must never perform another potentially stalled provider read.
+        roots, excluded = _profile_scope(root, raw=raw, output=output)
+        timeout_scope['names'] = roots + excluded
+        return operation()
+
+    def timed_out():
+        return deadline_result(raw=raw, output=output, max_bytes=max_bytes,
+                               selected_scope=timeout_scope.get('names'))
+
+    if strategy == 'hybrid':
+        from .hybrid_recall import hybrid_recall, validate_dates
+        validate_dates(after, before)
+        return _bounded(lambda: scoped_operation(lambda: hybrid_recall(root, state, terms, raw=raw, output=output,
+                                             max_hits=max_hits, max_bytes=max_bytes,
+                                             refresh=refresh, after=after, before=before)),
+                        deadline, timed_out)
+    return _bounded(lambda: scoped_operation(lambda: _recall_impl(root, state, terms, raw=raw, output=output,
+                                         max_hits=max_hits, max_bytes=max_bytes, refresh=refresh)),
+                    deadline, timed_out)
 
 
-def _relative(root, name, *, allowed_roots=('Wiki', 'Raw', 'Output')):
+def _relative(root, name, *, allowed_roots=None):
+    if allowed_roots is None:
+        allowed_roots, _ = _profile_scope(root, raw=True, output=True)
     if not name or Path(name).is_absolute() or '\\' in name or any(p in {'', '.', '..'} or p.startswith('.') or p.casefold() in PRIVATE or p.casefold() in PRIVATE_FILES or p.casefold() == 'coordination' for p in name.split('/')):
         _error('path', 'Use a vault-relative Markdown path without links or traversal.')
-    if name not in {'AGENTS.md', 'INDEX.md'} and (name.split('/')[0] not in allowed_roots or len(name.split('/')) < 2):
+    if not _scope_contains(name, allowed_roots):
         _error('scope', 'Path is outside the selected Markdown memory scope.')
     path = root.joinpath(*name.split('/'))
     if path.suffix.casefold() not in {'.md', '.markdown'}:
