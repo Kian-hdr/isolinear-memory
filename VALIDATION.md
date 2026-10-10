@@ -1009,3 +1009,19 @@ relaxing assertions. All 46 retrieval/release tests then passed on final source.
 The full suite was not repeated after those narrow corrections. The checksum-bound
 development runtime and both local command aliases were updated, retaining prior
 versions and existing capture-job bindings. This is a local development update.
+
+## 0.6.0 release acceptance, 2026-10-10
+
+The local Python 3.13 full product suite passed 593 tests with 21 platform/tool
+skips. The maintained development environment passed 58 workspace tests and
+7 diagnostic tests. The clean 0.6.0 package passed three-profile setup, capture,
+resume, exact/hybrid retrieval and hash-checked expansion; release checksums,
+source-commit metadata, skills and setup prompt were inspected. A two-contributor
+project test preserved both person/agent labels in recoverable history.
+
+Initial Windows CI identified test-side universal-newline normalization in five
+hybrid source-hash assertions. The runtime's original-byte hash contract was
+retained; the helper now reads bytes and decodes UTF-8 without newline conversion.
+An explicit CRLF fixture and all 20 hybrid tests passed locally. No hash/span
+assertion was relaxed. The refreshed CI matrix supplies the final cross-platform
+release evidence; see the repository pull-request checks and release notes.
