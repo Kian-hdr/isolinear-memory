@@ -1,0 +1,269 @@
+{
+  "dataset": "hybrid-recall-synthetic-v2",
+  "cases_sha256": "e0d633948cafd172d982ebd50f6efd18d3454dda1c57dd54dc26b3dde99ec1bf",
+  "packages": {
+    "baseline_sha256": "df2201adf5379763f70b429c08e2de5483e08a8d31b29385638b28459850ab97",
+    "candidate_sha256": "04e37633f2be890c81a31adf9907d7f3a871fe5dc31c5eceee7a67438a0b6b15"
+  },
+  "corpus_sha256": "87539c4e77926f96a9799645f6ab45cce2d98c5e3868da274e9ecbdaf1d03db7",
+  "provenance": "Original synthetic fixture; no private sources or model calls.",
+  "rights": "Repository MIT license; original test text.",
+  "grading": "Required evidence substring plus exact spans/current hashes and no unexpected hits for absent cases.",
+  "limits": "Eight purpose-built cases, not a prevalence sample or Hindsight benchmark; elapsed time is local CLI only.",
+  "side_effects": "Disposable private index only; original Markdown unchanged.",
+  "runs": [
+    {
+      "method": "baseline_exact",
+      "case": "rare_detail",
+      "accepted": true,
+      "source_checked": true,
+      "hit_paths": [
+        "Wiki/Rare.md"
+      ],
+      "returned_bytes": 441,
+      "elapsed_ms": 169.32
+    },
+    {
+      "method": "baseline_exact",
+      "case": "partial_query",
+      "accepted": false,
+      "source_checked": true,
+      "hit_paths": [],
+      "returned_bytes": 251,
+      "elapsed_ms": 166.39
+    },
+    {
+      "method": "baseline_exact",
+      "case": "linked_answer",
+      "accepted": false,
+      "source_checked": true,
+      "hit_paths": [
+        "Wiki/History.md",
+        "Wiki/Quartz.md"
+      ],
+      "returned_bytes": 667,
+      "elapsed_ms": 163.17
+    },
+    {
+      "method": "baseline_exact",
+      "case": "missing",
+      "accepted": true,
+      "source_checked": true,
+      "hit_paths": [],
+      "returned_bytes": 251,
+      "elapsed_ms": 163.11
+    },
+    {
+      "method": "baseline_exact",
+      "case": "raw_excluded",
+      "accepted": true,
+      "source_checked": true,
+      "hit_paths": [],
+      "returned_bytes": 251,
+      "elapsed_ms": 167.24
+    },
+    {
+      "method": "baseline_exact",
+      "case": "raw_included",
+      "accepted": true,
+      "source_checked": true,
+      "hit_paths": [
+        "Raw/Source.md"
+      ],
+      "returned_bytes": 439,
+      "elapsed_ms": 162.96
+    },
+    {
+      "method": "baseline_exact",
+      "case": "output_excluded",
+      "accepted": true,
+      "source_checked": true,
+      "hit_paths": [],
+      "returned_bytes": 251,
+      "elapsed_ms": 163.73
+    },
+    {
+      "method": "baseline_exact",
+      "case": "output_included",
+      "accepted": true,
+      "source_checked": true,
+      "hit_paths": [
+        "Output/Report.md"
+      ],
+      "returned_bytes": 442,
+      "elapsed_ms": 166.83
+    },
+    {
+      "method": "candidate_exact",
+      "case": "rare_detail",
+      "accepted": true,
+      "source_checked": true,
+      "hit_paths": [
+        "Wiki/Rare.md"
+      ],
+      "returned_bytes": 441,
+      "elapsed_ms": 170.01
+    },
+    {
+      "method": "candidate_exact",
+      "case": "partial_query",
+      "accepted": false,
+      "source_checked": true,
+      "hit_paths": [],
+      "returned_bytes": 251,
+      "elapsed_ms": 168.97
+    },
+    {
+      "method": "candidate_exact",
+      "case": "linked_answer",
+      "accepted": false,
+      "source_checked": true,
+      "hit_paths": [
+        "Wiki/History.md",
+        "Wiki/Quartz.md"
+      ],
+      "returned_bytes": 667,
+      "elapsed_ms": 169.7
+    },
+    {
+      "method": "candidate_exact",
+      "case": "missing",
+      "accepted": true,
+      "source_checked": true,
+      "hit_paths": [],
+      "returned_bytes": 251,
+      "elapsed_ms": 175.16
+    },
+    {
+      "method": "candidate_exact",
+      "case": "raw_excluded",
+      "accepted": true,
+      "source_checked": true,
+      "hit_paths": [],
+      "returned_bytes": 251,
+      "elapsed_ms": 170.51
+    },
+    {
+      "method": "candidate_exact",
+      "case": "raw_included",
+      "accepted": true,
+      "source_checked": true,
+      "hit_paths": [
+        "Raw/Source.md"
+      ],
+      "returned_bytes": 439,
+      "elapsed_ms": 168.96
+    },
+    {
+      "method": "candidate_exact",
+      "case": "output_excluded",
+      "accepted": true,
+      "source_checked": true,
+      "hit_paths": [],
+      "returned_bytes": 251,
+      "elapsed_ms": 166.94
+    },
+    {
+      "method": "candidate_exact",
+      "case": "output_included",
+      "accepted": true,
+      "source_checked": true,
+      "hit_paths": [
+        "Output/Report.md"
+      ],
+      "returned_bytes": 442,
+      "elapsed_ms": 167.18
+    },
+    {
+      "method": "candidate_hybrid",
+      "case": "rare_detail",
+      "accepted": true,
+      "source_checked": true,
+      "hit_paths": [
+        "Wiki/Rare.md"
+      ],
+      "returned_bytes": 675,
+      "elapsed_ms": 174.65
+    },
+    {
+      "method": "candidate_hybrid",
+      "case": "partial_query",
+      "accepted": true,
+      "source_checked": true,
+      "hit_paths": [
+        "Wiki/History.md",
+        "Wiki/Quartz.md",
+        "Wiki/Schedule.md"
+      ],
+      "returned_bytes": 1185,
+      "elapsed_ms": 172.02
+    },
+    {
+      "method": "candidate_hybrid",
+      "case": "linked_answer",
+      "accepted": true,
+      "source_checked": true,
+      "hit_paths": [
+        "Wiki/History.md",
+        "Wiki/Quartz.md",
+        "Wiki/Schedule.md"
+      ],
+      "returned_bytes": 1175,
+      "elapsed_ms": 172.54
+    },
+    {
+      "method": "candidate_hybrid",
+      "case": "missing",
+      "accepted": true,
+      "source_checked": true,
+      "hit_paths": [],
+      "returned_bytes": 521,
+      "elapsed_ms": 170.69
+    },
+    {
+      "method": "candidate_hybrid",
+      "case": "raw_excluded",
+      "accepted": true,
+      "source_checked": true,
+      "hit_paths": [],
+      "returned_bytes": 521,
+      "elapsed_ms": 170.47
+    },
+    {
+      "method": "candidate_hybrid",
+      "case": "raw_included",
+      "accepted": true,
+      "source_checked": true,
+      "hit_paths": [
+        "Raw/Source.md"
+      ],
+      "returned_bytes": 675,
+      "elapsed_ms": 182.65
+    },
+    {
+      "method": "candidate_hybrid",
+      "case": "output_excluded",
+      "accepted": true,
+      "source_checked": true,
+      "hit_paths": [],
+      "returned_bytes": 521,
+      "elapsed_ms": 189.17
+    },
+    {
+      "method": "candidate_hybrid",
+      "case": "output_included",
+      "accepted": true,
+      "source_checked": true,
+      "hit_paths": [
+        "Output/Report.md"
+      ],
+      "returned_bytes": 678,
+      "elapsed_ms": 183.76
+    }
+  ],
+  "totals": {
+    "baseline_exact": 6,
+    "candidate_exact": 6,
+    "candidate_hybrid": 8
+  }
+}

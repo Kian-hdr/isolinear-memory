@@ -15,7 +15,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = '0.5.2'
+VERSION = '0.6.0'
 
 
 class ReleaseBuildTests(unittest.TestCase):
@@ -33,6 +33,9 @@ class ReleaseBuildTests(unittest.TestCase):
                   'assets/isolinear-memory-wordmark-dark.png', 'assets/isolinear-memory-wordmark-light.png',
                   'scripts/render_icon_marks.py', 'scripts/render_wordmark.py',
                   'product/shared_workspace/recall.py',
+                  'product/shared_workspace/hybrid_recall.py',
+                  'product/shared_workspace/profile_scope.py',
+                  'skills/setup-shared-project-workspace/references/vault-profiles.md',
                   'product/tests/test_recall_cli.py']
         names += [path.relative_to(ROOT).as_posix()
                   for path in (ROOT / 'assets').glob('isolinear-memory*') if path.is_file()]
@@ -193,7 +196,7 @@ class ReleaseBuildTests(unittest.TestCase):
         recall = subprocess.run([sys.executable, str(self.output / package_name),
                                  'recall', str(project), 'Needle'], capture_output=True,
                                 timeout=30)
-        self.assertEqual(recall.returncode, 0, recall.stderr)
+        self.assertEqual(recall.returncode, 0, recall.stdout + recall.stderr)
         packet = json.loads(recall.stdout)
         self.assertTrue(packet['ok'], packet)
         hit = next(item for item in packet['data']['hits'] if item['path'] == 'Wiki/Note.md')

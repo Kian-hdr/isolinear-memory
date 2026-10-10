@@ -9,7 +9,7 @@
 
 **Persistent Markdown memory for people and AI agents. Edit notes normally; retrieve only the evidence a task needs.**
 
-Isolinear Memory 0.5.2 works inside one selected folder. Markdown remains the source
+Isolinear Memory 0.6.0 works inside one selected folder. Markdown remains the source
 of truth. The runtime records recoverable change history, reconciles the project
 files visible on each device, and returns small, source-linked passages to agents.
 Obsidian is optional. No memory-extraction model, vector service, MCP server or
@@ -22,7 +22,7 @@ The name is inspired by [Star Trek's isolinear chips](https://www.startrek.com/e
 
 | Layer | Contents | Role |
 | --- | --- | --- |
-| Selected project folder | `AGENTS.md`, `INDEX.md`, Markdown in `Raw/`, `Wiki/` and `Output/`, the format-3 manifest and portable event history | Canonical notes and history that the chosen folder provider can transport. Existing projects keep their own layout. |
+| Selected project folder | `AGENTS.md`, `INDEX.md`, Markdown in the selected team, personal or project layout, the format-3 manifest and portable event history | Canonical notes and history that the chosen folder provider can transport. Existing projects keep their own layout. |
 | Private state on each device | Causal baseline, recovery material and a rebuildable SQLite FTS5 index containing passage text | Speeds recall and supports safe local capture. It stays outside synchronized storage and is never a second authority. |
 | Folder provider, if chosen | Copies of the selected project files | Transports files between authorized devices. Isolinear Memory does not create access grants or prove delivery. |
 | Agent context | Bounded excerpts with paths, line numbers and source hashes | Holds just the evidence needed for the current task. Expand an exact source only when needed. |
@@ -61,14 +61,16 @@ have no project-provider arrow. A local-only project needs no provider at all.
 ## Find relevant memory with a small context packet
 
 Start with `AGENTS.md` and `INDEX.md`, then follow their routes to the relevant
-Wiki note. Native file search and editing remain first-class tools. When the
+canonical note. Native file search and editing remain first-class tools. When the
 location is unknown, `recall` searches the selected project and returns a compact
 packet: at most **five ranked hits** and **2 KiB by default**. Each hit carries a
 vault-relative path, heading, line range, exact excerpt and SHA-256 source hash.
 The result also says when sources were unavailable, truncated or left unsearched.
 
-By default, recall considers root `AGENTS.md` and `INDEX.md` plus `Wiki/`.
-`Raw/` and `Output/` are opt-in. A private FTS5 index stores rebuildable note
+Recall always considers root `AGENTS.md` and `INDEX.md`. Team/unclassified vaults
+add `Wiki/`, with `Raw/` and `Output/` opt-in. Personal vaults search `Notes/`,
+with `Resources/` opt-in through `--include-raw`. Project vaults search their
+declared domain folders. The diagram below illustrates the team-vault default. A private FTS5 index stores rebuildable note
 passages to accelerate lookup. Path and title matches can avoid a broad content
 scan; if indexing is unavailable or incomplete, recall has a bounded direct
 Markdown fallback. Returned hits are checked against current file bytes. A
@@ -113,10 +115,21 @@ file whose hash changed since recall. Search again after a stale result. The
 CLI also offers a versioned JSON envelope for integrations; `--text` gives
 agents a concise plain-text view.
 
+### Optional hybrid recall
+
+Use `recall PROJECT "query words" --strategy hybrid` to combine lexical matches,
+titles and explicit linked-note evidence. Optional `--after YYYY-MM-DD` and
+`--before YYYY-MM-DD` filter ISO dates in returned spans. Exact search stays the
+default; every excerpt still references current Markdown bytes. This dependency-free
+adaptation is inspired by Hindsight's ranked-search design. See the
+[operating guide](docs/PRODUCT-V1.md#optional-hybrid-retrieval)
+and [pinned source/adaptation record](docs/READINESS.md#hindsight-selective-assimilation-development-candidate-2026-10-02)
+for limits. Hybrid recall is included in 0.6.0; earlier 0.5.2 packages retain exact recall.
+
 ## Remember useful work automatically
 
 An agent with access to the selected folder reads its short `AGENTS.md` and
-`INDEX.md`, does the requested work, then updates the relevant canonical Wiki
+`INDEX.md`, does the requested work, then updates the relevant canonical
 note without a separate “remember this” prompt. It records durable findings,
 decisions, artifact links, current status and next steps with their sources and
 uncertainty. Substantial generated files belong in `Output/`; their Wiki note
@@ -258,9 +271,9 @@ and conflict handling. Check actual delivery on each recipient device. See
 
 ## Install or update
 
-1. Download the [v0.5.2 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.5.2) and verify the runtime against its external `SHA256SUMS`.
+1. Download the [v0.6.0 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.6.0) and verify the runtime against its external `SHA256SUMS`.
 2. [Give the setup prompt](SETUP-PROMPT.md) to an agent with local file access, or follow the [installation guide](docs/INSTALL.md).
-3. Select the intended folder. A wholly empty folder can receive `Raw/`, `Wiki/`, `Output/`, `AGENTS.md` and `INDEX.md`. A populated folder retains its hierarchy, instructions and attachments; add the memory rule to its existing agent instructions when appropriate.
+3. Select the intended folder. A wholly empty folder can receive team (`Raw/Wiki/Output`), personal (`Notes/Resources`) or custom project folders plus `AGENTS.md` and `INDEX.md`. Version 0.6.0 exposes `--vault-type` and repeatable `--project-folder`; older released packages retain their legacy seed. A populated folder retains its hierarchy, instructions and attachments; add the memory rule to its existing agent instructions when appropriate.
 4. Have the agent confirm the installed version, make one small edit, and verify local history capture. For requested sharing, it checks provider and recipient delivery separately.
 
 The runtime requires Python 3.11 or newer. The verified `.pyz` works on macOS,

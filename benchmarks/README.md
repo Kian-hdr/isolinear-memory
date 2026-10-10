@@ -35,3 +35,22 @@ synthetic harness alone cannot authorize a vault cutover.
 See [BASIC-MEMORY-PILOT.md](BASIC-MEMORY-PILOT.md) for the disposable-copy
 comparison and its observed Markdown mutation.
 See [SYNTHETIC-RESULTS.md](SYNTHETIC-RESULTS.md) for the candidate paired run.
+
+## Hindsight-inspired hybrid retrieval
+
+`hybrid_recall_pair.py` compares a frozen baseline package with the development
+candidate in exact and optional hybrid modes. Original synthetic cases cover rare
+facts, loose queries, a linked answer without query words, absent facts and explicit
+Raw/Output scope. The output records corpus/case hashes, package digests, exact-span
+and source-hash checks, local CLI time and return bytes. It verifies unchanged
+Markdown after every method. Expected gains are deliberately concentrated in loose
+and linked queries; this is not a representative workload or a Hindsight benchmark.
+
+```bash
+python3 benchmarks/hybrid_recall_pair.py --baseline /path/to/baseline.pyz --candidate /path/to/candidate.pyz --output /path/to/results.json
+```
+
+[Recorded development result](HINDSIGHT-ASSIMILATION-RESULTS.json): baseline exact
+6/8, candidate exact 6/8, candidate hybrid 8/8. This supports the intended retrieval
+behavior on these eight fixtures; it does not establish production reliability,
+semantic search, answer accuracy, cross-platform acceptance or token/cost savings.
