@@ -32,8 +32,10 @@ SQLite outside shared storage. Scope never expands to parents or new recipients.
 Respect read-only grants, confidentiality and mandatory OS/authentication controls.
 Local capture is not provider delivery or proof of independent recipient receipt.
 
-New empty projects use Raw/Wiki/Output; never reorganize populated folders during
-setup. Update existing canonical notes with durable decisions and provenance.
+New empty projects choose team (Raw/Wiki/Output), personal (light single-owner
+notes without manual contributor audit) or project (domain-specific folders). See
+skills/setup-shared-project-workspace/references/vault-profiles.md. Never reorganize
+populated folders during setup. Update existing canonical notes with durable decisions and provenance.
 Formats 1/2 retain their historical workflow until an explicit backed-up migration;
 never reset their authority or treat pending work as accepted. Legacy trackers remain
 separate. Consult docs/PRODUCT-V1.md or the relevant reference only when needed.

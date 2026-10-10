@@ -82,6 +82,11 @@ def capabilities() -> dict:
                                    "commands": list(coordination_workflow.COMMANDS),
                                    "explicit_session_credentials": True, "automatic_renewal": False,
                                    "live_vault_migration": False, "acceptance": "bounded_local_validation"},
+        "memory_retrieval": {"default_strategy": "exact", "optional_strategy": "hybrid",
+                             "hybrid_arms": ["lexical", "title", "explicit_wikilinks"],
+                             "fusion": "reciprocal_rank", "date_filter": "excerpt_iso_dates",
+                             "source_checked": True, "semantic_model": False,
+                             "automatic_fact_extraction": False, "hosted_service_required": False},
         "knowledge_graph": {"commands": list(knowledge_workflow.COMMANDS), "read_only": True,
                             "sources": ["local_selected_folder", "accepted_coordinator_snapshot"],
                             "parent_vault_reads": False, "policy_authority": False,
@@ -136,6 +141,8 @@ def emit(command, *, ok, code, data=None, warnings=None, message=None):
 def emit_text(command, data):
     if command == 'recall':
         print(f"method={data['method']} unavailable={data['unavailable']} unavailable_sources={','.join(data['unavailable_sources']) or 'none'} unsearched={','.join(data['unsearched']) or 'none'} truncated={str(data['truncated']).lower()}")
+        if 'retrieval' in data:
+            print('retrieval=' + json.dumps(data['retrieval'], ensure_ascii=True, separators=(',', ':')))
         for hit in data['hits']:
             print(f"{hit['path']}:{hit['start']}-{hit['end']} sha256={hit['sha256'][:24]}")
             print(hit['excerpt'])
