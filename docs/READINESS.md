@@ -1,5 +1,35 @@
 # Isolinear Memory readiness
 
+## Progressive context selective assimilation, development candidate 2026-10-16
+
+Inspected primary source revisions: OpenViking `8d28ffcdbb646a2f8cc1d8176d37d3c0185bc596`, Mnemosyne `87a86a28ac00ee5c9fe26dfa7c2117a96fce4e8f`, Memori `574b1ea3e876f100ef82c37817d603eb7e258e59`. Independent design adaptation only: no upstream code, generated sidecars, model, library or service is imported. OpenViking's AGPL-3.0 code is not copied; Mnemosyne's MIT code is not copied; no Memori backend or reuse rights are assumed from its README.
+
+| Source capability | Evidence | Decision and target | Acceptance |
+| --- | --- | --- | --- |
+| Directory abstract/overview/details | [OpenViking context layers](https://github.com/volcengine/OpenViking/blob/8d28ffcdbb646a2f8cc1d8176d37d3c0185bc596/docs/en/concepts/03-context-layers.md) | Original all-or-nothing `context` packet: full authored instructions/index plus explicit canonical section; exact sources expanded on demand. No generated summaries or folder rewrite. | Complete nested sections, no hidden stop condition, source hashes, exact expansion, whole-packet budget refusal |
+| Working versus durable context | [Mnemosyne architecture](https://github.com/mnemosyne-oss/mnemosyne/blob/87a86a28ac00ee5c9fe26dfa7c2117a96fce4e8f/docs/architecture.md) | Reuse existing handoff plus new bootstrap packet and optional explicit receipts. No TTL deletion, automatic prompt injection or background consolidation. | Reset sends original full evidence; no implicit session cache |
+| Query-result cache | [Mnemosyne query_cache.py](https://github.com/mnemosyne-oss/mnemosyne/blob/87a86a28ac00ee5c9fe26dfa7c2117a96fce4e8f/mnemosyne/core/query_cache.py) | No adoption: existing private index/source checking and receipts already cover the bounded need; no measured cache gap justifies another mutable store or fuzzy result reuse. | Existing retrieval unchanged; no new cache/database |
+| Entity/process/session provenance | [Memori README](https://github.com/MemoriLabs/Memori/blob/574b1ea3e876f100ef82c37817d603eb7e258e59/README.md) | Reuse source hash/locator and existing asserted history authorship. Exact authored packet text is not an inferred observation or authenticated author claim. No new attribution store. | Preserve contradictory assertions verbatim and distinguish source from truth |
+
+OpenViking L0/L1 are directory-level generated sidecars, not per-file summaries. This adaptation deliberately uses existing authored Markdown rather than reproducing those sidecars or its vector retrieval. The `context` packet offers atomic delivery, not a transactional filesystem snapshot or exhaustive policy discovery. Benefits must be compared with existing targeted native reads and receipt-enabled recall; the command is optional and does not establish a cheaper default.
+
+Implementation and acceptance: [progressive context](PROGRESSIVE-CONTEXT.md). Status: locally installed optional development candidate. Defaults remain unchanged; detailed acceptance and measurement limits are in VALIDATION.md.
+
+## Scion selective assimilation, development candidate 2026-10-16
+
+Source: [Anthropic, Redesigning source control](https://www.anthropic.com/engineering/redesigning-source-control), published October 13, updated October 15, 2026. This is an independently authored adaptation of documented architectural ideas, not a port of Anthropic code, an OpenScion dependency or Scion protocol compatibility. No upstream code/assets are copied. Attribution remains here; the article is not treated as an open-source code license.
+
+| Capability | Source evidence | Destination/reuse | Acceptance |
+| --- | --- | --- | --- |
+| Sparse on-demand materialization | Principles and checkout protocol | Existing bounded recall plus hash-checked show retained | Existing source/scope regressions |
+| Content-addressed reusable results | Immutable objects and client caches | Optional caller-held passage receipts in recall output; exact known passage text omitted only after normal current-source validation | Repeat, edit, different span and cross-root tests |
+| Derived state stays separate from authority | Changesets and derived data | Existing private rebuildable index retained; receipts create no new canonical store or background process | No Markdown/history/provider change |
+| Incremental client delivery | Clients request missing objects | Agent opts in with receipts for evidence still present in its context | Full byte envelope and synthetic response/input-byte comparison |
+
+Do not adopt Scion's always-online assumption, Spanner, distributed cache fleet, source-control format or merge policy. Isolinear remains file-first and usable offline. This feature reduces repeated evidence output only; it cannot erase earlier chat tokens, change a model context window or prove that an agent remembers evidence. Forget receipts whenever retained context is lost or uncertain. Total model-token cost and task accuracy require separate agent evaluation.
+
+Implementation and validation details: [evidence receipts](EVIDENCE-RECEIPTS.md). Status: locally installed development candidate, not a published release. See VALIDATION.md for exact checks and limits.
+
 ## 0.6.0 release scope
 
 This release includes vault profiles, profile-aware recall/show and optional hybrid

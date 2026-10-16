@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.7.0
+
+- Add optional complete authored bootstrap packets and context-local evidence
+  receipts. Preserve exact source hashes, scope, final stop conditions and full
+  original notes/history; reset callers retrieve full evidence again.
+- Add an optional official-SDK read-only stdio MCP adapter for the same selected
+  local project, with three bounded tools and a single evidence representation.
+- Make local readback the routine save boundary in generated instructions and
+  skills. Explicitly prohibit routine cloud-app/upload-queue/status checks.
+- Document the existing remote-connector path, phone/iPad scope and acceptance
+  limits, source-led Hindsight/Scion adaptations and measured optimization bounds.
+- Preserve ordinary native/CLI/offline behavior and existing profiles. The pending
+  optional Hindsight runtime adapter and private deployment bindings are not part
+  of this release. No hosted real-data or universal client acceptance is claimed.
+
+
 ## 0.6.0
 
 - Add team, personal and project vault profiles. Team vaults retain Raw/Wiki/Output;

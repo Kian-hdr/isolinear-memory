@@ -1,5 +1,138 @@
 # Validation record
 
+## 0.7.0 cross-device release candidate, October 16, 2026
+
+Source: isolated reviewed publication branch based on the 0.6.0 main tree, with
+only source-preserving receipts, authored packets, optional local MCP, policy,
+skill, test, documentation and packaging changes. Unfinished Hindsight runtime
+adapter work and all private connector/account bindings are excluded.
+
+- Initial combined candidate acceptance: 61 tests passed (official SDK, receipts,
+  context packet and product CLI). The optional MCP component independently passed
+  12 tests including actual SDK stdio round trips and complete escaped result caps.
+- Workspace toolkit: 58 passed; doctor: seven passed. Ten generated diagram blocks
+  passed. Independent review found a UTF-8 fixture portability issue and stale
+  current installation links, both corrected before publication. Relevant final
+  checks, full regression and CI are pending at this candidate checkpoint.
+- Runtime/skill guidance now prohibits routine cloud app, upload queue, status
+  polling, force-sync and restart checks. Normal local saves use native readback;
+  no-local-mirror remote source access and explicit delivery/write verification
+  remain distinct permitted tasks. This is agent guidance, not a claim to control
+  every external host's behavior.
+
+[Optimization goal and measured limits](docs/CROSS-DEVICE-OPTIMIZATION.md) records
+the cost-share ceiling and the remote compact slice's 4.8% observed reference-token
+reduction. The 20% engineering target was not met on that fixture. No total-task,
+model-answer, billing, real-vault or native phone/iPad gain is established. Local
+MCP uses the tested optional 1.30.0 maintenance SDK; the ordinary runtime remains
+stdlib-only. The private connector's 68-test/build/typecheck result is separate
+from the publicly shipped core and does not establish deployment.
+
+
+## Progressive authored context, local development candidate 2026-10-16
+
+[Source map](docs/READINESS.md#progressive-context-selective-assimilation-development-candidate-2026-10-16),
+[contract and limits](docs/PROGRESSIVE-CONTEXT.md), and
+[reproducible comparison](benchmarks/context_packet_pair.py) with
+[dated synthetic output](benchmarks/context_packet_pair_result_20261016.json).
+
+- Broad product discovery: 641 tests, 620 passed and 21 skipped, no failures.
+  That collection preceded one final comment-boundary regression and refinement;
+  all 15 final context cases and the final clean-package acceptance below passed
+  afterward. This distinction preserves exact tested revisions/counts.
+- Final clean candidate: 62 context/receipt/exact/hybrid checks passed. The
+  unrelated development Hindsight guard case is intentionally excluded because
+  this clean package does not include that adapter. Existing retrieval/receipt
+  development regression: 48 passed. The final five release-fixture checks also
+  passed, including context-packet execution from its generated source package.
+  Generated diagram/whitespace checks passed.
+- Tests cover complete nested sections with final stop conditions, fake headings
+  in fenced code/comments/raw HTML, duplicates, missing/empty/private/nested/link
+  denial, Unicode/CRLF source hashes, no source/cache writes, deadlines, atomic
+  budgets, exact repeats, changed sources and resets. Independent review found
+  and helped correct an initial collision with legacy coordinator `context` and
+  a comment-stripping boundary bug. New `context-packet` preserves the old command.
+- Actual installed-command checks passed complete/repeat/reset delivery, final
+  stop retention, whole-packet budget refusal and legacy context help. An existing
+  selected project returned all three complete authored sources with current
+  hashes. This is scoped local readback, not exhaustive vault or remote receipt.
+
+Installed package SHA-256:
+`30aa5c2367b4f504bf5465d5347b77ed1556ec57ae6afa4bb41830c72773d1e9`.
+It is a reviewed development overlay on the previous clean receipt candidate,
+with only CLI registration, atomic receipt fitting and the new context module
+changed. Unrelated Hindsight work remains excluded. Both local command aliases
+were updated with previous launchers/runtimes retained. Project-specific capture
+jobs, bindings, identities, histories and provider settings were not changed.
+No public release, commit, push or hosted rollout occurred.
+
+The same-fact synthetic bootstrap comparison returned 533 reference tokens for
+one first-read/reset packet versus 606 for three source-linked show calls (12.0%
+fewer), and 505 versus 606 for a repeat (16.7% fewer). Existing receipt queries
+used 761/749/761/811 across first/repeat/reset/edit; the packet used
+533/505/533/581. All required rare facts, negations, correction/contradiction,
+ownership, pending work and stop condition remained available in every arm.
+Counts include logical CLI inputs and actual JSON stdout, with warm routing;
+show receives exact hashes/ranges without discovery cost. Harness/host envelopes,
+index preparation and full conversation/model costs are excluded. Native targeted
+content alone is only 84 reference tokens before its tool inputs/wrappers, so
+these results do not establish a universal or real-task savings claim. No broad
+default change or additional query cache/provenance engine is justified.
+
+
+## Scion-inspired evidence receipts, local development candidate 2026-10-16
+
+Source-to-target map: [readiness](docs/READINESS.md#scion-selective-assimilation-development-candidate-2026-10-16).
+Usage, measured scope and removal: [evidence receipts](docs/EVIDENCE-RECEIPTS.md).
+
+- Initial broad product discovery: 627 tests, 605 passed, 21 skipped, one failure.
+  The release fixture copied tracked source but omitted the new untracked receipt
+  module, causing ImportError in its generated package. Added the new runtime,
+  test and documentation files to the fixture's existing explicit development-
+  prerequisite list. All five affected release tests then passed. The full suite
+  was not rerun after that fixture-only repair.
+- Final 128-bit receipt revision: all 11 packaged receipt tests and all 47 combined
+  receipt/exact/hybrid checks against the clean local package passed. One
+  Hindsight-only development guard test is excluded from the latter because the
+  clean baseline has no Hindsight strategy. Independent implementation review
+  found no blocker. Default output, live source edits, different spans, local-root
+  scope, missing/excluded notes, reset behavior, dates, invalid receipts and full
+  envelope budgets are covered. The initial 256-bit implementation's tests are
+  not substituted for this final affected verification.
+- Existing workspace toolkit: 58 passed; doctor: seven passed. Ten generated
+  diagram blocks and git diff whitespace checks passed. System Python was first
+  rejected by the product's >=3.11 gate, then tests used Python 3.13. Toolkit
+  checks used the existing development environment with PyYAML; no dependency
+  was added to the runtime.
+- Installed local CLI acceptance passed synthetic full/repeat delivery, exact
+  show, default output and edit invalidation. A current selected project passed
+  hash-checked show, bounded hybrid recall and exact-repeat omission. The latter
+  still reports incomplete coverage. An initial new-note query returned a
+  changed-read error and then no hits; no broad refresh or provider investigation
+  was used to force a result. This is not exhaustive vault acceptance.
+
+The clean local artifact is based on `a542e0d0f04bb2e9bc768f77ab0b3ce07f17393a`
+plus the independently reviewed receipt module and three integration files. Its
+SHA-256 is `ccac81d155c6469674366720225ff4e9e63c164a409ca40d6fe14f2a3e5362b3`.
+It was compared against the prior installed package: only four runtime members
+and BUILD metadata differ. BUILD explicitly labels a dirty development overlay.
+Unrelated pending Hindsight code is excluded. Both local command aliases point
+to this immutable package; previous runtimes/launchers are retained for rollback.
+Project-specific capture jobs and bindings were not changed. This is a local
+installation, not a committed source release, CI run, hosted connector rollout,
+provider-delivery check or cross-device acceptance.
+
+On two synthetic warm-cache calls, counting first-delivery metadata and added
+receipt arguments, a 2,559-character passage used 39.2% fewer serialized bytes and
+25.0% fewer `o200k_base` reference tokens. A 767-character passage saved only
+3.8% reference tokens. The first 256-bit design increased two-call reference
+usage by 8.8% on a smaller fixture, motivating the 128-bit locator. Receipt
+strings can slightly change tokenization across roots. These observations do not
+establish actual hosted-model usage, billing, task-answer quality, whole-vault
+performance or context-window expansion. Short/one-off passages can cost more;
+use remains explicit and context-local.
+
+
 ## Local two-vault rollout, 2026-10-02
 
 The user authorized live local installation after selective assimilation. Real

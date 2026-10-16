@@ -15,7 +15,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = '0.6.0'
+VERSION = '0.7.0'
 
 
 class ReleaseBuildTests(unittest.TestCase):
@@ -34,9 +34,18 @@ class ReleaseBuildTests(unittest.TestCase):
                   'scripts/render_icon_marks.py', 'scripts/render_wordmark.py',
                   'product/shared_workspace/recall.py',
                   'product/shared_workspace/hybrid_recall.py',
+                  'product/shared_workspace/evidence_receipts.py',
+                  'product/shared_workspace/context_packet.py',
                   'product/shared_workspace/profile_scope.py',
                   'skills/setup-shared-project-workspace/references/vault-profiles.md',
-                  'product/tests/test_recall_cli.py']
+                  'product/tests/test_recall_cli.py',
+                  'product/tests/test_evidence_receipts.py',
+                  'product/tests/test_context_packet.py',
+                  'docs/EVIDENCE-RECEIPTS.md', 'docs/PROGRESSIVE-CONTEXT.md',
+                  'benchmarks/context_packet_pair.py',
+                  'benchmarks/context_packet_pair_result_20261016.json',
+                  'product/shared_workspace/memory_mcp.py', 'product/tests/test_memory_mcp.py',
+                  'docs/MCP.md', 'requirements-mcp.txt']
         names += [path.relative_to(ROOT).as_posix()
                   for path in (ROOT / 'assets').glob('isolinear-memory*') if path.is_file()]
         names += [path.relative_to(ROOT).as_posix()
@@ -208,6 +217,16 @@ class ReleaseBuildTests(unittest.TestCase):
         expanded = json.loads(show.stdout)
         self.assertTrue(expanded['ok'], expanded)
         self.assertIn('Needle value is 42.', expanded['data']['excerpt'])
+        (project / 'AGENTS.md').write_text('# Rules\nPreserve source notes.\n', encoding='utf-8')
+        (project / 'INDEX.md').write_text('# Index\nWiki/Note.md\n', encoding='utf-8')
+        context = subprocess.run([sys.executable, str(self.output / package_name),
+                                  'context-packet', str(project), '--path', 'Wiki/Note.md'],
+                                 capture_output=True, timeout=30)
+        self.assertEqual(context.returncode, 0, context.stdout + context.stderr)
+        authored = json.loads(context.stdout)['data']
+        self.assertEqual([hit['path'] for hit in authored['hits']],
+                         ['AGENTS.md', 'INDEX.md', 'Wiki/Note.md'])
+        self.assertIn('Needle value is 42.', authored['hits'][2]['excerpt'])
         second = self.root / 'repeat'
         self.invoke(second)
         self.assertEqual(self.files(second), assets)

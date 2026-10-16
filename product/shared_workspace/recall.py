@@ -550,7 +550,8 @@ def bounded_cli(operation, *, command, raw=False, output=False, max_bytes=2048):
 
 
 def recall(root, state, query, *, raw=False, output=False, max_hits=5, max_bytes=2048,
-           refresh=False, deadline=5.0, strategy="exact", after=None, before=None):
+           refresh=False, deadline=5.0, strategy="exact", after=None, before=None,
+           with_receipts=False, known_evidence=()):
     if not 1 <= max_hits <= 5 or not 512 <= max_bytes <= 65536:
         _error('bounds', 'Use 1–5 hits and a 512–65536 byte output budget.')
     if len(query) > 1024:
@@ -562,6 +563,9 @@ def recall(root, state, query, *, raw=False, output=False, max_hits=5, max_bytes
         _error('strategy', 'Choose exact or hybrid recall.')
     if strategy == 'exact' and (after is not None or before is not None):
         _error('date', 'Date filters require --strategy hybrid.')
+    from . import evidence_receipts
+    known = evidence_receipts.validate(known_evidence)
+    receipt_mode = with_receipts or bool(known)
     timeout_scope = {}
 
     def scoped_operation(operation):
@@ -569,7 +573,8 @@ def recall(root, state, query, *, raw=False, output=False, max_hits=5, max_bytes
         # must never perform another potentially stalled provider read.
         roots, excluded = _profile_scope(root, raw=raw, output=output)
         timeout_scope['names'] = roots + excluded
-        return operation()
+        result = operation()
+        return evidence_receipts.deliver(root, result, known, max_bytes) if receipt_mode else result
 
     def timed_out():
         return deadline_result(raw=raw, output=output, max_bytes=max_bytes,
