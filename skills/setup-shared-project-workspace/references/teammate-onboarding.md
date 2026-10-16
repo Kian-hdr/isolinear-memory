@@ -13,10 +13,18 @@ capture, or one local sync after material edits/reconnect, preserving conflict
 copies and recording resolution evidence. This onboarding access check does not
 make provider-app or upload-queue checks part of ordinary note saving.
 
-Use language like the following, replacing only details that have been verified:
+If the recipient has no local mirror, provide the already authorized remote
+connector/service route instead of asking them to install a desktop runtime,
+initialize another project or copy another device's private state. Verify that the
+actual client supports that route; local stdio MCP alone is not remote access.
+Neither an onboarding prompt nor a saved skill grants credentials or vault rights.
+
+For a recipient with a local mirror, use language like the following, replacing
+only details that have been verified. A remote-only recipient needs the scoped
+connector/service instructions instead of this desktop setup prompt:
 
 ```text
-Set up the existing Shared Memory project available through the folder access
+Set up the existing Isolinear Memory project available through the folder access
 instructions supplied with this message. Verify the specified compatible runtime
 and its external checksum, then locate my own local copy and inspect its metadata.
 Use the normal direct-edit folder workflow, preserving existing notes, permissions

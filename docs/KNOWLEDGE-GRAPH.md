@@ -1,15 +1,32 @@
-# Knowledge graph for one shared project
+# Isolinear Memory knowledge graph
 
-For normal 0.3.0 folder mode, use the read-only `graph PROJECT` command and review
+For the current format-3 folder workflow, use the read-only `graph PROJECT` command and review
 links after direct edits. The `--accepted` and `graph-rename-*` procedures below
 belong to the explicitly retained coordinator workflow. Folder `rename` records
 a path move but does not update Markdown/wiki backlinks.
 
-Shared Memory builds a read-only graph from readable Markdown notes and their
+Isolinear Memory builds a read-only graph from readable Markdown notes and their
 explicit links. Use it to follow a project into its knowledge, decisions,
 evidence and work records, or to find a broken reference before publishing a
 change. Obsidian is optional. The core command needs neither Obsidian nor a new
 vault, and does not open an application.
+
+## What this graph represents
+
+Nodes are documents or supported linked attachments. Edges are explicit links in
+Markdown or link-bearing frontmatter, with source locations and relationship labels.
+Backlinks record which notes refer to a target. The analyzer reports missing,
+ambiguous and unsafe references; it does not generate semantic relationships or
+judge factual truth.
+
+This document-reference graph is different from the causal history graph used to
+reconcile captured versions. The full `graph` report is also separate from hybrid
+recall's bounded explicit-link expansion. Use graph inspection for navigation or
+link audits; do not load an entire large report as routine agent context.
+
+Graph inspection covers its documented selected-folder tree and exclusions.
+`recall` has its own profile-based retrieval scope; the two inventories are not
+promised to be identical. Keep reports private according to their source content.
 
 ## Choose the shared folder
 
@@ -48,7 +65,7 @@ python PACKAGE.pyz graph PROJECT
 ```
 
 This inspects the files currently present in the selected folder. It works before
-Shared Memory initialization and includes local edits that may not be accepted.
+Isolinear Memory initialization and includes local edits that may not be accepted.
 Do not supply `--state-dir` for this mode.
 
 For an attached project, inspect the authenticated accepted snapshot instead:

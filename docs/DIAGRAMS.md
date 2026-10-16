@@ -1,8 +1,8 @@
 # Isolinear Memory system diagrams
 
-These diagrams describe the **0.5.2 format-3 folder workflow**. They
+These diagrams describe the **0.7.1 format-3 folder workflow**. They
 separate note storage, private indexing, local history capture, provider
-transport and recipient verification. The older format-1/2 coordinator has a
+transport, knowledge links and recipient verification. Local stdio MCP is optional; remote MCP access is a separate deployment. The older format-1/2 coordinator has a
 [separate operating guide](COORDINATOR-WORKFLOW.md).
 
 The editable `.mmd` files under `assets/diagrams/` are the source of truth.
@@ -17,28 +17,27 @@ on Mermaid, Node or Chrome.
 <!-- BEGIN GENERATED MERMAID: 01-shared-folder.mmd -->
 ```mermaid
 flowchart TB
-  accTitle: One selected project, separate private device state
-  accDescr: Each device holds a selected Markdown project and a private baseline, recovery state and FTS5 index. Isolinear Memory reads and records only the selected project. Provider sync scope is configured separately; the private state is outside the project route.
-  subgraph A["DEVICE A"]
-    direction LR
-    AE["Person or agent<br/>native Markdown editor"] --> AF["Selected project folder<br/>AGENTS + INDEX + Raw / Wiki / Output<br/>format-3 manifest + portable events"]
-    AM["Isolinear Memory<br/>recall + sync + history"] <-->|"read and capture"| AF
-    AM <-->|"local only"| AS["Private device state<br/>baseline + recovery + FTS5 index"]
+  accTitle: One source of knowledge, local and remote access paths
+  accDescr: Desktop agents use native files, CLI or optional local stdio MCP over one selected Markdown project. Private indexes are rebuildable. A phone without a mirror needs a separately deployed authenticated remote service or an existing provider connector. Remote access and client acceptance are separate from the local release.
+  subgraph A["DESKTOP WITH A LOCAL MIRROR"]
+    AE["Person or agent"] --> AM["Native files or Isolinear CLI<br/>optional local stdio MCP"]
+    AM <-->|"scoped reads"| AF["Selected Markdown project<br/>instructions + canonical notes<br/>portable causal history"]
+    AM <-->|"derived state"| AS["Private device storage<br/>rebuildable index<br/>baseline + recovery"]
+    AE -->|"native edits"| AF
   end
-  AF <-->|"project files<br/>if configured"| P["One chosen folder provider"]
-  P <-->|"project files<br/>if delivered"| BF
-  subgraph B["DEVICE B"]
-    direction LR
-    BE["Person or agent<br/>native Markdown editor"] --> BF["Authorized project copy<br/>Markdown + portable events"]
-    BM["Isolinear Memory<br/>recall + sync + history"] <-->|"read and capture"| BF
-    BM <-->|"local only"| BS["Separate private state<br/>baseline + recovery + FTS5 index"]
+  AF <-->|"background file transport<br/>if configured"| P["One chosen folder provider"]
+  subgraph B["REMOTE ACCESS: SEPARATE DEPLOYMENT"]
+    BE["Phone, tablet or remote agent<br/>without a local mirror"] -->|"authenticated access"| BM["Remote MCP service<br/>authorized provider-backed projection<br/>or existing provider connector"]
+    BM --> O["Bounded source evidence<br/>revision or hash + coverage<br/>verify each intended client"]
   end
+  BM <-->|"authorized source reads"| P
+  AF --> V["Routine local save<br/>verify local readback<br/>leave upload queues alone"]
   classDef project fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e;
   classDef private fill:#f1f5f9,stroke:#64748b,color:#334155;
   classDef route fill:#ecfdf5,stroke:#059669,color:#064e3b;
-  class AF,BF project;
-  class AS,BS private;
-  class P route;
+  class AF project;
+  class AS private;
+  class P,AM,BM,O,V route;
 ```
 <!-- END GENERATED MERMAID: 01-shared-folder.mmd -->
 
@@ -65,29 +64,28 @@ selected project's boundary.
 <!-- BEGIN GENERATED MERMAID: 05-recall-and-index.mmd -->
 ```mermaid
 flowchart TB
-  accTitle: Bounded recall verifies current Markdown before returning evidence
-  accDescr: Recall searches the selected project's Wiki and root routing files by default. Path matches, private FTS5 chunks and bounded direct scanning provide candidates. Every returned hit is checked against current Markdown. Show expands lines only when the source hash still matches; incomplete coverage is reported.
-  Q["Agent asks for a fact"] --> R["recall query<br/>selected project only"]
-  R --> S["Default scope<br/>AGENTS + INDEX + Wiki<br/>Raw / Output only on request"]
-  S --> C{"Find candidate passages"}
-  C --> P["Path and title matches"]
-  C --> I["Private rebuildable FTS5<br/>stores passage chunks"]
-  C --> D["Bounded direct scan<br/>when index unavailable"]
-  P --> V["Re-read current Markdown<br/>verify source + excerpt"]
+  accTitle: Retrieve small evidence, expand only when needed
+  accDescr: Known notes can be read directly. Discovery uses exact recall or optional hybrid lexical and explicit-link ranking within the selected profile. Current Markdown is checked before small cited hits are returned. Coverage limits remain visible. Expand only missing detail, with stale source hashes refused.
+  Q["Agent needs evidence"] -->|"known source"| N["Read targeted note or section"]
+  Q -->|"discovery"| S["Selected project + profile scope<br/>root AGENTS and INDEX<br/>no parent or sibling discovery"]
+  S -->|"default"| P["Exact recall<br/>path / title + FTS5<br/>bounded scan fallback"]
+  S -->|"optional"| I["Hybrid recall<br/>lexical ranking + one-hop wikilinks<br/>no embedding model"]
+  P --> V["Verify current source + excerpt"]
   I --> V
-  D --> V
-  V --> O["At most 5 ranked hits<br/>2 KiB default packet<br/>path + heading + lines + SHA<br/>unsearched / unavailable flags"]
-  O --> H["show with path + SHA + lines"]
-  H --> G{"Current hash matches?"}
-  G -->|"yes"| E["Return exact bounded lines"]
-  G -->|"no"| X["Refuse stale evidence<br/>recall again"]
+  V --> O["Bounded cited packet: at most 5 hits<br/>path + heading + lines + SHA<br/>partial coverage remains explicit"]
+  N --> D{"Enough evidence?"}
+  O --> D
+  D -->|"yes"| A["Use evidence for the task"]
+  D -->|"missing detail"| H["show / MCP fetch<br/>path + SHA + 1-80 lines<br/>check current hash"]
+  H -->|"matches + fits budget"| E["Return exact bounded lines"]
+  H -->|"changed"| X["Refuse stale evidence<br/>recall again"]
   classDef route fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e;
   classDef private fill:#f1f5f9,stroke:#64748b,color:#334155;
   classDef valid fill:#ecfdf5,stroke:#059669,color:#064e3b;
   classDef stale fill:#fff7ed,stroke:#c2410c,color:#7c2d12;
-  class Q,R,S,C,P,D,V,O,H,G route;
+  class Q,N,S,P,D,V,O,H route;
   class I private;
-  class E valid;
+  class E,A valid;
   class X stale;
 ```
 <!-- END GENERATED MERMAID: 05-recall-and-index.mmd -->
@@ -101,8 +99,8 @@ flowchart TB
 
 [Editable Mermaid source](../assets/diagrams/05-recall-and-index.mmd)
 
-`recall` searches root `AGENTS.md` and `INDEX.md` plus `Wiki/` by default.
-`Raw/` and `Output/` require explicit inclusion. Path and title matches,
+`recall` considers root `AGENTS.md` and `INDEX.md` plus the profile's knowledge folders: `Wiki/` for team, `Notes/` for personal, or declared
+project folders. Supplemental source folders require explicit inclusion. Path and title matches,
 private FTS5 chunks and bounded direct scans supply candidate passages.
 The runtime rechecks current Markdown before returning at most five hits
 inside a 2 KiB default packet. Each hit carries a source path, heading, line
@@ -291,3 +289,45 @@ Markdown documents. Inspect every figure for readable labels, clipping,
 arrow direction, contrast and accurate privacy boundaries. The SVGs carry
 Mermaid accessibility titles and descriptions; surrounding prose explains
 the same relationships without relying on color.
+
+## 6. Explicit document links and source evidence
+
+<!-- BEGIN GENERATED MERMAID: 06-knowledge-graph.mmd -->
+```mermaid
+flowchart TB
+  accTitle: Illustrative document graph from explicit note links
+  accDescr: Inside one selected root, a project brief explicitly links to a storage policy with a decision relationship. The policy explicitly links to a storage check as evidence and an implementation work note as work. An unresolved depends_on reference produces a link_missing diagnostic, not a missing-note node. These are authored references, not inferred relationships or proof of factual correctness; inspection is read-only.
+  subgraph S["SELECTED PROJECT: READABLE NOTES"]
+    P["Project brief"] -->|"decision"| D["Storage policy"]
+    D -->|"evidence"| E["Storage check"]
+    D -->|"work"| W["Implementation<br/>work"]
+  end
+  D -.->|"unresolved depends_on"| M["Diagnostic: link_missing<br/>no target note"]
+  E ~~~ M
+  W ~~~ M
+  classDef source fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e;
+  classDef evidence fill:#ecfdf5,stroke:#059669,color:#064e3b;
+  classDef caution fill:#fff7ed,stroke:#c2410c,color:#7c2d12;
+  class P,D,W source;
+  class E evidence;
+  class M caution;
+```
+<!-- END GENERATED MERMAID: 06-knowledge-graph.mmd -->
+
+<details>
+<summary>SVG fallback</summary>
+
+![Illustrative explicit links connect a project brief, storage decision, evidence and work; an unresolved dependency produces a diagnostic.](../assets/diagrams/06-knowledge-graph.svg)
+
+</details>
+
+[Editable Mermaid source](../assets/diagrams/06-knowledge-graph.mmd)
+
+This illustrative graph uses explicit `decision`, `evidence`, `work` and
+`depends_on` metadata references. A missing dependency is a diagnostic, not a new
+source note. The document graph maps supported links and link-bearing metadata. It
+reports nodes, reference occurrences, backlinks and unresolved targets. It does
+not infer semantic relationships, change notes or establish factual truth. This
+is distinct from causal version ancestry used for history reconciliation. The
+hybrid reader uses its own bounded link subset, not the full graph CLI output.
+See the [graph contract and scope](KNOWLEDGE-GRAPH.md).
