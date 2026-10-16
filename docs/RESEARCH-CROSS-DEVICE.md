@@ -1,6 +1,6 @@
 # Cross-device memory efficiency: source-led research
 
-Checked October 16, 2026. This is a research and adaptation record, not a claim
+Checked October 17, 2026. This is a research and adaptation record, not a claim
 that phone/iPad clients, provider accounts or a deployed real-data bridge have
 passed acceptance. No private corpus was uploaded, no engine was installed and
 no external service or model was started for this research.
@@ -18,6 +18,66 @@ delivered-context budgets, compact source handles with exact expansion, explicit
 provenance for derived observations, and permission/freshness-aware remote
 retrieval. These can fit Isolinear's existing authored context packet, exact and
 hybrid recall, full source hashes and optional retained-evidence receipts.
+
+## Verified adoption decision, October 17, 2026
+
+The relevant upstream heads still match the pins below. Version labels and
+availability were checked against their first-party repository/PyPI records;
+those observations do not certify a product's deployment maturity or establish
+an Isolinear performance gain. The distinction is **independent design adoption**
+versus **an installed upstream dependency**.
+
+| Source | Evidence and license scope | Current decision |
+| --- | --- | --- |
+| Anthropic Scion | [Official architecture article](https://www.anthropic.com/engineering/redesigning-source-control), October 13, updated October 15; describes an internal system, not an installable public offering | Independently adapt selective delivery, source hashes, derived indexes and incremental evidence reuse. No Scion code, service or protocol dependency. |
+| OpenScion | [`00e92ab9c2a9985f39a64636b4b6c5c4bb583916`](https://github.com/tinyhumansai/openscion/tree/00e92ab9c2a9985f39a64636b4b6c5c4bb583916), GPL-3.0; [server README](https://github.com/tinyhumansai/openscion/blob/00e92ab9c2a9985f39a64636b4b6c5c4bb583916/crates/openscion-server/README.md) still says restart starts empty; persistence and essential collaboration remain future work in its [roadmap](https://github.com/tinyhumansai/openscion/blob/00e92ab9c2a9985f39a64636b4b6c5c4bb583916/ROADMAP.md). No GitHub tags/releases at this check. | No dependency or migration. Its prototype is not a suitable durable source of truth and does not replace Git. |
+| Hindsight | [`5331da2f4db369528bb122075341a7de9c3df6df`](https://github.com/vectorize-io/hindsight/tree/5331da2f4db369528bb122075341a7de9c3df6df), MIT; current latest GitHub release is v1.0.0 | Existing independent hybrid-retrieval ideas remain. Keep response/evidence budgeting and optional source expansion. The separate experimental sidecar targets v0.10.2; v1 availability is not a compatibility result or authorization to upgrade a held service. It is not a public-core dependency. |
+| OpenViking | [`8d28ffcdbb646a2f8cc1d8176d37d3c0185bc596`](https://github.com/volcengine/OpenViking/tree/8d28ffcdbb646a2f8cc1d8176d37d3c0185bc596), AGPL-3.0; latest GitHub release v0.5.0 | Independently adapt overview-to-detail access into authored `context-packet` and exact expansion. Do not import its generated directory sidecars, vector stack or runtime. |
+| Mnemosyne | [`87a86a28ac00ee5c9fe26dfa7c2117a96fce4e8f`](https://github.com/mnemosyne-oss/mnemosyne/tree/87a86a28ac00ee5c9fe26dfa7c2117a96fce4e8f), MIT; latest GitHub release v0.7.4 | Keep the small-active-context versus durable-originals distinction. Another fuzzy query cache, TTL policy or consolidation process has no demonstrated need here and remains deferred. |
+| Memori | [`574b1ea3e876f100ef82c37817d603eb7e258e59`](https://github.com/MemoriLabs/Memori/tree/574b1ea3e876f100ef82c37817d603eb7e258e59); the actual pinned [LICENSE](https://github.com/MemoriLabs/Memori/blob/574b1ea3e876f100ef82c37817d603eb7e258e59/LICENSE) contains Apache-2.0 text, although GitHub's classifier returned NOASSERTION; latest GitHub release v3.3.6 | Preserve explicit source/observer/session distinctions using existing hashes and asserted causal-history provenance. No additional attribution store or backend SDK. The repository license does not establish hosted-service rights or availability. |
+| TurboVec | [`c3b043b992290ff223b903046af7f6683768241c`](https://github.com/RyanCodrai/turbovec/tree/c3b043b992290ff223b903046af7f6683768241c), MIT; [PyPI v1.1.2](https://pypi.org/project/turbovec/1.1.2/) is available but package metadata still declares Alpha | Deferred optional semantic-index experiment only. It compresses backend embeddings, not the text in a model's context. No installation, dependency or benchmark was added by this verification. |
+
+The optional public MCP adapter uses the official Python MCP SDK to expose the
+existing read-only search, fetch and authored-context contract over stdio. It is
+not a wrapper that installs the memory engines above. See [MCP](MCP.md),
+[evidence receipts](EVIDENCE-RECEIPTS.md) and
+[progressive context](PROGRESSIVE-CONTEXT.md) for implementation boundaries.
+
+### Benefit over Git
+
+Scion/OpenScion concern source-control scaling. Isolinear concerns source-linked
+memory and evidence delivery. This review establishes no reason to replace the
+product's Git repository or migrate vault history into another source-control
+format. Selective retrieval can improve context assembly while Git continues to
+provide the product's code history, diffs and review workflow. TurboVec is also
+not a source-control alternative. Infrastructure throughput or vector-storage
+benchmarks are not model-token savings.
+
+### TurboVec experiment gate
+
+The [Python metadata](https://github.com/RyanCodrai/turbovec/blob/c3b043b992290ff223b903046af7f6683768241c/turbovec-python/pyproject.toml)
+requires Python >=3.9, NumPy and a native Rust extension. Published wheels were
+present for macOS arm64, Linux arm64/x86_64 and Windows amd64 at this check.
+Availability is not acceptance on this product's supported hosts. A native Python
+extension is not a drop-in component of a TypeScript/Workers service.
+
+First demonstrate a useful semantic-retrieval improvement over current
+lexical/title/explicit-link retrieval. No vector-memory bottleneck has been
+measured in this review. Only then compare a float embedding baseline with a
+4-bit candidate using the same embeddings, corpus and allowed scope. Measure
+real resident memory, latency, source recall and accepted-task evidence, not
+only compressed file size or maintainer microbenchmarks.
+
+If that gate justifies an experiment, use [IdMapIndex stable external IDs](https://github.com/RyanCodrai/turbovec/blob/c3b043b992290ff223b903046af7f6683768241c/turbovec/src/id_map.rs)
+with collision-checked passage identity and fresh scope/time/authorization
+allowlists. Its [API documentation](https://github.com/RyanCodrai/turbovec/blob/c3b043b992290ff223b903046af7f6683768241c/docs/api.md)
+warns that positional masks become invalid after mutations, including equal-size
+remove/add sequences. Empty/unknown authorization sets must fail closed, never
+fall back to searching all vectors. Keep source/model-version fingerprints and
+current-byte checks before text delivery. Exercise edits, deletion, restart,
+revocation, rare literals, negations and correction pairs. Quantization is lossy;
+a smaller index may leave final tool-context cost unchanged or worsen retrieval.
+This future experiment is not a blocker for the current source-preserving work.
 
 ## Hindsight: useful mechanisms and important differences
 

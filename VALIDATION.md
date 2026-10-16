@@ -1,5 +1,23 @@
 # Validation record
 
+## 0.7.0 final local checks, October 17, 2026
+
+- Final affected suite: 19 passed (12 official-SDK MCP tests and seven release
+  tests). Actual stdio initialization advertises the approved light/dark icons;
+  exact-source releases include checked artwork, its manifest and reproducible ZIPs.
+- The resumed broad run collected 632 tests before final fixture edits. It ended
+  with 609 passed, 21 skipped and two release-fixture failures because its loaded
+  fixture list omitted the newly required branding manifest. The final seven
+  release tests above use the corrected fixture list and passed. Fresh clean-source
+  CI is still required; this is not a claim of a passing final broad local run.
+- Enlarged artwork exposed opposing stdin/stdout pipe writers during batched Git
+  object reads. A temporary binary input file removes that deadlock while retaining
+  exact object IDs, ordered byte parsing and clean-source verification. The affected
+  release suite and independent review passed without increasing test timeouts.
+- Independent review passed 27 MCP/context checks and all 23 artwork plus three
+  editable-source hashes; disclosure/path and documentation checks found no issue.
+  Ten generated Mermaid blocks and whitespace checks passed.
+
 ## 0.7.0 cross-device release candidate, October 16, 2026
 
 Source: isolated reviewed publication branch based on the 0.6.0 main tree, with

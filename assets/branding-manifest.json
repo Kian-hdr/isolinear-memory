@@ -1,0 +1,254 @@
+{
+  "schema_version": 1,
+  "brand": "Isolinear Memory",
+  "design_version": "1.1.0",
+  "artwork_date": "2026-10-02",
+  "promoted_date": "2026-10-16",
+  "canonical_source": {
+    "path": "IsolinearMemory.icon",
+    "files": {
+      "Assets/foreground-dark.svg": {
+        "sha256": "33412ce2aee1722df1a96c37bd3231b87df107f56d15307ef8acb818a54ba0c4",
+        "bytes": 906
+      },
+      "Assets/foreground.svg": {
+        "sha256": "f19c63819ca7004e28bbee8e9769d61ad9cfda1fa74a6c03d31b0375fd8c0cfd",
+        "bytes": 906
+      },
+      "icon.json": {
+        "sha256": "f129d357eeedece8aec9faf0bbc70f05bbaf714e6a6309c04d1233232c26ab48",
+        "bytes": 916
+      }
+    },
+    "receipt_sha256": "5025a89e80f542550878c39567e9b2ff229cde4ce58f150a57fd675b01e6922f"
+  },
+  "appearances": {
+    "light": {
+      "primary_png": "isolinear-memory.png",
+      "connector_png": "isolinear-memory-256.png",
+      "icns": "isolinear-memory.icns",
+      "background": "authored graphite-blue gradient",
+      "png_sizes": {
+        "16": "isolinear-memory-16.png",
+        "24": "isolinear-memory-24.png",
+        "32": "isolinear-memory-32.png",
+        "48": "isolinear-memory-48.png",
+        "64": "isolinear-memory-64.png",
+        "128": "isolinear-memory-128.png",
+        "256": "isolinear-memory-256.png",
+        "512": "isolinear-memory-512.png",
+        "1024": "isolinear-memory-1024.png"
+      }
+    },
+    "dark": {
+      "primary_png": "isolinear-memory-dark.png",
+      "connector_png": "isolinear-memory-dark-256.png",
+      "icns": "isolinear-memory-dark.icns",
+      "background": "system-dark",
+      "png_sizes": {
+        "16": "isolinear-memory-dark-16.png",
+        "24": "isolinear-memory-dark-24.png",
+        "32": "isolinear-memory-dark-32.png",
+        "48": "isolinear-memory-dark-48.png",
+        "64": "isolinear-memory-dark-64.png",
+        "128": "isolinear-memory-dark-128.png",
+        "256": "isolinear-memory-dark-256.png",
+        "512": "isolinear-memory-dark-512.png",
+        "1024": "isolinear-memory-dark-1024.png"
+      }
+    }
+  },
+  "preview": "light-dark-preview.png",
+  "provenance": {
+    "isolinear-memory": {
+      "primary_png_receipt_sha256": "d9afbc504919b18d18214c7e8d15dc888882372a796751fc07d0129df21d1dc1",
+      "primary_png_byte_exact_approved_export": true,
+      "derived_sizes_color_management": "Display P3 to sRGB via Pillow ImageCms; Lanczos downsample",
+      "native_revalidation": "ictool27.0(129), macOS, design-generation27, Default/Dark successful; render texture can differ between exports"
+    },
+    "isolinear-memory-dark": {
+      "primary_png_receipt_sha256": "d0f67691a236aa0bf598945c97ed8b9805f5a4bb7b5e6068ead3879c6b095e21",
+      "primary_png_byte_exact_approved_export": true,
+      "derived_sizes_color_management": "Display P3 to sRGB via Pillow ImageCms; Lanczos downsample",
+      "native_revalidation": "ictool27.0(129), macOS, design-generation27, Default/Dark successful; render texture can differ between exports"
+    }
+  },
+  "artifacts": {
+    "isolinear-memory-1024.png": {
+      "sha256": "d9afbc504919b18d18214c7e8d15dc888882372a796751fc07d0129df21d1dc1",
+      "bytes": 1729435,
+      "pixels": [
+        1024,
+        1024
+      ]
+    },
+    "isolinear-memory-128.png": {
+      "sha256": "70cf6c7a13ce16f8d1e8832a8c2cc212c5b22a6f58dce9ce649b77753cb452dd",
+      "bytes": 15049,
+      "pixels": [
+        128,
+        128
+      ]
+    },
+    "isolinear-memory-16.png": {
+      "sha256": "6854465a2b16669ff6063feeb62d8915e5a8f8270fafd760be83eb51a6e946c9",
+      "bytes": 1135,
+      "pixels": [
+        16,
+        16
+      ]
+    },
+    "isolinear-memory-24.png": {
+      "sha256": "4e41093a478caedb3aeb7275612a796957ff74d2b0a71ac6dff706d26f816e47",
+      "bytes": 1787,
+      "pixels": [
+        24,
+        24
+      ]
+    },
+    "isolinear-memory-256.png": {
+      "sha256": "25df77c16ea967dc47039bf822a10e884f7200243928f1f1f1cafe5a024b48b7",
+      "bytes": 42120,
+      "pixels": [
+        256,
+        256
+      ]
+    },
+    "isolinear-memory-32.png": {
+      "sha256": "98e059ab333c9a41c5511926f89e658983b5c359b620ad7b5b1e6cf101bc2c1a",
+      "bytes": 2468,
+      "pixels": [
+        32,
+        32
+      ]
+    },
+    "isolinear-memory-48.png": {
+      "sha256": "622f8a8e0687ef4d58e18ce13777c25b0712786cda53c935ceda2a29651bcc7c",
+      "bytes": 4069,
+      "pixels": [
+        48,
+        48
+      ]
+    },
+    "isolinear-memory-512.png": {
+      "sha256": "52836aa7b6afb1b5199a08c6d3c90987ecf581a5ba095bff44c5a782468f1927",
+      "bytes": 136349,
+      "pixels": [
+        512,
+        512
+      ]
+    },
+    "isolinear-memory-64.png": {
+      "sha256": "ed6b571aa96cf31ffec8d9bf29608b2d791102d75d9d960e1c563d6d3b2ebf2b",
+      "bytes": 5678,
+      "pixels": [
+        64,
+        64
+      ]
+    },
+    "isolinear-memory-dark-1024.png": {
+      "sha256": "d0f67691a236aa0bf598945c97ed8b9805f5a4bb7b5e6068ead3879c6b095e21",
+      "bytes": 1958764,
+      "pixels": [
+        1024,
+        1024
+      ]
+    },
+    "isolinear-memory-dark-128.png": {
+      "sha256": "85bd547feef3535fd25cbcf94d37a3a10e35953e1e59903452bba3f49b83f093",
+      "bytes": 13396,
+      "pixels": [
+        128,
+        128
+      ]
+    },
+    "isolinear-memory-dark-16.png": {
+      "sha256": "a79ac6da23220f5cba341d67cdd5b06cc81047b575e77d1f86d4e0283a6e659e",
+      "bytes": 1144,
+      "pixels": [
+        16,
+        16
+      ]
+    },
+    "isolinear-memory-dark-24.png": {
+      "sha256": "a32db106ea4cae0c3fbd60e438ea485aaa51425dfadd1ea564e4930bbcce9d36",
+      "bytes": 1694,
+      "pixels": [
+        24,
+        24
+      ]
+    },
+    "isolinear-memory-dark-256.png": {
+      "sha256": "1ef9d44434c28c7446a51375f3279431aa31f6bbcec3abe97131120a4938fb2a",
+      "bytes": 36944,
+      "pixels": [
+        256,
+        256
+      ]
+    },
+    "isolinear-memory-dark-32.png": {
+      "sha256": "c1291d35f3fa039e01f3d88c3c1cb3da651585cc82a6ee2c9e7402ea6387b6b0",
+      "bytes": 2321,
+      "pixels": [
+        32,
+        32
+      ]
+    },
+    "isolinear-memory-dark-48.png": {
+      "sha256": "d48e755f5e7f825694ce974109cf25e4832d86165bae4f82cb1d5762f479be87",
+      "bytes": 3789,
+      "pixels": [
+        48,
+        48
+      ]
+    },
+    "isolinear-memory-dark-512.png": {
+      "sha256": "09dbf812ae18edee4f8b38a1731b8c0f2c9f6169258d1d482bf1397f79207a9d",
+      "bytes": 122569,
+      "pixels": [
+        512,
+        512
+      ]
+    },
+    "isolinear-memory-dark-64.png": {
+      "sha256": "8b7575dac4fd99cdc6e3a7efac4360e517e3b834d4b9a4c4ae1596dea1969650",
+      "bytes": 5213,
+      "pixels": [
+        64,
+        64
+      ]
+    },
+    "isolinear-memory-dark.icns": {
+      "sha256": "02dfea1bb8e47b61c8c76ba973df3b6f315aeb35f449c97c09e902ece90b381f",
+      "bytes": 735403
+    },
+    "isolinear-memory-dark.png": {
+      "sha256": "d0f67691a236aa0bf598945c97ed8b9805f5a4bb7b5e6068ead3879c6b095e21",
+      "bytes": 1958764,
+      "pixels": [
+        1024,
+        1024
+      ]
+    },
+    "isolinear-memory.icns": {
+      "sha256": "192d799f015aba63b5754f0976a7e704ec3e20da10b6e1160ecdff928f88fd77",
+      "bytes": 832240
+    },
+    "isolinear-memory.png": {
+      "sha256": "d9afbc504919b18d18214c7e8d15dc888882372a796751fc07d0129df21d1dc1",
+      "bytes": 1729435,
+      "pixels": [
+        1024,
+        1024
+      ]
+    },
+    "light-dark-preview.png": {
+      "sha256": "5456f23444eb7c8054e4626a95fb5b1bfd33da3ff1863e3623e54ac6bfff1a8a",
+      "bytes": 412154,
+      "pixels": [
+        1600,
+        800
+      ]
+    }
+  }
+}

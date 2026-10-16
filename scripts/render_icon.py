@@ -3,10 +3,12 @@
 
 Requires macOS, Icon Composer (bundled with Xcode) and Pillow. No runtime dependency.
 """
-from pathlib import Path
 import argparse
+import io
+from pathlib import Path
+import shutil
 import subprocess
-from PIL import Image
+from PIL import Image, ImageCms
 
 ROOT = Path(__file__).resolve().parents[1]
 SIZES = (16, 24, 32, 48, 64, 128, 256, 512, 1024)
@@ -21,6 +23,7 @@ def main():
     if not args.ictool.is_file():
         parser.error('Icon Composer ictool is required; use --ictool for another installation.')
     args.output.mkdir(parents=True, exist_ok=False)
+    icons = {}
     for stem, rendition in [('isolinear-memory', 'Default'), ('isolinear-memory-dark', 'Dark')]:
         png = args.output / (stem + '.png')
         subprocess.run([str(args.ictool), str(ROOT / 'assets/IsolinearMemory.icon'),
@@ -28,16 +31,23 @@ def main():
                         '--rendition', rendition, '--width', '1024', '--height', '1024',
                         '--scale', '1', '--design-generation', '27'], check=True)
         icon = Image.open(png).convert('RGBA')
+        if icon.info.get('icc_profile'):
+            icon = ImageCms.profileToProfile(
+                icon, ImageCms.ImageCmsProfile(io.BytesIO(icon.info['icc_profile'])),
+                ImageCms.createProfile('sRGB'), outputMode='RGBA')
+        icons[stem] = icon
         icon.save(args.output / (stem + '.icns'), format='ICNS')
         for size in SIZES:
-            icon.resize((size, size), Image.Resampling.LANCZOS).save(
-                args.output / (stem + '-' + str(size) + '.png'))
+            destination = args.output / (stem + '-' + str(size) + '.png')
+            if size == 1024:
+                shutil.copyfile(png, destination)
+            else:
+                icon.resize((size, size), Image.Resampling.LANCZOS).save(destination)
     preview = Image.new('RGB', (1600, 800))
     preview.paste((231, 236, 245), (0, 0, 800, 800))
     preview.paste((23, 30, 43), (800, 0, 1600, 800))
     for x, stem in ((50, 'isolinear-memory'), (850, 'isolinear-memory-dark')):
-        icon = Image.open(args.output / (stem + '.png')).convert('RGBA')
-        icon = icon.resize((700, 700), Image.Resampling.LANCZOS)
+        icon = icons[stem].resize((700, 700), Image.Resampling.LANCZOS)
         preview.paste(icon, (x, 50), icon)
     preview.save(args.output / 'light-dark-preview.png')
     print(args.output)

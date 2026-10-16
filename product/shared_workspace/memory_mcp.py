@@ -10,11 +10,12 @@ import json
 from pathlib import Path
 from typing import Annotated, Literal
 
-from . import context_packet, recall, workflow
+from . import PRODUCT_VERSION, context_packet, recall, workflow
 from .errors import ProductError
 from .folder import private_path
 
 SDK_VERSION = '1.30.0'
+PUBLIC_ICON_BASE = f'https://raw.githubusercontent.com/Kian-hdr/isolinear-memory/v{PRODUCT_VERSION}/assets/'
 ALLOWED = {
     'isolinear_search': {'query', 'strategy', 'max_hits', 'max_bytes', 'known_evidence'},
     'isolinear_fetch': {'path', 'sha256', 'start', 'end', 'max_bytes'},
@@ -29,9 +30,9 @@ def _sdk():
         if importlib.metadata.version('mcp') != SDK_VERSION:
             raise ImportError('Untested SDK version')
         from mcp.server.fastmcp import FastMCP
-        from mcp.types import CallToolResult, TextContent, ToolAnnotations
+        from mcp.types import CallToolResult, Icon, TextContent, ToolAnnotations
         from pydantic import Field
-        return FastMCP, CallToolResult, TextContent, ToolAnnotations, Field
+        return FastMCP, CallToolResult, TextContent, ToolAnnotations, Field, Icon
     except (ImportError, importlib.metadata.PackageNotFoundError) as error:
         raise ProductError(3, 'memory_mcp_sdk',
                            'Install optional requirements-mcp.txt in this private Python environment.') from error
@@ -48,7 +49,7 @@ def create_server(root: Path, state: Path):
         chosen = workflow.selected_root(root)
         return chosen, private_path(state, chosen)
     root, state = recall.bounded_cli(selected, command='show')
-    FastMCP, CallToolResult, TextContent, ToolAnnotations, Field = _sdk()
+    FastMCP, CallToolResult, TextContent, ToolAnnotations, Field, Icon = _sdk()
 
     def result(data, *, error=False):
         text = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
@@ -103,7 +104,14 @@ def create_server(root: Path, state: Path):
                 return failure('memory_mcp_budget', 'Complete MCP result exceeds max_bytes.', cap)
             return response
 
-    server = BoundedFastMCP('isolinear_memory_mcp', log_level='ERROR')
+    # Initialization metadata only: public release-tag URLs avoid embedding
+    # image bytes or repeating artwork metadata in every tool result/schema.
+    icons = [Icon(src=PUBLIC_ICON_BASE + filename, mimeType='image/png',
+                  sizes=['256x256'], theme=theme)
+             for theme, filename in [('light', 'isolinear-memory-256.png'),
+                                     ('dark', 'isolinear-memory-dark-256.png')]]
+    server = BoundedFastMCP('isolinear_memory_mcp', log_level='ERROR', icons=icons,
+                            website_url='https://github.com/Kian-hdr/isolinear-memory')
     read = ToolAnnotations(readOnlyHint=True, destructiveHint=False,
                            idempotentHint=True, openWorldHint=False)
     Bytes = Annotated[int, Field(ge=512, le=65536, strict=True)]
