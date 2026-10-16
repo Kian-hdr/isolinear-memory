@@ -13,6 +13,10 @@ People and agents read and edit ordinary Markdown. Obsidian is optional. Use nat
 file tools; routine memory work does not require generated scripts or model-specific
 APIs. Read the project's INDEX and relevant notes only. Update existing canonical
 notes with durable facts, decisions and progress; retain evidence and uncertainty.
+For a known note, start with a bounded native read. Use scoped exact/hybrid recall
+for discovery; expand only when returned evidence lacks the needed details or
+freshness. A heading-only local hit still needs its body. Complete evidence does
+not require an automatic second fetch.
 
 Use a local mirror and verify ordinary saves by local readback. Do not open cloud
 client apps/menus, inspect upload queues/status, poll remote receipt, force sync,
@@ -22,11 +26,13 @@ MCP/connector is appropriate when the host has no local mirror; enforce the sele
 scope and verify the actual remote operation without checking desktop upload queues.
 Use provider-delivery diagnostics only for an explicitly requested investigation or
 actual recipient/delivery task. See [agent integration](references/agent-integration.md)
-for optional bounded context packets and reset-safe evidence receipts.
+for released 0.7 context packets, reset-safe evidence receipts, and optional local
+stdio MCP versus a separately configured remote connector.
 
 ## Setup or update
 
-Read [runtime setup](references/product-runtime.md). Discover the selected folder,
+Read only the relevant format/operation in [runtime setup](references/product-runtime.md).
+Discover the selected folder,
 existing format, installed runtime and private state. Verify release checksums before
 execution. Preserve project identity, history, instructions and unrelated files.
 Choose team, personal or project guidance from
@@ -34,10 +40,15 @@ Choose team, personal or project guidance from
 workspace receives the selected profile's folders, AGENTS.md and INDEX.md.
 Never reorganize a populated workspace automatically.
 
-Install stable `isolinear-memory` and `shared-memory` launchers for the same runtime,
-with automatic capture where supported, outside
-shared storage. [Agent integration](references/agent-integration.md) explains the
-small routine contract. Automatic capture works independently of the model; host
+On macOS/Linux, install stable `isolinear-memory` and `shared-memory` launchers
+for the same verified runtime outside shared storage. Windows invokes the package
+with compatible Python directly. The supplied capture installer is macOS-only;
+other hosts use manual capture or an existing scheduler. Verify source/skill ZIPs
+before use, and execute helper installers only from the matching verified source
+kit, never from the selected memory project. Preserve prior runtimes for rollback.
+Read [agent integration](references/agent-integration.md) when
+configuring client/context behavior or troubleshooting retrieval, rather than
+loading every reference for ordinary notes. Automatic capture works independently of the model; host
 permissions still apply. Without it, run one `sync PROJECT --brief` after edits.
 On failure, preserve saved notes and report the capture gap once; do not retry or
 reinstall repeatedly. Load detailed command help only for the operation needed.

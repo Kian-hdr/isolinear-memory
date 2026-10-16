@@ -1,5 +1,31 @@
 # Validation record
 
+## 0.7.1 documentation and skills patch, October 17, 2026
+
+- README and setup prompt were reviewed against the actual CLI and storage
+  contracts. The reference graph, causal history graph, profile retrieval scope,
+  native reads, optional MCP and remote-service limits are described separately.
+- Focused product CLI, release, knowledge graph, graph CLI and official-SDK checks:
+  82 tests collected, 81 passed and one platform/fixture skip. After final guidance
+  and diagram refinements, all seven release tests passed again.
+- Synthetic packaged examples passed new team/personal/custom-project setup,
+  identity/instruction preservation on resume, capture history containing the
+  exact fixture text, recall/hash-checked expansion, full authored context with
+  a stop condition, and explicit graph links without source writes.
+- Independent skill forward review covered known-note native reads, heading-only
+  hits needing expansion, complete indexed fictional evidence with live-source
+  checking false, and reset-safe bootstrap. The review found and corrected the
+  missing verified source-kit acquisition step for helper installers.
+- Both skill structural validators passed. All 12 generated diagram blocks match
+  their editable sources. Three changed Mermaid figures rendered with pinned
+  CLI 11.17.0 and were visually inspected; SVG exports are retained. Relative-link,
+  disclosure and whitespace checks passed. These checks do not certify provider
+  delivery, native-device performance or answer quality.
+- Fresh cross-platform CI and exact clean merged-source release/readback remain
+  publication gates at this source checkpoint. Runtime behavior is unchanged;
+  the patch version distributes updated bundled guidance and diagrams.
+
+
 ## 0.7.0 final local checks, October 17, 2026
 
 - Final affected suite: 19 passed (12 official-SDK MCP tests and seven release

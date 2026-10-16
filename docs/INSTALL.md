@@ -1,22 +1,40 @@
-# Install or update Isolinear Memory 0.7.0
+# Install or update Isolinear Memory 0.7.1
 
 This is setup reference, not routine agent context. Preserve the selected workspace,
 private state and previous runtime. Python 3.11+ is required. Download the versioned
-runtime and SHA256SUMS from the [v0.7.0 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.7.0).
+runtime and SHA256SUMS from the [v0.7.1 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.7.1).
 Verify the runtime SHA-256 against its external SHA256SUMS entry before execution.
 If unavailable or mismatched, stop installation; do not substitute an unverified asset.
+
+Choose the matching assets from that same release:
+
+| Asset | When needed |
+| --- | --- |
+| `isolinear-memory-0.7.1.pyz` | The self-contained runtime |
+| `SHA256SUMS` | External checksums for downloaded assets |
+| `isolinear-memory-0.7.1.zip` | Versioned source kit, including the launcher and capture installer scripts |
+| `isolinear-memory-skills-0.7.1.zip` | Packaged setup skills for the host agent |
+
+Before executing a helper script, download and verify the **source kit ZIP** against
+its external checksum, then extract it to a separate tools/source directory outside
+the memory folder. Use only scripts from that exact extracted kit. Do not run a
+same-named script found in the selected project or on an unrelated search path.
+Verify the skills ZIP as well before installing its contents. A runtime-only Python
+invocation does not need the source kit; the commands below that use installer
+scripts do. Use a compatible Python command on your platform; `python3` is the
+example spelling here.
 
 Use the verified package's `version` and `install-package --help`, then:
 
 ```text
-python3 isolinear-memory-0.7.0.pyz install-package isolinear-memory-0.7.0.pyz --sha256 VERIFIED_SHA --tools-dir PRIVATE_TOOLS
+python3 isolinear-memory-0.7.1.pyz install-package isolinear-memory-0.7.1.pyz --sha256 VERIFIED_SHA --tools-dir PRIVATE_TOOLS
 ```
 
 Substitute actual discovered paths and checksum. Use the returned immutable package
 for `setup PROJECT` and subsequent commands. Existing format-3 projects retain their
 private state; supply `--state-dir` only when required by their existing binding.
 For old formats, read the [migration guide](PRODUCT-V1.md) before proceeding.
-Version 0.7.0 supports `--vault-type team|personal|project`
+Version 0.7.1 supports `--vault-type team|personal|project`
 and repeatable `--project-folder` inputs. Team keeps Raw/Wiki/Output; personal uses
 Notes/Resources; project uses chosen domain folders. See [vault profiles](../skills/setup-shared-project-workspace/references/vault-profiles.md).
 Published older releases may lack these options; inspect setup help and pre-create
@@ -28,11 +46,15 @@ macOS automatic-capture installer. On native Windows, invoke the verified packag
 with Python directly; this release does not install a Windows command shim.
 
 ```text
-python3 scripts/install_command.py --runtime INSTALLED_PACKAGE --sha256 VERIFIED_SHA
-python3 scripts/install_capture.py PROJECT --state-dir PRIVATE_STATE --runtime INSTALLED_PACKAGE --sha256 VERIFIED_SHA --install
+python3 VERIFIED_SOURCE_KIT/scripts/install_command.py --runtime INSTALLED_PACKAGE --sha256 VERIFIED_SHA
+python3 VERIFIED_SOURCE_KIT/scripts/install_capture.py PROJECT --state-dir PRIVATE_STATE --runtime INSTALLED_PACKAGE --sha256 VERIFIED_SHA --install
 ```
 
-The second installs a macOS user LaunchAgent. Read [automatic capture](AUTOMATIC-CAPTURE.md)
+Replace `VERIFIED_SOURCE_KIT` with the absolute extracted-kit path, and use the
+actual selected project, private state and installed-package paths. These are
+placeholders, not commands to execute literally. Reuse an existing valid capture
+binding before considering an installer update. The second command installs a
+macOS user LaunchAgent. Read [automatic capture](AUTOMATIC-CAPTURE.md)
 for status, recovery and removal. Other systems can continue with native edits and
 one manual sync; an automatic Windows/Linux service is not supplied in this release.
 Use the host's existing private scheduler if separately configured and verified.

@@ -1,6 +1,6 @@
 # Context-local evidence receipts
 
-Development addition, October 16, 2026. See the [Scion source-to-target map](READINESS.md#scion-selective-assimilation-development-candidate-2026-10-16).
+Optional feature introduced in 0.7.0. See the [Scion source-to-target map](READINESS.md#scion-selective-assimilation-development-candidate-2026-10-16).
 
 ## Purpose and contract
 

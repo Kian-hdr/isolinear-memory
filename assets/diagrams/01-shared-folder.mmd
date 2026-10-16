@@ -1,23 +1,22 @@
 flowchart TB
-  accTitle: One selected project, separate private device state
-  accDescr: Each device holds a selected Markdown project and a private baseline, recovery state and FTS5 index. Isolinear Memory reads and records only the selected project. Provider sync scope is configured separately; the private state is outside the project route.
-  subgraph A["DEVICE A"]
-    direction LR
-    AE["Person or agent<br/>native Markdown editor"] --> AF["Selected project folder<br/>AGENTS + INDEX + Raw / Wiki / Output<br/>format-3 manifest + portable events"]
-    AM["Isolinear Memory<br/>recall + sync + history"] <-->|"read and capture"| AF
-    AM <-->|"local only"| AS["Private device state<br/>baseline + recovery + FTS5 index"]
+  accTitle: One source of knowledge, local and remote access paths
+  accDescr: Desktop agents use native files, CLI or optional local stdio MCP over one selected Markdown project. Private indexes are rebuildable. A phone without a mirror needs a separately deployed authenticated remote service or an existing provider connector. Remote access and client acceptance are separate from the local release.
+  subgraph A["DESKTOP WITH A LOCAL MIRROR"]
+    AE["Person or agent"] --> AM["Native files or Isolinear CLI<br/>optional local stdio MCP"]
+    AM <-->|"scoped reads"| AF["Selected Markdown project<br/>instructions + canonical notes<br/>portable causal history"]
+    AM <-->|"derived state"| AS["Private device storage<br/>rebuildable index<br/>baseline + recovery"]
+    AE -->|"native edits"| AF
   end
-  AF <-->|"project files<br/>if configured"| P["One chosen folder provider"]
-  P <-->|"project files<br/>if delivered"| BF
-  subgraph B["DEVICE B"]
-    direction LR
-    BE["Person or agent<br/>native Markdown editor"] --> BF["Authorized project copy<br/>Markdown + portable events"]
-    BM["Isolinear Memory<br/>recall + sync + history"] <-->|"read and capture"| BF
-    BM <-->|"local only"| BS["Separate private state<br/>baseline + recovery + FTS5 index"]
+  AF <-->|"background file transport<br/>if configured"| P["One chosen folder provider"]
+  subgraph B["REMOTE ACCESS: SEPARATE DEPLOYMENT"]
+    BE["Phone, tablet or remote agent<br/>without a local mirror"] -->|"authenticated access"| BM["Remote MCP service<br/>authorized provider-backed projection<br/>or existing provider connector"]
+    BM --> O["Bounded source evidence<br/>revision or hash + coverage<br/>verify each intended client"]
   end
+  BM <-->|"authorized source reads"| P
+  AF --> V["Routine local save<br/>verify local readback<br/>leave upload queues alone"]
   classDef project fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e;
   classDef private fill:#f1f5f9,stroke:#64748b,color:#334155;
   classDef route fill:#ecfdf5,stroke:#059669,color:#064e3b;
-  class AF,BF project;
-  class AS,BS private;
-  class P route;
+  class AF project;
+  class AS private;
+  class P,AM,BM,O,V route;
