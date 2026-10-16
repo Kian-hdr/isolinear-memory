@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.1
+
+- Rewrite the README around setup, storage, retrieval, explicit knowledge links,
+  context limits and device access, with shared editable diagrams and SVG fallbacks.
+- Clarify the setup prompt and both setup skills, including platform-specific
+  installation/capture, existing-project preservation and conditional evidence expansion.
+- Package the updated guidance with the existing source-preserving runtime behavior.
+
+
 ## 0.7.0
 
 - Add optional complete authored bootstrap packets and context-local evidence

@@ -1,6 +1,6 @@
 # Low-context everyday use
 
-Read INDEX.md and only relevant notes. Search before writing. Use the host's native
+Read AGENTS.md, INDEX.md and only relevant notes. Search before writing. Use the host's native
 read/edit tools. The agent maintains memory as part of finishing each task, without
 waiting for the human to request documentation. Save meaningful findings, decisions,
 corrections, generated artifacts, status changes and useful next steps in the relevant
@@ -23,23 +23,40 @@ instructions and the selected folder's scope, ownership and permissions.
 
 For a known path or exact symbol, use native bounded search and read. For an
 unknown location, `isolinear-memory recall . "QUERY" --text` from the selected folder returns a small
-source-linked result; use `isolinear-memory show` with its path/hash/lines to expand
-only a relevant passage. If unavailable or incomplete, fall back to native file
-tools and say which sources were not checked. The private index is disposable;
+source-linked result. Exact recall is the default; optional `--strategy hybrid`
+combines lexical/title/explicit-link discovery for related matches. Relevance is
+not factual confidence. Retain the selected root/profile and personal/company
+boundary; do not widen the corpus just to find an answer.
+
+Read the returned evidence before deciding to expand. If it already contains the
+needed details, scope, qualifiers and adequate source/freshness information, use it
+without a redundant `show`/fetch unless the host's source/citation contract requires
+another read. Heading-only, path-only, truncated or incomplete results need exact
+expansion. A local exact hit can contain only a heading, so its source hash does not
+mean the body was read. Use `show` with path/hash/lines when needed; changed sources
+must be searched/read again. A fetch from an indexed remote copy remains an indexed
+copy, not a live-source freshness check. Use the appropriate source route when the
+task actually requires current live bytes.
+
+If unavailable or incomplete, fall back to authorized native file tools when a local
+mirror exists, and say which relevant sources were not checked. The private index is disposable;
 the selected project's Markdown is still the record of truth. Use targeted edits,
 not whole-note rewrites, for routine memory updates.
 
-For a startup/reset that needs several complete authored sources, use
-`context-packet` only if the installed runtime's help advertises it. It combines
+For a startup/reset that needs several complete authored sources, released 0.7
+provides optional `context-packet`. Check help when using an older runtime. It combines
 complete AGENTS.md, INDEX.md and an explicitly selected canonical file or exact
 unique handoff section, with current hashes/locators. Missing or oversized required
-content fails as a whole; never drop a stop condition to make it fit. Native
+content fails as a whole; never drop a stop condition to make it fit. This is
+per-source readback, not a transactional snapshot or exhaustive policy discovery. Native
 bounded reads and recall/show remain appropriate for focused evidence.
 
 Optional `--with-receipts`/`--known-evidence` reuse exact passages the caller still
 holds after source revalidation. Forget receipts after a new chat, compaction,
 reset or uncertain retention; reload authored text. Receipts cannot reconstruct
 lost context and do not prove model understanding, delivery or factual truth.
+The caller decides what it actually retains; no server can infer that a prior
+passage survived host compaction. Revalidation does not enlarge the model window.
 
 An installed local capture job can run Isolinear Memory without a model tool call.
 The installer must verify its actual runtime, project and private state once. A
@@ -77,6 +94,22 @@ See the source repository's docs/AUTOMATIC-CAPTURE.md for deterministic installa
 status and removal. Local-mirror workflows need no MCP server, API key or extra
 tool schemas.
 
+## Optional local stdio MCP
+
+Released 0.7 `memory-mcp PROJECT --state-dir PRIVATE_STATE` exposes read-only search,
+hash-checked fetch and authored context over one fixed local project. Use the
+optional SDK environment from the release's `requirements-mcp.txt`; it is separate
+from the normal dependency-free local CLI and from the Hindsight adapter. Keep
+each project/state binding and client permission explicit. This adapter neither
+listens as a remote service nor gives a phone access to the local disk by itself.
+
+For its search/context tools, omit `known_evidence` for ordinary output; `[]`
+requests receipt IDs, and a list of still-retained IDs requests exact omission.
+Its fetch tool always expands the requested source. Clear IDs after context loss.
+Do not add a fetch merely because search ran: inspect evidence and freshness first.
+Read the version-matched public MCP guide for configuration instead of repeatedly
+loading server schemas or installing an SDK during ordinary note work.
+
 ## Hosts without a local mirror
 
 Use the host's authorized Google Drive, OneDrive or Isolinear MCP/connector for the
@@ -89,6 +122,9 @@ remote write through its returned receipt or source readback when that is the
 actual save operation. These necessary remote reads are not upload-status checks
 for a local mirror. Preserve personal/company isolation and report unavailable
 source access without inventing a cloud copy or changing another project's binding.
+A remote connector/service is a separate transport/deployment with its own
+authentication and acceptance evidence. The public local stdio adapter is not a
+claim that every ChatGPT/mobile host supports the same remote tools or writes.
 
 Use [vault profiles](vault-profiles.md): personal vaults omit manual contributor logs
 and mandatory verification templates; project vaults use a domain-specific layout.

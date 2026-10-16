@@ -1,0 +1,17 @@
+flowchart TB
+  accTitle: Illustrative document graph from explicit note links
+  accDescr: Inside one selected root, a project brief explicitly links to a storage policy with a decision relationship. The policy explicitly links to a storage check as evidence and an implementation work note as work. An unresolved depends_on reference produces a link_missing diagnostic, not a missing-note node. These are authored references, not inferred relationships or proof of factual correctness; inspection is read-only.
+  subgraph S["SELECTED PROJECT: READABLE NOTES"]
+    P["Project brief"] -->|"decision"| D["Storage policy"]
+    D -->|"evidence"| E["Storage check"]
+    D -->|"work"| W["Implementation<br/>work"]
+  end
+  D -.->|"unresolved depends_on"| M["Diagnostic: link_missing<br/>no target note"]
+  E ~~~ M
+  W ~~~ M
+  classDef source fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e;
+  classDef evidence fill:#ecfdf5,stroke:#059669,color:#064e3b;
+  classDef caution fill:#fff7ed,stroke:#c2410c,color:#7c2d12;
+  class P,D,W source;
+  class E evidence;
+  class M caution;

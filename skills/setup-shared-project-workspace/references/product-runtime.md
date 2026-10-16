@@ -1,9 +1,9 @@
 # Product runtime and format routing
 
-Isolinear Memory 0.7.0, formerly Shared Memory, defaults to direct shared-folder editing. Use Python 3.11+ and
+This guide targets Isolinear Memory 0.7.1, formerly Shared Memory, with direct shared-folder editing. Use Python 3.11+ and
 an exact verified `.pyz`. The version-specific release is
-[v0.7.0](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.7.0); execute
-`isolinear-memory-0.7.0.pyz` only when actually supplied/present and verified against
+[v0.7.1](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.7.1); execute
+`isolinear-memory-0.7.1.pyz` only when actually supplied/present and verified against
 external `SHA256SUMS`. An explicitly provided reviewed candidate is separate from
 a published release. Verify before execution, then check `version` and the command help needed. Install it in private immutable tools storage using `install-package`.
 This skill is not the runtime and must not silently substitute the advisory tracker.
@@ -17,10 +17,10 @@ optional inputs include `--state-dir`, `--actor`, `--person`, `--agent`,
 Google Drive, iCloud, OneDrive, Nextcloud or an explicitly selected self-hosted route.
 These flags record intent and local binding, not account authentication or receipt.
 
-Version 0.7.0 seeds team, personal or project layouts only in an
+Vault profiles, supported since 0.6.0, seed team, personal or project layouts only in an
 entirely empty folder. See [vault profiles](vault-profiles.md) for selection and
-custom project folders. Older releases retain their Raw/Wiki/Output empty-folder
-seed; inspect setup help and pre-create the designed notes before legacy setup.
+custom project folders. Runtimes before profile support retain their Raw/Wiki/Output
+empty-folder seed; inspect setup help and pre-create designed notes before legacy setup.
 Existing content, hidden files or empty directories prevent automatic scaffolding.
 Setup never reorganizes existing workspaces. Join and resume retain their content.
 
@@ -47,6 +47,27 @@ Rename does not rewrite backlinks; inspect/correct them separately. Missing file
 can be delayed provider delivery and are not silently treated as deletions.
 `watch PROJECT --interval 5 --cycles 12` is a bounded local capture loop, not an
 always-running AI service. Do not promise future provider receipt from a local call.
+
+## Source access and optional 0.7 tools
+
+Read a known local note directly. For discovery, use selected-project exact recall,
+or optional hybrid lexical/title/link ranking. Preserve coverage and source hashes.
+Expand with `show` only when needed evidence is absent or the source contract
+requires it; a local exact search can return just a heading. Complete relevant
+search evidence can suffice without a second fetch, but an indexed remote copy
+does not become live-provider-verified merely because it was fetched again.
+
+`context-packet PROJECT --path NOTE --heading "Current handoff"` returns complete
+authored instructions/index/selected section or fails without a partial packet.
+It is separate from historical coordinator `context`. Optional CLI evidence
+receipts require actual retained text; discard them after reset/compaction.
+
+`memory-mcp PROJECT --state-dir PRIVATE_STATE` is an optional read-only stdio
+adapter using `requirements-mcp.txt` in its SDK environment. The configured host
+fixes one project; clients cannot select arbitrary roots. It is not a remote phone
+service or the Hindsight engine. Without a local mirror, use an authorized remote
+connector/service available on that client and retain its source/freshness limits.
+No client API, credentials or remote availability follows from installing this skill.
 
 ## Existing coordinator or advisory project
 
