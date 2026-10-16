@@ -8,8 +8,10 @@ private paths. Mark missing access as missing; a prompt does not grant permissio
 The recipient's agent should verify the package, locate that recipient's own local
 copy, inspect existing metadata, retain private local state and run ordinary setup.
 It should not initialize a second project, request a coordinator token for folder
-mode or create another cloud service. Direct edits persist offline; run sync after
-edits and after reconnect, preserving conflict copies and recording resolution evidence.
+mode or create another cloud service. Direct edits persist offline. Use configured
+capture, or one local sync after material edits/reconnect, preserving conflict
+copies and recording resolution evidence. This onboarding access check does not
+make provider-app or upload-queue checks part of ordinary note saving.
 
 Use language like the following, replacing only details that have been verified:
 
@@ -19,7 +21,9 @@ instructions supplied with this message. Verify the specified compatible runtime
 and its external checksum, then locate my own local copy and inspect its metadata.
 Use the normal direct-edit folder workflow, preserving existing notes, permissions
 and private parent folders. Keep my baseline/recovery state private and preserve
-shared history. After changes or reconnect, sync and report any unresolved conflicts.
+shared history. Read back saved local files. Use configured capture, or one local
+sync after changes/reconnect, and report any unresolved conflicts. Leave background
+cloud clients and upload queues alone during routine saves.
 Do not copy another user's private state or create an unrequested coordinator.
 ```
 

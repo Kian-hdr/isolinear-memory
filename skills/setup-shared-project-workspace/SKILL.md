@@ -14,6 +14,16 @@ file tools; routine memory work does not require generated scripts or model-spec
 APIs. Read the project's INDEX and relevant notes only. Update existing canonical
 notes with durable facts, decisions and progress; retain evidence and uncertainty.
 
+Use a local mirror and verify ordinary saves by local readback. Do not open cloud
+client apps/menus, inspect upload queues/status, poll remote receipt, force sync,
+restart clients or change sync settings merely to verify notes or capture. Background
+uploading is not a routine completion step. Remote source access through an authorized
+MCP/connector is appropriate when the host has no local mirror; enforce the selected
+scope and verify the actual remote operation without checking desktop upload queues.
+Use provider-delivery diagnostics only for an explicitly requested investigation or
+actual recipient/delivery task. See [agent integration](references/agent-integration.md)
+for optional bounded context packets and reset-safe evidence receipts.
+
 ## Setup or update
 
 Read [runtime setup](references/product-runtime.md). Discover the selected folder,

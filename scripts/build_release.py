@@ -13,6 +13,7 @@ from pathlib import Path
 import re
 import stat
 import subprocess
+import tempfile
 import zipfile
 
 from build_product import build, PRODUCT_VERSION, ROOT
@@ -54,8 +55,12 @@ def committed_source() -> tuple[str, dict[str, bytes]]:
             raise ValueError("Release source requires regular committed files and relative POSIX paths")
         entries.append((name, oid))
     # Batch exact object IDs: filenames with spaces/newlines cannot alter requests.
-    data = subprocess.check_output(["git", "cat-file", "--batch"], cwd=ROOT,
-                                  input=b"".join(oid + b"\n" for _, oid in entries))
+    # A regular input stream avoids opposing pipe writers when large artwork
+    # objects fill Git's stdout while an OID batch is still being submitted.
+    with tempfile.TemporaryFile() as requests:
+        requests.write(b"".join(oid + b"\n" for _, oid in entries))
+        requests.seek(0)
+        data = subprocess.check_output(["git", "cat-file", "--batch"], cwd=ROOT, stdin=requests)
     offset, sources = 0, {}
     for name, oid in entries:
         newline = data.index(b"\n", offset)
@@ -89,6 +94,47 @@ def verify_checkout(revision: str, sources: dict[str, bytes]) -> None:
             raise ValueError("Tracked working bytes differ from reviewed HEAD: " + name)
 
 
+def verify_branding(sources: dict[str, bytes]) -> dict:
+    """Bind the published icon manifest to exact committed source/artifact bytes."""
+    try:
+        raw = sources['assets/branding-manifest.json']
+        branding = json.loads(raw)
+        if branding['schema_version'] != 1 or branding['brand'] != 'Isolinear Memory':
+            raise ValueError('Unsupported branding manifest')
+        artifacts = branding['artifacts']
+        canonical = branding['canonical_source']
+        if (not isinstance(artifacts, dict) or not isinstance(canonical, dict) or
+                canonical['path'] != 'IsolinearMemory.icon' or
+                set(canonical['files']) != {'icon.json', 'Assets/foreground.svg', 'Assets/foreground-dark.svg'}):
+            raise ValueError('Incomplete canonical branding source')
+        records = list(artifacts.items()) + [
+            (canonical['path'] + '/' + name, record) for name, record in canonical['files'].items()]
+        for name, record in records:
+            if (not name or name.startswith('/') or '\\' in name or
+                    any(part in {'', '.', '..'} for part in name.split('/'))):
+                raise ValueError('Unsafe branding asset path')
+            content = sources['assets/' + name]
+            if (type(record['bytes']) is not int or record['bytes'] != len(content) or
+                    record['sha256'] != hashlib.sha256(content).hexdigest()):
+                raise ValueError('Branding asset bytes differ from manifest')
+            if 'pixels' in record:
+                if (not content.startswith(b'\x89PNG\r\n\x1a\n') or content[12:16] != b'IHDR' or
+                        record['pixels'] != [int.from_bytes(content[16:20], 'big'),
+                                             int.from_bytes(content[20:24], 'big')]):
+                    raise ValueError('Branding PNG dimensions differ from manifest')
+        connector_pngs = {}
+        for theme in ['light', 'dark']:
+            name = branding['appearances'][theme]['connector_png']
+            expected = 'isolinear-memory' + ('-dark' if theme == 'dark' else '') + '-256.png'
+            if name != expected or artifacts[name]['pixels'] != [256, 256]:
+                raise ValueError('Connector artwork must identify its 256px appearance')
+            connector_pngs[theme] = name
+        return {'path': 'branding-manifest.json', 'sha256': hashlib.sha256(raw).hexdigest(),
+                'design_version': branding['design_version'], 'connector_pngs': connector_pngs}
+    except (KeyError, TypeError, json.JSONDecodeError) as error:
+        raise ValueError('Release branding manifest is missing or malformed') from error
+
+
 def release(output: Path, version: str) -> dict:
     """Build all assets from one reviewed byte map, without executing source payloads."""
     output = output.expanduser().resolve()
@@ -104,7 +150,7 @@ def release(output: Path, version: str) -> dict:
                 "assets/isolinear-memory-dark.icns", "assets/IsolinearMemory.icon/icon.json",
                 "assets/IsolinearMemory.icon/Assets/foreground.svg",
                 "assets/IsolinearMemory.icon/Assets/foreground-dark.svg",
-                "assets/README.md", "scripts/render_icon_marks.py",
+                "assets/README.md", "assets/branding-manifest.json", "scripts/render_icon_marks.py",
                 "skills/setup-shared-project-workspace/SKILL.md",
                 "skills/setup-isolinear-memory/SKILL.md", "docs/BRAND-MIGRATION.md",
                 "assets/isolinear-memory-wordmark-dark.svg", "assets/isolinear-memory-wordmark-light.svg",
@@ -113,6 +159,7 @@ def release(output: Path, version: str) -> dict:
                 "docs/PRODUCT-V1.md", "docs/KNOWLEDGE-GRAPH.md", "requirements-server.txt"}
     if not required <= sources.keys():
         raise ValueError("Release is missing required committed source inputs")
+    branding = verify_branding(sources)
     output.mkdir(parents=True, exist_ok=False)
     package = output / f"isolinear-memory-{version}.pyz"
     product = build(package, source_files=sources, source_revision=source_revision)
@@ -132,7 +179,9 @@ def release(output: Path, version: str) -> dict:
         "public_wordmarks": ["isolinear-memory-wordmark-dark.svg", "isolinear-memory-wordmark-light.svg",
                              "isolinear-memory-wordmark-dark.png", "isolinear-memory-wordmark-light.png"],
         "public_icons": ["isolinear-memory.svg", "isolinear-memory.png", "isolinear-memory-dark.png",
-                         "isolinear-memory.icns", "isolinear-memory-dark.icns"],
+                         "isolinear-memory.icns", "isolinear-memory-dark.icns",
+                         "isolinear-memory-256.png", "isolinear-memory-dark-256.png"],
+        "branding_manifest": branding,
         "source_repository": "https://github.com/Kian-hdr/isolinear-memory",
         "source_revision": source_revision, "source_dirty": False,
         "runtime_version": PRODUCT_VERSION, "runtime_asset": package.name,

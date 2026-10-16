@@ -15,7 +15,7 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[2]
-VERSION = '0.6.0'
+VERSION = '0.7.0'
 
 
 class ReleaseBuildTests(unittest.TestCase):
@@ -25,7 +25,8 @@ class ReleaseBuildTests(unittest.TestCase):
         # Include distribution prerequisites when exercising an uncommitted
         # working change to the release tooling or assets.
         names += ['scripts/build_release.py', 'scripts/build_product.py', '.gitattributes',
-                  'assets/README.md', 'assets/isolinear-memory.svg', 'assets/isolinear-memory.png',
+                  'assets/README.md', 'assets/branding-manifest.json',
+                  'assets/isolinear-memory.svg', 'assets/isolinear-memory.png',
                   'assets/isolinear-memory.icns', 'assets/isolinear-memory-dark.png',
                   'assets/isolinear-memory-dark.icns', 'skills/setup-isolinear-memory/SKILL.md',
                   'docs/BRAND-MIGRATION.md',
@@ -34,9 +35,18 @@ class ReleaseBuildTests(unittest.TestCase):
                   'scripts/render_icon_marks.py', 'scripts/render_wordmark.py',
                   'product/shared_workspace/recall.py',
                   'product/shared_workspace/hybrid_recall.py',
+                  'product/shared_workspace/evidence_receipts.py',
+                  'product/shared_workspace/context_packet.py',
                   'product/shared_workspace/profile_scope.py',
                   'skills/setup-shared-project-workspace/references/vault-profiles.md',
-                  'product/tests/test_recall_cli.py']
+                  'product/tests/test_recall_cli.py',
+                  'product/tests/test_evidence_receipts.py',
+                  'product/tests/test_context_packet.py',
+                  'docs/EVIDENCE-RECEIPTS.md', 'docs/PROGRESSIVE-CONTEXT.md',
+                  'benchmarks/context_packet_pair.py',
+                  'benchmarks/context_packet_pair_result_20261016.json',
+                  'product/shared_workspace/memory_mcp.py', 'product/tests/test_memory_mcp.py',
+                  'docs/MCP.md', 'requirements-mcp.txt']
         names += [path.relative_to(ROOT).as_posix()
                   for path in (ROOT / 'assets').glob('isolinear-memory*') if path.is_file()]
         names += [path.relative_to(ROOT).as_posix()
@@ -137,6 +147,16 @@ class ReleaseBuildTests(unittest.TestCase):
         self.assertNotIn(f'shared-memory-{VERSION}.pyz', assets)
         with zipfile.ZipFile(io.BytesIO(assets[f'isolinear-memory-icons-{VERSION}.zip'])) as artwork:
             names = set(artwork.namelist())
+            branding_bytes = artwork.read('branding-manifest.json')
+            self.assertEqual(branding_bytes, self.sources['assets/branding-manifest.json'])
+            branding = json.loads(branding_bytes)
+            for name, record in branding['artifacts'].items():
+                data = artwork.read(name)
+                self.assertEqual(len(data), record['bytes'])
+                self.assertEqual(hashlib.sha256(data).hexdigest(), record['sha256'])
+            for name, record in branding['canonical_source']['files'].items():
+                data = artwork.read(branding['canonical_source']['path'] + '/' + name)
+                self.assertEqual(hashlib.sha256(data).hexdigest(), record['sha256'])
             icon_source = json.loads(artwork.read('IsolinearMemory.icon/icon.json'))
             referenced = {
                 entry['value']
@@ -174,6 +194,10 @@ class ReleaseBuildTests(unittest.TestCase):
         self.assertEqual(manifest['runtime_sha256'], hashlib.sha256(assets[package_name]).hexdigest())
         self.assertEqual(manifest['product_name'], 'Isolinear Memory')
         self.assertIn('isolinear-memory.png', manifest['public_icons'])
+        self.assertEqual(manifest['branding_manifest']['sha256'], hashlib.sha256(branding_bytes).hexdigest())
+        self.assertEqual(manifest['branding_manifest']['design_version'], branding['design_version'])
+        self.assertEqual(manifest['branding_manifest']['connector_pngs'],
+                         {theme: branding['appearances'][theme]['connector_png'] for theme in ['light', 'dark']})
         with zipfile.ZipFile(io.BytesIO(assets[f'isolinear-memory-skills-{VERSION}.zip'])) as skills:
             self.assertIn('setup-isolinear-memory/SKILL.md', skills.namelist())
             self.assertIn('setup-shared-project-workspace/SKILL.md', skills.namelist())
@@ -208,6 +232,16 @@ class ReleaseBuildTests(unittest.TestCase):
         expanded = json.loads(show.stdout)
         self.assertTrue(expanded['ok'], expanded)
         self.assertIn('Needle value is 42.', expanded['data']['excerpt'])
+        (project / 'AGENTS.md').write_text('# Rules\nPreserve source notes.\n', encoding='utf-8')
+        (project / 'INDEX.md').write_text('# Index\nWiki/Note.md\n', encoding='utf-8')
+        context = subprocess.run([sys.executable, str(self.output / package_name),
+                                  'context-packet', str(project), '--path', 'Wiki/Note.md'],
+                                 capture_output=True, timeout=30)
+        self.assertEqual(context.returncode, 0, context.stdout + context.stderr)
+        authored = json.loads(context.stdout)['data']
+        self.assertEqual([hit['path'] for hit in authored['hits']],
+                         ['AGENTS.md', 'INDEX.md', 'Wiki/Note.md'])
+        self.assertIn('Needle value is 42.', authored['hits'][2]['excerpt'])
         second = self.root / 'repeat'
         self.invoke(second)
         self.assertEqual(self.files(second), assets)
@@ -221,6 +255,28 @@ class ReleaseBuildTests(unittest.TestCase):
         inside = self.repo / 'release'
         self.invoke(inside, expected=1)
         self.assertFalse(inside.exists())
+
+    def test_stale_branding_artifact_refused_before_output_creation(self):
+        name = 'assets/isolinear-memory-256.png'
+        path = self.repo / name
+        path.write_bytes(path.read_bytes() + b'CHANGED_SYNTHETIC_ARTIFACT')
+        self.git('add', name)
+        self.git('commit', '-qm', 'Synthetic changed artwork without manifest update')
+        rejected = self.invoke(expected=1)
+        self.assertIn(b'Branding asset bytes differ from manifest', rejected.stderr)
+        self.assertFalse(self.output.exists())
+
+    def test_incorrect_branding_dimensions_refused_before_output_creation(self):
+        name = 'assets/branding-manifest.json'
+        path = self.repo / name
+        branding = json.loads(path.read_bytes())
+        branding['artifacts']['isolinear-memory-256.png']['pixels'] = [255, 256]
+        path.write_text(json.dumps(branding), encoding='utf-8')
+        self.git('add', name)
+        self.git('commit', '-qm', 'Synthetic incorrect artwork dimensions')
+        rejected = self.invoke(expected=1)
+        self.assertIn(b'Branding PNG dimensions differ from manifest', rejected.stderr)
+        self.assertFalse(self.output.exists())
 
     def test_development_builder_excludes_ignored_and_labels_new_or_hidden_inputs_dirty(self):
         secret = b'SYNTHETIC DEVELOPMENT ONLY INPUT'

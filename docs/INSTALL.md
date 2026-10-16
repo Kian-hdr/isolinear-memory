@@ -1,22 +1,22 @@
-# Install or update Isolinear Memory 0.6.0
+# Install or update Isolinear Memory 0.7.0
 
 This is setup reference, not routine agent context. Preserve the selected workspace,
 private state and previous runtime. Python 3.11+ is required. Download the versioned
-runtime and SHA256SUMS from the [v0.6.0 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.6.0).
+runtime and SHA256SUMS from the [v0.7.0 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.7.0).
 Verify the runtime SHA-256 against its external SHA256SUMS entry before execution.
 If unavailable or mismatched, stop installation; do not substitute an unverified asset.
 
 Use the verified package's `version` and `install-package --help`, then:
 
 ```text
-python3 isolinear-memory-0.6.0.pyz install-package isolinear-memory-0.6.0.pyz --sha256 VERIFIED_SHA --tools-dir PRIVATE_TOOLS
+python3 isolinear-memory-0.7.0.pyz install-package isolinear-memory-0.7.0.pyz --sha256 VERIFIED_SHA --tools-dir PRIVATE_TOOLS
 ```
 
 Substitute actual discovered paths and checksum. Use the returned immutable package
 for `setup PROJECT` and subsequent commands. Existing format-3 projects retain their
 private state; supply `--state-dir` only when required by their existing binding.
 For old formats, read the [migration guide](PRODUCT-V1.md) before proceeding.
-Version 0.6.0 supports `--vault-type team|personal|project`
+Version 0.7.0 supports `--vault-type team|personal|project`
 and repeatable `--project-folder` inputs. Team keeps Raw/Wiki/Output; personal uses
 Notes/Resources; project uses chosen domain folders. See [vault profiles](../skills/setup-shared-project-workspace/references/vault-profiles.md).
 Published older releases may lack these options; inspect setup help and pre-create

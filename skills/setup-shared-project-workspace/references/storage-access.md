@@ -6,6 +6,18 @@ access from a repository download. Local-only requires no account. Check read/wr
 rights separately from whether a local file is writable. Never override read-only
 configuration merely to complete synchronization.
 
+For routine local-mirror work, verify saved files by native local readback. Leave
+background clients alone: do not open apps/menus, inspect upload queues/provider
+status, poll remote receipt, force syncing, restart clients or change sync settings
+to complete an ordinary note save or history capture. Unchecked background upload
+status is not a blocker. Source access errors remain real errors, not permission
+to bypass file safety or launch a provider-status investigation.
+
+When no local mirror exists, use an authorized remote source connector/MCP within
+the selected vault scope. Reading source bytes/revisions or checking the result of
+an actual remote write is appropriate; this does not require desktop client UI or
+upload-queue checks. Do not infer cross-device connector availability or credentials.
+
 For offline work, retain real local files using the chosen provider's documented
 option. Google Shared Drives stream rather than mirror; streamed files need explicit
 offline availability. Apple and Microsoft expose keep-downloaded/always-available
@@ -21,8 +33,9 @@ Nextcloud's conflict copies are not uploaded by default. Preserve and capture th
 locally before cleanup; a remote copy may not contain the edit yet.
 [Nextcloud conflicts](https://docs.nextcloud.com/server/stable/user_manual/en/desktop/conflicts.html).
 
-Verify that the complete shared metadata/history arrives on the recipient, including
-any hidden names. A local `sync` result or green provider icon alone is not an
-independent recipient receipt. Record what was actually transferred and which
-provider/device checks remain unrun. Do not deploy a server during an unrelated
+For an explicitly requested delivery test or recipient onboarding, verify that the
+required shared metadata/history arrives on that recipient, including hidden names.
+This is a scoped delivery check, not a routine save requirement. A local `sync`
+result or green provider icon alone is not an independent recipient receipt.
+Record what was actually transferred and which checks remain unrun. Do not deploy a server during an unrelated
 folder setup; use an existing service or the user's explicit deployment scope.

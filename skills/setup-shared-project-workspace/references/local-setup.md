@@ -13,9 +13,11 @@ Obsidian is optional. Ordinary setup does not install it, open/register a vault 
 change `.obsidian`. If the user explicitly asks for app setup, use the installed
 app's actual state and scope. Preserve existing settings and recovery copies.
 
-Confirm the chosen folder's files are actually downloaded for offline work. Resolve
-unsafe path or placeholder errors through the provider's supported local-file route;
-do not hide them with symlinks or weaken runtime checks. Keep baselines/recovery in
+For requested offline setup, confirm the required selected files can actually be
+read locally. Do not enumerate upload queues or open/restart cloud clients just to
+check ordinary saves. Resolve unavailable source bytes through the task's supported
+file-access route; report a remaining source gap rather than hiding it with symlinks
+or weakening runtime checks. Keep baselines/recovery in
 local non-synchronized private storage outside the shared folder. The shared history
 is a deliberate part of folder-mode synchronization, not a private SQLite database.
 
