@@ -9,6 +9,8 @@
   local project, with three bounded tools and a single evidence representation.
 - Make local readback the routine save boundary in generated instructions and
   skills. Explicitly prohibit routine cloud-app/upload-queue/status checks.
+- Unify the approved graphite Icon Composer artwork, light/dark exports and local
+  MCP discovery icons. Bind release artwork to its checked branding manifest.
 - Document the existing remote-connector path, phone/iPad scope and acceptance
   limits, source-led Hindsight/Scion adaptations and measured optimization bounds.
 - Preserve ordinary native/CLI/offline behavior and existing profiles. The pending

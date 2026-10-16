@@ -4,11 +4,12 @@ The icon is a balanced memory lattice: four equally spaced nodes connect to
 a central retrieval point inside a circular orbit. Opposite nodes share a
 color, preserving the symbol's symmetry. It represents persistent,
 source-linked memory without using a document or folder silhouette. Teal
-and periwinkle carry the symbol; Apple's Icon Composer supplies the system
-light and dark backgrounds, rounded mask and native edge treatment. The
+and periwinkle carry the symbol. The current **v1.1.0** Default/light appearance
+uses its authored graphite-blue gradient; Dark retains `system-dark`. Apple's
+Icon Composer supplies the rounded mask and native edge treatment. The
 README selects the PNG matching the viewer's preferred color scheme.
 
-| Asset | Standard / light background | Dark appearance / background |
+| Asset | Default / light appearance | Dark appearance |
 |---|---|---|
 | Native icon, 1024px | [PNG](isolinear-memory.png) | [PNG](isolinear-memory-dark.png) |
 | macOS icon container | [ICNS](isolinear-memory.icns) | [ICNS](isolinear-memory-dark.icns) |
@@ -16,7 +17,8 @@ README selects the PNG matching the viewer's preferred color scheme.
 | Publication wordmark | [For light surfaces](isolinear-memory-wordmark-dark.svg) | [For dark surfaces](isolinear-memory-wordmark-light.svg) |
 
 [Native Icon Composer source](IsolinearMemory.icon/icon.json) ·
-[Appearance preview](light-dark-preview.png).
+[Appearance preview](light-dark-preview.png) ·
+[Branding manifest](branding-manifest.json).
 PNG exports include 16, 24, 32, 48, 64, 128, 256, 512 and 1024 pixels. The
 node motif remains visible at 16px, while the fine orbit detail softens.
 Wordmark lettering is outlined and needs no installed font.
@@ -27,13 +29,33 @@ native background. Use the PNG exports for the complete icon or open
 `IsolinearMemory.icon` in Icon Composer for native editing and appearance previews.
 The `shared-memory*` files remain in the source kit for older integrations.
 
-The native source follows Apple's layered icon workflow. Its background uses
-`system-light` and `system-dark`, with separate foreground vectors selected by
-appearance. The checked-in exports were rendered with Icon Composer 27.0 (129),
-design generation 27, macOS Default and Dark. These are standalone artwork
+The native source follows Apple's layered icon workflow. The approved v1.1.0
+package was promoted byte-for-byte on October 16, 2026, including its original
+Default gradient values and unchanged foreground vectors. The 1024px PNGs are
+the verified approved native Default and Dark exports. Both appearances also
+passed fresh Icon Composer 27.0 (129), design generation 27 rendering. Native
+material textures can vary slightly between renders; the manifest records the
+exact distributed files. These are standalone artwork
 assets, not a shipped macOS application.
 The ICNS files are explicit alternatives and do not switch Finder appearance
 automatically. No app installation or runtime appearance-switching test is claimed.
+
+## One icon across the product, MCP and plugins
+
+`IsolinearMemory.icon` is the editable source for this distributed artwork.
+The branding manifest binds its three files and all raster/container exports to
+SHA-256 hashes. Connector/plugin consumers should use
+`appearances.light.connector_png` and `appearances.dark.connector_png`, currently
+the matching 256px complete icons. Use Default when a host supports one icon.
+The transparent foreground marks and outlined wordmarks retain their distinct
+publication roles; they were not replaced or recolored during this promotion.
+
+The native 1024px exports retain their embedded Display P3 profiles. Smaller PNGs,
+ICNS containers and the appearance preview are derived with an explicit sRGB
+color conversion and Lanczos resizing for consistent presentation across hosts.
+This changes the encoding, not the authored source colors. All 16, 32, 64 and
+1024px light/dark variants were visually inspected. The 16px lattice remains
+recognizable while its fine orbit detail softens.
 
 ## Regenerate native exports and transparent marks
 

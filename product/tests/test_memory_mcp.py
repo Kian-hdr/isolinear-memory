@@ -11,6 +11,7 @@ import unittest
 from unittest import mock
 
 from product.shared_workspace import memory_mcp, recall
+from product.shared_workspace import PRODUCT_VERSION
 from product.shared_workspace.errors import ProductError
 
 REPO = Path(__file__).resolve().parents[2]
@@ -93,6 +94,7 @@ class MemoryMCPTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(tool.annotations.idempotentHint)
             self.assertFalse(tool.annotations.openWorldHint)
             self.assertIsNone(tool.outputSchema)
+            self.assertIsNone(tool.icons)
             self.assertFalse(tool.inputSchema['additionalProperties'])
             self.assertNotIn('root', tool.inputSchema['properties'])
             self.assertNotIn('state', tool.inputSchema['properties'])
@@ -233,7 +235,16 @@ class MemoryMCPTests(unittest.IsolatedAsyncioTestCase):
                                        args=['-c', code, str(self.root), str(self.state)], cwd=str(REPO))
         async with stdio_client(params) as (read, write):
             async with ClientSession(read, write) as session:
-                await session.initialize()
+                initialized = await session.initialize()
+                icons = [icon.model_dump(by_alias=True, exclude_none=True)
+                         for icon in initialized.serverInfo.icons]
+                self.assertEqual(icons, [
+                    {'src': f'https://raw.githubusercontent.com/Kian-hdr/isolinear-memory/v{PRODUCT_VERSION}/assets/{name}',
+                     'mimeType': 'image/png', 'sizes': ['256x256'], 'theme': theme}
+                    for theme, name in [('light', 'isolinear-memory-256.png'),
+                                        ('dark', 'isolinear-memory-dark-256.png')]])
+                self.assertEqual(initialized.serverInfo.websiteUrl,
+                                 'https://github.com/Kian-hdr/isolinear-memory')
                 tools = await session.list_tools()
                 self.assertEqual(len(tools.tools), 3)
                 found = self.decoded(await session.call_tool('isolinear_search',
