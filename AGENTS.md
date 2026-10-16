@@ -31,6 +31,11 @@ Choose one provider per folder. Keep private baselines, credentials, recovery an
 SQLite outside shared storage. Scope never expands to parents or new recipients.
 Respect read-only grants, confidentiality and mandatory OS/authentication controls.
 Local capture is not provider delivery or proof of independent recipient receipt.
+Routine local saves complete with native-file readback. Never inspect Drive/OneDrive
+apps, menus, queues or upload status, poll, force sync, restart clients or alter
+sync settings merely to verify routine saves/capture. Remote source access without
+a local mirror is allowed; remote delivery checks require that task scope.
+
 
 New empty projects choose team (Raw/Wiki/Output), personal (light single-owner
 notes without manual contributor audit) or project (domain-specific folders). See

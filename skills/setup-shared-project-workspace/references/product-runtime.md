@@ -1,9 +1,9 @@
 # Product runtime and format routing
 
-Isolinear Memory 0.6.0, formerly Shared Memory, defaults to direct shared-folder editing. Use Python 3.11+ and
+Isolinear Memory 0.7.0, formerly Shared Memory, defaults to direct shared-folder editing. Use Python 3.11+ and
 an exact verified `.pyz`. The version-specific release is
-[v0.6.0](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.6.0); execute
-`isolinear-memory-0.6.0.pyz` only when actually supplied/present and verified against
+[v0.7.0](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.7.0); execute
+`isolinear-memory-0.7.0.pyz` only when actually supplied/present and verified against
 external `SHA256SUMS`. An explicitly provided reviewed candidate is separate from
 a published release. Verify before execution, then check `version` and the command help needed. Install it in private immutable tools storage using `install-package`.
 This skill is not the runtime and must not silently substitute the advisory tracker.
@@ -17,7 +17,7 @@ optional inputs include `--state-dir`, `--actor`, `--person`, `--agent`,
 Google Drive, iCloud, OneDrive, Nextcloud or an explicitly selected self-hosted route.
 These flags record intent and local binding, not account authentication or receipt.
 
-Version 0.6.0 seeds team, personal or project layouts only in an
+Version 0.7.0 seeds team, personal or project layouts only in an
 entirely empty folder. See [vault profiles](vault-profiles.md) for selection and
 custom project folders. Older releases retain their Raw/Wiki/Output empty-folder
 seed; inspect setup help and pre-create the designed notes before legacy setup.
@@ -30,8 +30,12 @@ Default state is a per-root application-data directory with a `folder` child; us
 the returned `state_dir` for exact discovery. Do not copy another person's baseline.
 Keep provider/OS permissions and explicit read-only bindings intact.
 
-Edit notes directly, then `sync PROJECT`. Inspect `folder-status PROJECT` and
-`history PROJECT [--path RELATIVE_NOTE]`. Capture provenance identifies the observer;
+Edit notes directly and read back local bytes. A verified configured capture job
+records history independently; otherwise run one `sync PROJECT --brief`. Use
+`folder-status PROJECT --brief` and `history PROJECT [--path RELATIVE_NOTE]` only
+when their diagnostics/history are needed, not after every routine save. Do not
+check cloud client apps, upload queues or provider status to complete local work.
+Capture provenance identifies the observer;
 provider-arrived bytes may have been authored elsewhere. Compatible text can merge;
 semantic agreement still needs judgment. Resolve with `resolve PROJECT --path NOTE
 --text-file REVIEWED_FILE --evidence TEXT`, retaining competing history. The agent

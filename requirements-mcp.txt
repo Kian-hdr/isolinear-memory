@@ -1,0 +1,3 @@
+# Optional local stdio adapter; install in a private environment, not globally.
+# Official SDK v1 maintenance line, checked against its tagged API and tests.
+mcp==1.30.0

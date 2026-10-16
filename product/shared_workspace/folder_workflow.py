@@ -11,7 +11,7 @@ from .errors import ProductError
 from . import workflow
 
 COMMANDS = ('sync', 'folder-status', 'history', 'resolve', 'delete', 'rename', 'migrate-folder', 'watch',
-            'recall', 'show', 'append-row')
+            'recall', 'show', 'context-packet', 'memory-mcp', 'append-row')
 FOLDER_PROVIDERS = ('local', 'google-drive', 'icloud', 'onedrive', 'nextcloud', 'self-hosted')
 
 
@@ -79,8 +79,11 @@ unrelated edits. Retain conflicts; resolve factual disagreements against evidenc
 Record explicit renames/deletions through Isolinear Memory and check links; missing
 files alone are not deletions. Configured automatic capture records history;
 otherwise run the installed isolinear-memory sync once after material edits.
-Local save/capture does not prove remote receipt. Report material capture failures
-once, preserve saved notes and avoid repeated retries or routine provider narration.
+Complete routine saves by local readback. Leave Drive/OneDrive background syncing
+alone: do not inspect apps, queues or upload status, poll, force sync or restart
+clients. Remote source access is appropriate when no local mirror exists; check
+remote delivery only for an explicit delivery/investigation task. Local capture
+is not remote receipt. Report actual read/capture errors once and preserve notes.
 Keep credentials, private runtime state and recovery outside the vault. Respect
 read-only grants and OS/provider controls. Preserve .shared-memory/ and
 .shared-memory.json. One provider per folder.
@@ -131,9 +134,12 @@ files alone are not deletions.
 Configured automatic capture records history independently. Otherwise run the
 installed isolinear-memory sync once after material edits. If capture fails, keep
 saved Markdown and report a material history gap once, without repeated retries.
-Routine success is quiet; an optional short saved-note location is enough. Do not
-narrate capture, Google Drive uploads or provider checks. Mention remote receipt
-only when requested or consequential; local save/capture does not prove it.
+Complete routine saves by local readback; an optional short saved-note location
+is enough. Do not inspect cloud apps, menus, upload queues or provider status,
+poll uploads, force syncing, restart clients or change sync settings for routine
+work. Use connected source tools when no local mirror exists. Check remote
+receipt only for an explicit delivery/investigation task; local capture does not
+prove it. An actual local read/save failure still needs to be reported.
 
 Keep private state, credentials and recovery outside shared storage. Respect
 confidentiality, read-only grants and OS/provider controls. One provider per folder.
@@ -194,13 +200,15 @@ def add_commands(commands):
             'watch': 'Optional local history capture loop; no background AI or approval service',
             'recall': 'Search current Markdown with private indexing and bounded source-linked results',
             'show': 'Expand exact lines only when the source hash still matches',
+            'context-packet': 'Read complete instructions, index and an authored section as one bounded packet',
+            'memory-mcp': 'Serve read-only source-checked memory tools over local stdio (optional SDK)',
             'append-row': 'Atomically append one row to an existing Markdown table',
         }[name])
         command.add_argument('project', nargs='?', default='.', help='Selected folder; defaults to current directory')
-        if name not in {'migrate-folder', 'recall', 'show', 'append-row'}:
+        if name not in {'migrate-folder', 'recall', 'show', 'context-packet', 'memory-mcp', 'append-row'}:
             command.add_argument('--brief', action='store_true', help='Bounded summary without full per-note heads or excluded paths')
         command.add_argument('--state-dir', help='Existing private per-device state; otherwise discovered locally')
-        if name in {'recall', 'show', 'append-row'}:
+        if name in {'recall', 'show', 'context-packet', 'append-row'}:
             command.add_argument('--text', action='store_true', help='Concise plain-text output instead of versioned JSON')
         if name == 'recall':
             command.add_argument('query', help='Search words; quote phrases with spaces')
@@ -213,6 +221,16 @@ def add_commands(commands):
                                  help='Exact terms (default) or fused lexical/title/explicit-link retrieval')
             command.add_argument('--after', help='Hybrid only: inclusive YYYY-MM-DD lower bound on dates in excerpts')
             command.add_argument('--before', help='Hybrid only: inclusive YYYY-MM-DD upper bound on dates in excerpts')
+            command.add_argument('--with-receipts', action='store_true',
+                                 help='Identify delivered passages for optional context-local reuse')
+            command.add_argument('--known-evidence', action='append', default=[], metavar='RECEIPT',
+                                 help='Omit an exact revalidated passage still retained in context; repeat up to 32 times')
+        if name == 'context-packet':
+            command.add_argument('--path', required=True, help='Explicit canonical source in the selected scope')
+            command.add_argument('--heading', help='Exact unique ATX heading; includes all nested sections')
+            command.add_argument('--max-bytes', type=int, default=8192)
+            command.add_argument('--with-receipts', action='store_true')
+            command.add_argument('--known-evidence', action='append', default=[], metavar='RECEIPT')
         if name == 'show':
             command.add_argument('--path', required=True)
             command.add_argument('--sha256', required=True)
@@ -371,25 +389,31 @@ def setup(args):
     return {'workflow': 'folder', 'route': route, 'project_id': result['project_id'],
             'vault_type': vault_type, 'project_folders': project_folders,
             'state_dir': str(state), 'status': result, 'readiness': result.get('readiness', 'inspect_status'),
-            'next': 'Edit local notes directly, then sync to preserve/reconcile history. Reviews are optional.',
+            'next': 'Edit notes and verify local readback. Use configured capture, or sync once when absent. Leave background cloud uploads alone.',
             'provider_delivery': 'unverified', 'coordinator_required': False, 'approval_queue': False}
 
 
 def dispatch(bundle, args):
     from .folder import Folder
-    if args.command in {'recall', 'show'}:
+    if args.command in {'recall', 'show', 'context-packet'}:
         from . import recall as retrieval
         def selected_read():
             # Bound even selected-root path checks, which may call a cloud
             # provider before the note read begins.
             selected = workflow.selected_root(args.project)
+            if args.command == 'context-packet':
+                from .context_packet import context
+                return context(selected, args.path, args.heading, max_bytes=args.max_bytes,
+                               with_receipts=args.with_receipts, known_evidence=args.known_evidence)
             if args.command == 'recall':
                 private_state = state_path(args, selected)
                 return retrieval.recall(selected, private_state, args.query,
                                         raw=args.include_raw, output=args.include_output,
                                         max_hits=args.max_hits, max_bytes=args.max_bytes,
                                         refresh=args.refresh, strategy=args.strategy,
-                                        after=args.after, before=args.before)
+                                        after=args.after, before=args.before,
+                                        with_receipts=getattr(args, 'with_receipts', False),
+                                        known_evidence=getattr(args, 'known_evidence', ()))
             return retrieval.show(selected, args.path, args.sha256, args.start,
                                   args.end, max_bytes=args.max_bytes)
         return retrieval.bounded_cli(selected_read, command=args.command,

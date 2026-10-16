@@ -9,7 +9,7 @@
 
 **Persistent Markdown memory for people and AI agents. Edit notes normally; retrieve only the evidence a task needs.**
 
-Isolinear Memory 0.6.0 works inside one selected folder. Markdown remains the source
+Isolinear Memory 0.7.0 works inside one selected folder. Markdown remains the source
 of truth. The runtime records recoverable change history, reconciles the project
 files visible on each device, and returns small, source-linked passages to agents.
 Obsidian is optional. No memory-extraction model, vector service, MCP server or
@@ -17,6 +17,21 @@ hosted account is required.
 
 The name is inspired by [Star Trek's isolinear chips](https://www.startrek.com/en-un/news/below-deck-with-lower-decks-403-move-along).
 [Explore the artwork](assets/README.md).
+
+## Local mirrors and other clients
+
+Routine local work ends with native-file readback. Leave Google Drive/OneDrive
+background syncing alone: no app, upload-queue, status polling or restart checks.
+A phone without a local mirror needs an authenticated remote source connection;
+a local stdio server is not an always-reachable mobile backend.
+
+Optional 0.7.0 tools add complete authored `context-packet` bootstrap, explicit
+retained-evidence receipts and a three-tool read-only local MCP adapter over the
+same file engine. Native files and ordinary recall remain valid defaults.
+See [cross-device design and optimization limits](docs/CROSS-DEVICE-OPTIMIZATION.md),
+[local MCP setup](docs/MCP.md) and [progressive context](docs/PROGRESSIVE-CONTEXT.md).
+MCP client/device compatibility and real provider scope require separate tests;
+this release does not claim a hosted real-vault service or phone/iPad acceptance.
 
 ## What lives where
 
@@ -271,7 +286,7 @@ and conflict handling. Check actual delivery on each recipient device. See
 
 ## Install or update
 
-1. Download the [v0.6.0 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.6.0) and verify the runtime against its external `SHA256SUMS`.
+1. Download the [v0.7.0 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.7.0) and verify the runtime against its external `SHA256SUMS`.
 2. [Give the setup prompt](SETUP-PROMPT.md) to an agent with local file access, or follow the [installation guide](docs/INSTALL.md).
 3. Select the intended folder. A wholly empty folder can receive team (`Raw/Wiki/Output`), personal (`Notes/Resources`) or custom project folders plus `AGENTS.md` and `INDEX.md`. Version 0.6.0 exposes `--vault-type` and repeatable `--project-folder`; older released packages retain their legacy seed. A populated folder retains its hierarchy, instructions and attachments; add the memory rule to its existing agent instructions when appropriate.
 4. Have the agent confirm the installed version, make one small edit, and verify local history capture. For requested sharing, it checks provider and recipient delivery separately.

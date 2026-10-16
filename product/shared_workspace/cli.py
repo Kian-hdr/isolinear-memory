@@ -70,6 +70,8 @@ def capabilities() -> dict:
         "product_name": "Isolinear Memory", "legacy_name": "Shared Memory",
         "commands": list(COMMANDS) + list(folder_workflow.COMMANDS) + list(workflow.TEAM_COMMANDS) + list(maintenance.COMMANDS) + list(delivery_workflow.COMMANDS) + list(knowledge_workflow.COMMANDS) + list(coordination_workflow.COMMANDS) + list(graph_rename.COMMANDS) + list(onboarding.COMMANDS),
         "default_workflow": "folder",
+        "routine_save_policy": {"completion": "local_file_readback", "cloud_upload_check_required": False,
+                                "remote_source_access_without_mirror": True},
         "folder_workflow": {"commands": list(folder_workflow.COMMANDS), "direct_edits": True, "mandatory_approval": False, "coordinator_required": False, "history": "immutable_files", "provider_delivery": "unverified", "missing_file_is_delete": False, "self_hosted_candidate": "nextcloud"},
         "implemented": {"selected_folder_setup": True, "portable_project_identity": True,
                         "trusted_bundle_execution": True, "json_output": True,
@@ -139,13 +141,16 @@ def emit(command, *, ok, code, data=None, warnings=None, message=None):
 
 
 def emit_text(command, data):
-    if command == 'recall':
+    if command in {'recall', 'context-packet'}:
         print(f"method={data['method']} unavailable={data['unavailable']} unavailable_sources={','.join(data['unavailable_sources']) or 'none'} unsearched={','.join(data['unsearched']) or 'none'} truncated={str(data['truncated']).lower()}")
         if 'retrieval' in data:
             print('retrieval=' + json.dumps(data['retrieval'], ensure_ascii=True, separators=(',', ':')))
         for hit in data['hits']:
             print(f"{hit['path']}:{hit['start']}-{hit['end']} sha256={hit['sha256'][:24]}")
-            print(hit['excerpt'])
+            if 'evidence_id' in hit:
+                print(f"evidence_id={hit['evidence_id']} delivery={hit['delivery']}")
+            if 'excerpt' in hit:
+                print(hit['excerpt'])
     elif command == 'show':
         print(f"{data['path']}:{data['start']}-{data['end']} sha256={data['sha256']}")
         print(data['excerpt'])
@@ -161,6 +166,16 @@ def main(argv=None) -> int:
             raise ProductError(2, "unsupported_runtime", "Python 3.11 or newer is required; Python 3.13 is the rehearsal baseline.")
         args = parser().parse_args(arguments)
         command = args.command
+        if command == 'memory-mcp':
+            from . import memory_mcp
+            from . import recall as source
+            def selected_memory():
+                root = workflow.selected_root(args.project)
+                return root, folder_workflow.state_path(args, root)
+            selected = source._bounded(selected_memory, 5.0,
+                lambda: source._error('deadline', 'Selected local source is unavailable; no MCP server started.', 5))
+            memory_mcp.serve(*selected)
+            return 0
         for name in ("person", "actor", "agent", "purpose"):
             if getattr(args, name, None) is not None and not getattr(args, name).strip():
                 raise ProductError(2, "usage_error", f"--{name} cannot be empty.")
@@ -186,7 +201,9 @@ def main(argv=None) -> int:
             elif command == "guide":
                 data = {"guide": (bundle.root / "PRODUCT-GUIDE.md").read_text(encoding="utf-8"),
                         "knowledge_graph_guide": (bundle.root / "KNOWLEDGE-GRAPH.md").read_text(encoding="utf-8"),
-                        "server_dependencies": (bundle.root / "requirements-server.txt").read_text(encoding="utf-8")}
+                        "server_dependencies": (bundle.root / "requirements-server.txt").read_text(encoding="utf-8"),
+                        "mcp_guide": (bundle.root / "MCP-GUIDE.md").read_text(encoding="utf-8"),
+                        "mcp_dependencies": (bundle.root / "requirements-mcp.txt").read_text(encoding="utf-8")}
             elif command == "capabilities":
                 data = capabilities()
                 data["bundle_id"] = bundle.build["bundle_id"]
@@ -202,7 +219,7 @@ def main(argv=None) -> int:
                 warnings.append(project.SHARED_WARNING)
             if getattr(args, "brief", False):
                 data = folder_workflow.brief(data)
-            if getattr(args, 'text', False) and command in {'recall', 'show', 'append-row'}:
+            if getattr(args, 'text', False) and command in {'recall', 'show', 'context-packet', 'append-row'}:
                 emit_text(command, data)
             else:
                 emit(command, ok=True, code="ok", data=data, warnings=warnings)

@@ -40,6 +40,26 @@ and graph neighbors; they do not establish event time. Partial-match ranking is 
 factual authority. The same selected-folder, source-hash, deadline and output-budget
 boundaries apply. See [source-to-target map](../docs/READINESS.md#hindsight-selective-assimilation-development-candidate-2026-10-02).
 
+## Optional evidence receipts
+
+Optional development `recall --with-receipts` adds context-local passage identifiers.
+Supplying `--known-evidence` omits only an exact already-held passage after normal
+current-source validation; its path, hash, lines and unchanged status remain.
+Receipts bind the local root and final excerpt, never replace source or history,
+and must be forgotten after context loss. Defaults are unchanged. See
+[evidence receipts](../docs/EVIDENCE-RECEIPTS.md) for limits and acceptance evidence.
+
+## Optional authored bootstrap packet
+
+`context-packet` returns complete AGENTS.md, INDEX.md and one explicitly selected
+canonical source or unique authored ATX section, with exact locators and current
+hashes. Required-source failure or insufficient budget returns no excerpts;
+sections and stop conditions are never trimmed to fit. It follows no links and
+claims per-source reads, not a transactional snapshot or exhaustive policy.
+Optional explicit receipts require actual retained context; reset callers request
+full text again. Historical coordinator `context` remains separate. See
+[progressive context](../docs/PROGRESSIVE-CONTEXT.md).
+
 ## Capture and reconciliation
 
 People and agents edit ordinary Markdown directly. A save persists a local file;
