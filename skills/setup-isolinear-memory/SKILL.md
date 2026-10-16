@@ -44,6 +44,23 @@ Read back touched notes and artifacts before confirming they were saved.
 This is an agent instruction, not an automatic conversation-extraction service;
 each host agent must perform the native edit within its selected folder permissions.
 
+Use the local mirror when it exists. A successful native save and local readback
+complete an ordinary save. Leave background synchronization to its client: do not
+open Drive/OneDrive apps or menus, inspect upload queues/status, poll for remote
+receipt, force syncing, restart clients or change sync settings for routine notes
+or history capture. Do not make unchecked upload status a completion blocker.
+Investigate remote delivery only when explicitly requested or required by an actual
+recipient/delivery task. On a phone or host without a local mirror, use an authorized
+remote connector to the selected sources; necessary source reads/revisions and
+remote write readback are access verification, not desktop upload-queue checks.
+
+For startup/reset, an installed runtime may offer `context-packet`: it returns
+complete authored instructions/index and an explicitly selected handoff section or
+fails without partial excerpts. Inspect command help before using candidate-only
+features. Optional evidence receipts omit only exact passages still retained by the
+caller after source revalidation; discard them after compaction/reset or uncertain
+retention. Native targeted reads remain valid and can be cheaper.
+
 An installed capture job records history outside the model; otherwise run one `sync`
 after material edits. Once `--status --brief` confirms a job is ready, record its
 active status only in device-local host guidance for that selected project; recheck
@@ -51,6 +68,6 @@ and clear that signal if health changes. Never put device-specific status in sha
 `AGENTS.md`. Ordinary successful capture and provider activity should not
 appear in the user-facing reply. Optionally give the saved note's short location when
 it helps the user; report a failed canonical save or material capture gap once. Discuss
-remote receipt only when requested or consequential to the requested outcome, and do
+remote receipt only for an explicitly requested investigation or actual delivery outcome, and do
 not imply local capture proves it. Keep personal and company folder boundaries,
 read-only grants, credentials, and private indexes intact.

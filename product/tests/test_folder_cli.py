@@ -73,8 +73,10 @@ class FolderCLITests(unittest.TestCase):
         self.assertIn('read back touched notes and artifacts before claiming a save', instructions)
         self.assertIn('No transcript', instructions)
         self.assertIn('Never put private material in a company', instructions)
-        self.assertIn('narrate capture, Google Drive uploads or provider checks', instructions)
-        self.assertIn('local save/capture does not prove it', instructions)
+        self.assertIn('Complete routine saves by local readback', instructions)
+        self.assertIn('Do not inspect cloud apps, menus, upload queues or provider status', instructions)
+        self.assertIn('poll uploads, force syncing, restart clients or change sync settings', instructions)
+        self.assertIn('local capture does not\nprove it', instructions)
         self.assertEqual(first['readiness'], 'ready')
         events = self.cli('history', empty, '--state-dir', self.state)['events']
         self.assertEqual(len(events), 1)

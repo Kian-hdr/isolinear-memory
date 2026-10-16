@@ -1,0 +1,235 @@
+{
+  "scenario": "same authored bootstrap facts; warm routing; first/repeat/reset/edit",
+  "reference_tokenizer": "o200k_base",
+  "limits": [
+    "logical CLI inputs and actual JSON stdout; harness/host envelopes excluded",
+    "show baseline receives correct hashes/ranges without discovery cost",
+    "source fidelity assertions are not model-answer accuracy or billed usage",
+    "one packet is not necessarily cheaper than native targeted reads"
+  ],
+  "native_targeted_content_lower_bound": {
+    "bytes": 372,
+    "reference_tokens": 84
+  },
+  "results": [
+    {
+      "arm": "source_linked_show",
+      "stage": "first",
+      "calls": 3,
+      "input": {
+        "bytes": 454,
+        "reference_tokens": 194
+      },
+      "output": {
+        "bytes": 1156,
+        "reference_tokens": 411
+      },
+      "total": {
+        "bytes": 1611,
+        "reference_tokens": 606
+      },
+      "all_required_facts_preserved": true
+    },
+    {
+      "arm": "source_linked_show",
+      "stage": "repeat",
+      "calls": 3,
+      "input": {
+        "bytes": 454,
+        "reference_tokens": 194
+      },
+      "output": {
+        "bytes": 1156,
+        "reference_tokens": 411
+      },
+      "total": {
+        "bytes": 1611,
+        "reference_tokens": 606
+      },
+      "all_required_facts_preserved": true
+    },
+    {
+      "arm": "source_linked_show",
+      "stage": "reset",
+      "calls": 3,
+      "input": {
+        "bytes": 454,
+        "reference_tokens": 194
+      },
+      "output": {
+        "bytes": 1156,
+        "reference_tokens": 411
+      },
+      "total": {
+        "bytes": 1611,
+        "reference_tokens": 606
+      },
+      "all_required_facts_preserved": true
+    },
+    {
+      "arm": "source_linked_show",
+      "stage": "source_edit",
+      "calls": 3,
+      "input": {
+        "bytes": 454,
+        "reference_tokens": 198
+      },
+      "output": {
+        "bytes": 1156,
+        "reference_tokens": 414
+      },
+      "total": {
+        "bytes": 1611,
+        "reference_tokens": 613
+      },
+      "all_required_facts_preserved": true
+    },
+    {
+      "arm": "existing_recall_receipts",
+      "stage": "first",
+      "calls": 3,
+      "input": {
+        "bytes": 342,
+        "reference_tokens": 99
+      },
+      "output": {
+        "bytes": 1881,
+        "reference_tokens": 661
+      },
+      "total": {
+        "bytes": 2224,
+        "reference_tokens": 761
+      },
+      "all_required_facts_preserved": true
+    },
+    {
+      "arm": "existing_recall_receipts",
+      "stage": "repeat",
+      "calls": 3,
+      "input": {
+        "bytes": 492,
+        "reference_tokens": 174
+      },
+      "output": {
+        "bytes": 1511,
+        "reference_tokens": 574
+      },
+      "total": {
+        "bytes": 2004,
+        "reference_tokens": 749
+      },
+      "all_required_facts_preserved": true
+    },
+    {
+      "arm": "existing_recall_receipts",
+      "stage": "reset",
+      "calls": 3,
+      "input": {
+        "bytes": 342,
+        "reference_tokens": 99
+      },
+      "output": {
+        "bytes": 1881,
+        "reference_tokens": 661
+      },
+      "total": {
+        "bytes": 2224,
+        "reference_tokens": 761
+      },
+      "all_required_facts_preserved": true
+    },
+    {
+      "arm": "existing_recall_receipts",
+      "stage": "source_edit",
+      "calls": 3,
+      "input": {
+        "bytes": 492,
+        "reference_tokens": 174
+      },
+      "output": {
+        "bytes": 1774,
+        "reference_tokens": 636
+      },
+      "total": {
+        "bytes": 2267,
+        "reference_tokens": 811
+      },
+      "all_required_facts_preserved": true
+    },
+    {
+      "arm": "authored_packet",
+      "stage": "first",
+      "calls": 1,
+      "input": {
+        "bytes": 117,
+        "reference_tokens": 33
+      },
+      "output": {
+        "bytes": 1431,
+        "reference_tokens": 499
+      },
+      "total": {
+        "bytes": 1549,
+        "reference_tokens": 533
+      },
+      "all_required_facts_preserved": true
+    },
+    {
+      "arm": "authored_packet",
+      "stage": "repeat",
+      "calls": 1,
+      "input": {
+        "bytes": 267,
+        "reference_tokens": 101
+      },
+      "output": {
+        "bytes": 1023,
+        "reference_tokens": 403
+      },
+      "total": {
+        "bytes": 1291,
+        "reference_tokens": 505
+      },
+      "all_required_facts_preserved": true
+    },
+    {
+      "arm": "authored_packet",
+      "stage": "reset",
+      "calls": 1,
+      "input": {
+        "bytes": 117,
+        "reference_tokens": 33
+      },
+      "output": {
+        "bytes": 1431,
+        "reference_tokens": 499
+      },
+      "total": {
+        "bytes": 1549,
+        "reference_tokens": 533
+      },
+      "all_required_facts_preserved": true
+    },
+    {
+      "arm": "authored_packet",
+      "stage": "source_edit",
+      "calls": 1,
+      "input": {
+        "bytes": 267,
+        "reference_tokens": 101
+      },
+      "output": {
+        "bytes": 1336,
+        "reference_tokens": 479
+      },
+      "total": {
+        "bytes": 1604,
+        "reference_tokens": 581
+      },
+      "all_required_facts_preserved": true
+    }
+  ],
+  "checked": "2026-10-16",
+  "package_sha256": "30aa5c2367b4f504bf5465d5347b77ed1556ec57ae6afa4bb41830c72773d1e9",
+  "source_revision": "a542e0d0f04bb2e9bc768f77ab0b3ce07f17393a plus reviewed development overlay"
+}

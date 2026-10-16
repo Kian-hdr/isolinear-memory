@@ -1,7 +1,21 @@
 {
   "fill-specializations": [
     {
-      "value": "system-light"
+      "value": {
+        "linear-gradient": [
+          "srgb:0.216667,0.236667,0.346667,1",
+          "srgb:0.254902,0.278431,0.407843,1"
+        ]
+      }
+    },
+    {
+      "appearance": "light",
+      "value": {
+        "linear-gradient": [
+          "srgb:0.216667,0.236667,0.346667,1",
+          "srgb:0.254902,0.278431,0.407843,1"
+        ]
+      }
     },
     {
       "appearance": "dark",
