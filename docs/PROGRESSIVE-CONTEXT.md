@@ -1,6 +1,6 @@
 # Progressive authored context packets
 
-Optional development feature, October 16, 2026. See the
+Optional feature introduced in 0.7.0. See the
 [source-to-target map](READINESS.md#progressive-context-selective-assimilation-development-candidate-2026-10-16).
 
 ## What this adds

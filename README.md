@@ -3,189 +3,279 @@
 <p align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/isolinear-memory-dark.png">
-  <img src="assets/isolinear-memory.png" width="96" height="96" alt="Isolinear Memory icon: connected memory lattice">
+  <img src="assets/isolinear-memory.png" width="96" height="96" alt="Isolinear Memory: connected memory lattice">
 </picture>
 </p>
 
-**Persistent Markdown memory for people and AI agents. Edit notes normally; retrieve only the evidence a task needs.**
+**Persistent Markdown memory for people and AI agents. Keep the originals. Retrieve the evidence a task needs.**
 
-Isolinear Memory 0.7.0 works inside one selected folder. Markdown remains the source
-of truth. The runtime records recoverable change history, reconciles the project
-files visible on each device, and returns small, source-linked passages to agents.
-Obsidian is optional. No memory-extraction model, vector service, MCP server or
-hosted account is required.
+Isolinear Memory helps an agent pick up a project without replaying its entire
+conversation history. Decisions, sources and current work live in ordinary notes.
+The agent reads the relevant passages, does its work, and updates the existing
+project record. A local runtime captures supported file changes and helps
+reconcile the project copies that are visible on different devices.
 
-The name is inspired by [Star Trek's isolinear chips](https://www.startrek.com/en-un/news/below-deck-with-lower-decks-403-move-along).
-[Explore the artwork](assets/README.md).
+The core works offline in one selected folder. Your editor, Obsidian, Git and
+folder provider can remain part of your workflow. A hosted service, vector
+database or memory-extraction model is optional architecture, not a requirement.
 
-## Local mirrors and other clients
+[Get started](#get-started) · [How it works](#how-it-works) ·
+[Knowledge graph](#the-knowledge-graph) · [Devices and access](#devices-and-access) ·
+[Documentation](#documentation)
 
-Routine local work ends with native-file readback. Leave Google Drive/OneDrive
-background syncing alone: no app, upload-queue, status polling or restart checks.
-A phone without a local mirror needs an authenticated remote source connection;
-a local stdio server is not an always-reachable mobile backend.
+## What it gives you
 
-Optional 0.7.0 tools add complete authored `context-packet` bootstrap, explicit
-retained-evidence receipts and a three-tool read-only local MCP adapter over the
-same file engine. Native files and ordinary recall remain valid defaults.
-See [cross-device design and optimization limits](docs/CROSS-DEVICE-OPTIMIZATION.md),
-[local MCP setup](docs/MCP.md) and [progressive context](docs/PROGRESSIVE-CONTEXT.md).
-MCP client/device compatibility and real provider scope require separate tests;
-this release does not claim a hosted real-vault service or phone/iPad acceptance.
+- **Durable project context:** authored instructions, an index and canonical notes
+  that a new agent or chat can read.
+- **Source-linked retrieval:** bounded passages with a path, line range and source
+  hash, plus explicit warnings about incomplete coverage.
+- **Recoverable history:** portable causal events and private device recovery state
+  for supported captured changes, including visible conflict handling.
+- **Optional context tools:** complete authored bootstrap packets, receipts for
+  evidence still retained by the caller, and a read-only local MCP adapter.
 
-## What lives where
+The runtime records files. The agent decides what useful knowledge to write.
+It does not automatically turn every conversation into facts or silently replace
+original notes with generated summaries.
 
-| Layer | Contents | Role |
+## Get started
+
+Isolinear Memory **0.7.1** requires Python **3.11+**. The runtime supports macOS,
+Linux and Windows. POSIX command launchers are supplied for macOS/Linux; Windows
+can invoke the verified `.pyz` with Python. Automatic capture installation is
+supplied for macOS; other systems can use manual capture or their own scheduler.
+
+### With an agent
+
+1. Select the exact folder that should hold the memory. Keep personal, company and
+   unrelated project scopes separate.
+2. Give an agent with authorized file access the [setup prompt](SETUP-PROMPT.md).
+   It follows the [installation guide](docs/INSTALL.md), verifies release checksums,
+   and preserves an existing project's identity, notes and history.
+3. Choose a profile for a new empty folder. Populated folders keep their layout.
+4. Confirm the installed version and a real local capture result. Routine saves
+   complete with local-file readback; leave cloud upload queues alone.
+
+| New folder profile | Starting layout | Intended use |
 | --- | --- | --- |
-| Selected project folder | `AGENTS.md`, `INDEX.md`, Markdown in the selected team, personal or project layout, the format-3 manifest and portable event history | Canonical notes and history that the chosen folder provider can transport. Existing projects keep their own layout. |
-| Private state on each device | Causal baseline, recovery material and a rebuildable SQLite FTS5 index containing passage text | Speeds recall and supports safe local capture. It stays outside synchronized storage and is never a second authority. |
-| Folder provider, if chosen | Copies of the selected project files | Transports files between authorized devices. Isolinear Memory does not create access grants or prove delivery. |
-| Agent context | Bounded excerpts with paths, line numbers and source hashes | Holds just the evidence needed for the current task. Expand an exact source only when needed. |
+| Team | `Raw/`, `Wiki/`, `Output/` | Shared organizational knowledge and sources |
+| Personal | `Notes/`, `Resources/` | Concise personal notes without manual team registers |
+| Project | Domain folders you choose | A software, research, production or other bounded project |
 
-Each device has its own private state, even when people work on copies of the same
-project. Selecting a subfolder inside a larger vault does not include its parent
-notes or nested projects. The diagram shows that boundary:
+### Manual installation
+
+Download the runtime and external `SHA256SUMS` from the
+[0.7.1 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.7.1).
+Verify the downloaded runtime before executing it, then follow the
+[installation instructions](docs/INSTALL.md). Keep the prior package for rollback.
+
+After installing the command, a new empty personal folder can be initialized with:
+
+```bash
+isolinear-memory setup "/path/to/selected-folder" --vault-type personal
+```
+
+Use a real selected path. For an existing project, resume its binding and profile;
+do not initialize another identity or reorganize its files. Setup does not create
+cloud accounts, grant sharing access or configure a phone backend.
+
+## How it works
+
+There are four places to distinguish:
+
+| Place | What belongs there |
+| --- | --- |
+| Selected project folder | Authored Markdown, routing files, project identity and portable history |
+| Private storage on each device | Rebuildable search index, causal baseline and recovery state |
+| Folder provider, if configured | Transport of the chosen project files to authorized copies |
+| Agent context | The current task, relevant instructions and selected source evidence |
 
 <!-- BEGIN GENERATED MERMAID: 01-shared-folder.mmd -->
 ```mermaid
 flowchart TB
-  accTitle: One selected project, separate private device state
-  accDescr: Each device holds a selected Markdown project and a private baseline, recovery state and FTS5 index. Isolinear Memory reads and records only the selected project. Provider sync scope is configured separately; the private state is outside the project route.
-  subgraph A["DEVICE A"]
-    direction LR
-    AE["Person or agent<br/>native Markdown editor"] --> AF["Selected project folder<br/>AGENTS + INDEX + Raw / Wiki / Output<br/>format-3 manifest + portable events"]
-    AM["Isolinear Memory<br/>recall + sync + history"] <-->|"read and capture"| AF
-    AM <-->|"local only"| AS["Private device state<br/>baseline + recovery + FTS5 index"]
+  accTitle: One source of knowledge, local and remote access paths
+  accDescr: Desktop agents use native files, CLI or optional local stdio MCP over one selected Markdown project. Private indexes are rebuildable. A phone without a mirror needs a separately deployed authenticated remote service or an existing provider connector. Remote access and client acceptance are separate from the local release.
+  subgraph A["DESKTOP WITH A LOCAL MIRROR"]
+    AE["Person or agent"] --> AM["Native files or Isolinear CLI<br/>optional local stdio MCP"]
+    AM <-->|"scoped reads"| AF["Selected Markdown project<br/>instructions + canonical notes<br/>portable causal history"]
+    AM <-->|"derived state"| AS["Private device storage<br/>rebuildable index<br/>baseline + recovery"]
+    AE -->|"native edits"| AF
   end
-  AF <-->|"project files<br/>if configured"| P["One chosen folder provider"]
-  P <-->|"project files<br/>if delivered"| BF
-  subgraph B["DEVICE B"]
-    direction LR
-    BE["Person or agent<br/>native Markdown editor"] --> BF["Authorized project copy<br/>Markdown + portable events"]
-    BM["Isolinear Memory<br/>recall + sync + history"] <-->|"read and capture"| BF
-    BM <-->|"local only"| BS["Separate private state<br/>baseline + recovery + FTS5 index"]
+  AF <-->|"background file transport<br/>if configured"| P["One chosen folder provider"]
+  subgraph B["REMOTE ACCESS: SEPARATE DEPLOYMENT"]
+    BE["Phone, tablet or remote agent<br/>without a local mirror"] -->|"authenticated access"| BM["Remote MCP service<br/>authorized provider-backed projection<br/>or existing provider connector"]
+    BM --> O["Bounded source evidence<br/>revision or hash + coverage<br/>verify each intended client"]
   end
+  BM <-->|"authorized source reads"| P
+  AF --> V["Routine local save<br/>verify local readback<br/>leave upload queues alone"]
 ```
 <!-- END GENERATED MERMAID: 01-shared-folder.mmd -->
 
-Isolinear Memory reads and records only the selected project folder. Configure
-the provider's own sync scope and permissions separately; it may also sync
-other folders. The private baseline, FTS5 index, credentials and recovery state
-have no project-provider arrow. A local-only project needs no provider at all.
+The selected folder is the authority for its authored knowledge. A private search
+index helps find passages; it can be rebuilt. The provider transports files, while
+the agent receives bounded evidence. Each authorized desktop copy needs its own
+private device state. Local-only use needs no folder provider.
 
-## Find relevant memory with a small context packet
+### A typical work session
 
-Start with `AGENTS.md` and `INDEX.md`, then follow their routes to the relevant
-canonical note. Native file search and editing remain first-class tools. When the
-location is unknown, `recall` searches the selected project and returns a compact
-packet: at most **five ranked hits** and **2 KiB by default**. Each hit carries a
-vault-relative path, heading, line range, exact excerpt and SHA-256 source hash.
-The result also says when sources were unavailable, truncated or left unsearched.
+1. Read `AGENTS.md`, `INDEX.md` and the relevant current handoff.
+2. Use a native read for a known note, or search when its location is unknown.
+3. Expand evidence when the returned excerpt leaves a fact or qualification missing.
+4. Complete the work and update the existing canonical note with durable results,
+   sources, open work and next steps. Read the saved file back.
+5. Let configured local capture run in the background, or run one bounded manual
+   `sync` when automatic capture is not available.
 
-Recall always considers root `AGENTS.md` and `INDEX.md`. Team/unclassified vaults
-add `Wiki/`, with `Raw/` and `Output/` opt-in. Personal vaults search `Notes/`,
-with `Resources/` opt-in through `--include-raw`. Project vaults search their
-declared domain folders. The diagram below illustrates the team-vault default. A private FTS5 index stores rebuildable note
-passages to accelerate lookup. Path and title matches can avoid a broad content
-scan; if indexing is unavailable or incomplete, recall has a bounded direct
-Markdown fallback. Returned hits are checked against current file bytes. A
-cached hit can still leave newer, nonmatching files unsearched, so use
-`--refresh` or a targeted native search when completeness matters. Reads have
-a five-second outer deadline and report partial coverage instead of silently
-claiming an exhaustive search.
+A fresh chat can resume from that authored handoff. Shared files do not transfer
+an agent's live conversation context by themselves.
+
+## Retrieve evidence without loading the whole vault
+
+`recall` returns small source-linked hits. Its default limit is five hits and a
+2 KiB response budget. Each hit identifies the source path, heading, exact lines,
+excerpt and SHA-256 hash. Coverage fields report unavailable, truncated or
+unsearched material. A no-hit or partial result is not proof that a fact is absent.
+
+```bash
+isolinear-memory recall . "project owner" --max-hits 3 --text
+isolinear-memory recall . "delivery constraints" --strategy hybrid --text
+```
+
+Use `.` only from inside the intended project. Exact recall is the default.
+Optional hybrid recall combines lexical matches, titles and a bounded subset of
+explicit note links. It requires no embedding model. The configured profile
+controls retrieval folders: team defaults to `Wiki/`, personal to `Notes/`, and
+projects to their declared domain folders, alongside the root routing files.
+See [retrieval scope](docs/PRODUCT-V1.md#optional-hybrid-retrieval) for opt-in sources
+and coverage limits.
 
 <!-- BEGIN GENERATED MERMAID: 05-recall-and-index.mmd -->
 ```mermaid
 flowchart TB
-  accTitle: Bounded recall verifies current Markdown before returning evidence
-  accDescr: Recall searches the selected project's Wiki and root routing files by default. Path matches, private FTS5 chunks and bounded direct scanning provide candidates. Every returned hit is checked against current Markdown. Show expands lines only when the source hash still matches; incomplete coverage is reported.
-  Q["Agent asks for a fact"] --> R["recall query<br/>selected project only"]
-  R --> S["Default scope<br/>AGENTS + INDEX + Wiki<br/>Raw / Output only on request"]
-  S --> C{"Find candidate passages"}
-  C --> P["Path and title matches"]
-  C --> I["Private rebuildable FTS5<br/>stores passage chunks"]
-  C --> D["Bounded direct scan<br/>when index unavailable"]
-  P --> V["Re-read current Markdown<br/>verify source + excerpt"]
+  accTitle: Retrieve small evidence, expand only when needed
+  accDescr: Known notes can be read directly. Discovery uses exact recall or optional hybrid lexical and explicit-link ranking within the selected profile. Current Markdown is checked before small cited hits are returned. Coverage limits remain visible. Expand only missing detail, with stale source hashes refused.
+  Q["Agent needs evidence"] -->|"known source"| N["Read targeted note or section"]
+  Q -->|"discovery"| S["Selected project + profile scope<br/>root AGENTS and INDEX<br/>no parent or sibling discovery"]
+  S -->|"default"| P["Exact recall<br/>path / title + FTS5<br/>bounded scan fallback"]
+  S -->|"optional"| I["Hybrid recall<br/>lexical ranking + one-hop wikilinks<br/>no embedding model"]
+  P --> V["Verify current source + excerpt"]
   I --> V
-  D --> V
-  V --> O["At most 5 ranked hits<br/>2 KiB default packet<br/>path + heading + lines + SHA<br/>unsearched / unavailable flags"]
-  O --> H["show with path + SHA + lines"]
-  H --> G{"Current hash matches?"}
-  G -->|"yes"| E["Return exact bounded lines"]
-  G -->|"no"| X["Refuse stale evidence<br/>recall again"]
+  V --> O["Bounded cited packet: at most 5 hits<br/>path + heading + lines + SHA<br/>partial coverage remains explicit"]
+  N --> D{"Enough evidence?"}
+  O --> D
+  D -->|"yes"| A["Use evidence for the task"]
+  D -->|"missing detail"| H["show / MCP fetch<br/>path + SHA + 1-80 lines<br/>check current hash"]
+  H -->|"matches + fits budget"| E["Return exact bounded lines"]
+  H -->|"changed"| X["Refuse stale evidence<br/>recall again"]
 ```
 <!-- END GENERATED MERMAID: 05-recall-and-index.mmd -->
 
-For example:
+Candidates are checked against current local source bytes before evidence is
+returned. Warm indexed search can still leave new or changed paths unsearched.
+Use a targeted native read or deliberate `--refresh` when current coverage is
+needed; refresh may encounter a slow or unavailable cloud-backed file.
+
+When an excerpt is insufficient, use `show` with the returned path and hash:
 
 ```bash
-isolinear-memory recall "/path/to/project" "current project owner" --text
-isolinear-memory show "/path/to/project" \
-  --path "Wiki/Project Brief.md" \
-  --sha256 HASH_FROM_RECALL --start 22 --end 28 --text
+isolinear-memory show . --path "Wiki/Project Brief.md" \
+  --sha256 HASH_FROM_RECALL --start 1 --end 20 --text
 ```
 
-`show` expands up to 80 exact lines (8 KiB default) and refuses to quote a
-file whose hash changed since recall. Search again after a stale result. The
-CLI also offers a versioned JSON envelope for integrations; `--text` gives
-agents a concise plain-text view.
+Substitute the actual source path, hash and needed line bounds. `show` returns up
+to 80 exact lines per request and refuses a changed source. A search excerpt that
+already contains all required facts and qualifiers can be sufficient; a heading-only
+hit still needs expansion. Fetching the same evidence twice adds context cost.
 
-### Optional hybrid recall
+### Bootstrap packets and retained evidence
 
-Use `recall PROJECT "query words" --strategy hybrid` to combine lexical matches,
-titles and explicit linked-note evidence. Optional `--after YYYY-MM-DD` and
-`--before YYYY-MM-DD` filter ISO dates in returned spans. Exact search stays the
-default; every excerpt still references current Markdown bytes. This dependency-free
-adaptation is inspired by Hindsight's ranked-search design. See the
-[operating guide](docs/PRODUCT-V1.md#optional-hybrid-retrieval)
-and [pinned source/adaptation record](docs/READINESS.md#hindsight-selective-assimilation-development-candidate-2026-10-02)
-for limits. Hybrid recall is included in 0.6.0; earlier 0.5.2 packages retain exact recall.
-
-## Remember useful work automatically
-
-An agent with access to the selected folder reads its short `AGENTS.md` and
-`INDEX.md`, does the requested work, then updates the relevant canonical
-note without a separate “remember this” prompt. It records durable findings,
-decisions, artifact links, current status and next steps with their sources and
-uncertainty. Substantial generated files belong in `Output/`; their Wiki note
-links the result. The agent reads back its edits before finishing. Routine
-intermediate steps and conversation transcripts do not need separate notes.
-
-The agent performs this knowledge write through native file tools. New projects
-receive this rule in their seeded `AGENTS.md`; existing projects keep their own
-instructions and can adopt the rule through a targeted edit. Isolinear
-Memory captures the resulting file changes locally; it does not watch a chat or
-use another model to decide what is important. A healthy macOS capture job runs
-outside the agent, while the agent can run one bounded sync when no job is
-available. Normal success needs at most a short saved-location confirmation.
-Capture diagnostics and provider state stay in the background unless they affect
-the current result, a requested delivery check or an action the person must take.
-
-## Save normally, then capture history
-
-People and agents edit ordinary Markdown directly. A file save persists bytes
-locally. `sync` compares observed files with the device's private causal
-baseline, records immutable events in the selected project, and reconciles
-history already visible from the provider. The optional **macOS local capture
-job** can run this work outside the model. Without that job, the agent runs one
-bounded manual sync after material edits and provider arrivals.
+`context-packet` reads complete `AGENTS.md`, complete `INDEX.md` and one explicitly
+selected canonical note or unique Markdown heading, including its subsections:
 
 ```bash
-isolinear-memory sync "/path/to/project" --brief
+isolinear-memory context-packet . --path "Wiki/Project Brief.md" \
+  --heading "Current handoff" --max-bytes 8192
 ```
 
-For long registers, `append-row` adds one validated row atomically without an
-agent loading the entire table into context. It is a local Markdown edit, so
-capture still follows it:
+All required sources must fit. Missing, unsafe, ambiguous or over-budget input
+returns no partial packet. The tool does not decide which handoff is important,
+summarize its contents or silently trim a stop condition.
+
+Optional evidence receipts let a caller omit an exact passage it still retains,
+after source revalidation. They are local-context identifiers, not a replacement
+for the text. Discard them after reset, compaction or uncertain retention and
+request the evidence again. Short or one-off passages can cost more with receipts.
+See [context packets](docs/PROGRESSIVE-CONTEXT.md) and
+[evidence receipts](docs/EVIDENCE-RECEIPTS.md).
+
+An MCP server cannot remove old messages from a host's context. Smaller future
+responses and an external index help control what gets loaded next; the host still
+owns conversation compaction and context-window behavior.
+
+## The knowledge graph
+
+A knowledge graph maps **explicit references between documents**. For example, a
+project brief can link a decision to its supporting evidence and implementation
+work. Isolinear reports the links, backlinks and unresolved targets so an agent can
+follow the right sources or inspect reference health.
+
+<!-- BEGIN GENERATED MERMAID: 06-knowledge-graph.mmd -->
+```mermaid
+flowchart LR
+  accTitle: Illustrative document graph from explicit note links
+  accDescr: Inside one selected root, a project brief explicitly links to a storage policy with a decision relationship. The policy explicitly links to a storage check as evidence and an implementation work note as work. An unresolved depends_on reference produces a link_missing diagnostic, not a missing-note node. These are authored references, not inferred relationships or proof of factual correctness; inspection is read-only.
+  subgraph S["ILLUSTRATIVE READABLE NOTES IN ONE SELECTED ROOT"]
+    P["Project brief<br/>project note"] -->|"decision"| D["Storage policy<br/>decision note"]
+    D -->|"evidence"| E["Storage check<br/>evidence note"]
+    D -->|"work"| W["Implementation work<br/>work note"]
+  end
+  D -.->|"unresolved depends_on reference"| M["Diagnostic: link_missing<br/>reference location reported<br/>no target note created"]
+```
+<!-- END GENERATED MERMAID: 06-knowledge-graph.mmd -->
 
 ```bash
-isolinear-memory append-row "/path/to/project" \
-  --path "Wiki/Change Register.md" --heading "Change Register" \
-  --row "| 2026-09-29 | Verified decision |"
+isolinear-memory graph .
 ```
 
-The table must already exist and the row must match its columns. Native
-targeted edits remain appropriate for ordinary notes.
+The command returns JSON with nodes, edges, backlinks, source locations and
+diagnostics. It reads a bounded selected folder tree and does not change notes,
+rewrite links, infer semantic relationships or decide whether a statement is true.
+Its graph-inspection scope is documented separately from `recall`'s profile scope.
+Keep reports private when their note names or links are private; inspect the needed
+summary or edges instead of loading a whole graph into model context.
+
+For a project with `Decisions/` and `Evidence/` folders, two supported
+ways to write an explicit relationship are:
+
+```markdown
+[Supporting evidence](../Evidence/Storage%20Check.md)
+[[Decisions/Storage Policy]]
+```
+
+Link-bearing frontmatter such as `evidence: "[[Storage Check]]"` can also name a
+relationship. Ambiguous, missing or unsafe targets are reported rather than
+silently guessed. Supported syntax and limits are in the
+[knowledge graph guide](docs/KNOWLEDGE-GRAPH.md).
+
+There are **two different graphs** in the system. The knowledge graph connects
+notes through their references. The history graph connects captured versions
+through their parent events, helping reconcile offline changes. A link between
+notes does not grant access, authenticate an author or prove factual agreement.
+
+## Save history and handle offline edits
+
+A normal save writes the Markdown file locally. `sync` compares observed files
+with the private causal baseline, captures supported changes, and reconciles
+complete history that is already visible in the selected project:
+
+```bash
+isolinear-memory sync . --brief
+```
+
+Configured macOS capture can do this outside the agent. A partial capture leaves
+the saved Markdown in place and reports the gap. Capture is not a complete backup
+of every attachment or a guarantee that a provider cannot overwrite uncaptured work.
+Retain appropriate backups and provider history.
 
 <!-- BEGIN GENERATED MERMAID: 02-edit-and-deliver.mmd -->
 ```mermaid
@@ -209,32 +299,19 @@ flowchart TB
 ```
 <!-- END GENERATED MERMAID: 02-edit-and-deliver.mmd -->
 
-These are four separate observations:
-
-| State | What it establishes |
+| Observation | What it establishes |
 | --- | --- |
-| Markdown saved | Local file bytes were written. |
-| History captured | A local event and private baseline record the observed version. |
-| Provider delivery | A configured provider transported files to another copy. This needs provider-side evidence. |
-| Recipient receipt | The other device read the intended content and history, then reconciled them. This needs independent readback. |
+| Local readback | The intended file bytes are present on this device |
+| Local capture | Isolinear recorded the observed supported version and history |
+| Provider delivery | An explicitly checked transport delivered files |
+| Recipient readback | The other device read the intended content and history |
 
-A partial or failed capture does not discard saved Markdown. It reports
-unavailable files, missing history or other incomplete work. A configured
-capture job does not imply a successful run; inspect its latest result. A
-provider can overwrite a version before local capture records it, so retain
-provider history or backups for uncaptured work.
-If a cloud-backed folder listing stalls, sync can still capture changed notes
-already known to its private baseline. It marks the scan incomplete and waits
-for a later complete listing to discover new paths.
+Routine note work verifies local readback; local capture has its own status.
+An explicit delivery test can check the latter two observations; ordinary note work does not inspect Drive/OneDrive apps,
+upload queues or background syncing.
 
-## Work offline and preserve disagreements
-
-Two copies can edit while disconnected. Each captured event records its known
-parent versions; timestamps do not select a winner. Once the provider delivers
-complete parent history, compatible text edits can merge. Missing parents
-defer reconciliation. Overlapping edits or ambiguous ancestry keep both
-versions and a readable conflict report until an authorized editor resolves
-the difference with chosen text and evidence.
+<details>
+<summary>How offline versions and conflicts are preserved</summary>
 
 <!-- BEGIN GENERATED MERMAID: 03-offline-and-conflicts.mmd -->
 ```mermaid
@@ -254,18 +331,40 @@ flowchart TB
 ```
 <!-- END GENERATED MERMAID: 03-offline-and-conflicts.mmd -->
 
-Text convergence does not prove factual agreement. Review consequential claims
-against their sources. A missing provider file is not an intentional deletion:
-`delete` and `rename` record those decisions explicitly. A rename does not
-rewrite Markdown or Obsidian backlinks automatically.
+Each captured event names its known parents. Once complete parent history arrives,
+compatible text changes can merge. Missing parents defer reconciliation.
+Overlapping edits preserve both versions and a readable conflict report for
+resolution. Timestamps do not select the factual winner. Explicit `delete` and
+`rename` operations record intent; a missing provider file is not a deletion.
+Folder rename does not automatically rewrite backlinks.
 
-## Choose local-only use or one provider
+</details>
 
-A single physical project can stay local or use **one** configured folder
-provider. Google Drive, iCloud Drive, OneDrive and operator-managed Nextcloud
-are alternative routes, not bridges between services. Another person needs
-provider access to the selected folder and a separate local setup; neither
-folder selection nor a successful local sync grants access or proves receipt.
+## Devices and access
+
+| Environment | Practical route |
+| --- | --- |
+| Desktop with a local mirror | Native files or CLI; optional fixed-project stdio MCP |
+| Authorized remote computer with a mounted mirror | The same selected-folder workflow on that computer |
+| Phone or tablet without a mirror | A separately deployed authenticated remote MCP service, or an authorized provider connector |
+
+The released local MCP adapter exposes three read-only tools: search, exact fetch
+and authored context. It is optional and uses a separately pinned SDK. It does not
+create a public HTTP endpoint or stay reachable while its computer is asleep.
+See [MCP setup](docs/MCP.md).
+
+A remote service needs its own hosting, authentication, source permissions,
+freshness checks and client acceptance. This public release does not provision
+those accounts or include private deployment bindings. Test the actual client and
+allowed corpus; a synthetic endpoint test does not establish real-note access.
+
+For shared folder use, choose one provider per physical project. Authorized people
+receive access through that provider and set up their own private device state.
+Folder selection does not grant access. Google Drive, OneDrive, iCloud Drive and
+operator-managed Nextcloud are alternative transports, not automatic bridges.
+
+<details>
+<summary>Local-only use and folder-provider choices</summary>
 
 <!-- BEGIN GENERATED MERMAID: 04-provider-options.mmd -->
 ```mermaid
@@ -280,49 +379,50 @@ flowchart TB
 ```
 <!-- END GENERATED MERMAID: 04-provider-options.mmd -->
 
-Provider behavior depends on the account, OS client, offline availability
-and conflict handling. Check actual delivery on each recipient device. See
-[provider guidance](docs/PROVIDERS.md) for the operating details.
+See [provider guidance](docs/PROVIDERS.md) for platform and delivery details.
 
-## Install or update
+</details>
 
-1. Download the [v0.7.0 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.7.0) and verify the runtime against its external `SHA256SUMS`.
-2. [Give the setup prompt](SETUP-PROMPT.md) to an agent with local file access, or follow the [installation guide](docs/INSTALL.md).
-3. Select the intended folder. A wholly empty folder can receive team (`Raw/Wiki/Output`), personal (`Notes/Resources`) or custom project folders plus `AGENTS.md` and `INDEX.md`. Version 0.6.0 exposes `--vault-type` and repeatable `--project-folder`; older released packages retain their legacy seed. A populated folder retains its hierarchy, instructions and attachments; add the memory rule to its existing agent instructions when appropriate.
-4. Have the agent confirm the installed version, make one small edit, and verify local history capture. For requested sharing, it checks provider and recipient delivery separately.
+## Privacy, compatibility and limits
 
-The runtime requires Python 3.11 or newer. The verified `.pyz` works on macOS,
-Linux and Windows. The stable POSIX launcher is available on macOS/Linux;
-Windows runs the package with Python directly. This release supplies an
-optional automatic capture installer for macOS. Linux and Windows can use
-manual sync or an independently configured host scheduler.
+- Private indexes contain derived passage text. Keep them, credentials and recovery
+  material outside shared storage. Source filters are not a secret classifier.
+- Portable history may retain text removed from current notes. Choose the correct
+  sharing boundary and use backups appropriate to the records.
+- Person/agent labels are asserted attribution, not authenticated identity.
+- Original Markdown remains readable in other editors. Obsidian is optional; Git
+  can continue to manage code and reviews independently.
+- Existing format-3 projects keep `.shared-memory.json`, `.shared-memory/`, their
+  identity and history. `shared-memory` and the older setup-skill name remain
+  compatible entry points. Formats 1/2 retain their historical coordinator workflow
+  until an explicit backed-up migration.
+- Token savings depend on the task. JSON, hashes, receipts and discovery have
+  overhead. [Measured fixtures](docs/CROSS-DEVICE-OPTIMIZATION.md) and
+  [validation evidence](VALIDATION.md) distinguish reference tokens from total
+  model usage, billing, answer quality and physical-device acceptance.
 
-Existing format-3 projects keep their project IDs, history and private
-bindings. The `shared-memory` command and setup skill remain compatibility
-entry points. The manifest `.shared-memory.json`, portable
-`.shared-memory/` history and internal `shared_workspace` module retain their
-protocol names; adopting Isolinear Memory does not require a folder migration.
-Formats 1 and 2 use their historical coordinator workflow until an explicit,
-backed-up migration. See the [brand transition](docs/BRAND-MIGRATION.md) and
-[operating guide](docs/PRODUCT-V1.md).
+## Documentation
 
-## Validation and limits
+| Need | Guide |
+| --- | --- |
+| Give an agent a complete setup request | [Setup prompt](SETUP-PROMPT.md) |
+| Install, update or roll back | [Installation](docs/INSTALL.md) |
+| Use the commands and understand profiles | [Operating guide](docs/PRODUCT-V1.md) |
+| Set up background local capture | [Automatic capture](docs/AUTOMATIC-CAPTURE.md) |
+| Inspect links, backlinks and graph diagnostics | [Knowledge graph](docs/KNOWLEDGE-GRAPH.md) |
+| View diagram sources and SVG fallbacks | [System diagrams](docs/DIAGRAMS.md) |
+| Connect a local agent through MCP | [MCP guide](docs/MCP.md) |
+| Understand context cost and selective adaptations | [Cross-device design](docs/CROSS-DEVICE-OPTIMIZATION.md), [research](docs/RESEARCH-CROSS-DEVICE.md) |
+| Review what was tested | [Validation](VALIDATION.md), [benchmarks](benchmarks/README.md), [agent compatibility](docs/AGENT-COMPATIBILITY.md) |
+| Work with retained coordinator projects | [Historical coordinator guide](docs/COORDINATOR-WORKFLOW.md) |
 
-Release assets are built from one clean source commit and checked by the
-[macOS, Linux and Windows CI matrix](https://github.com/Kian-hdr/isolinear-memory/actions).
-Each release includes SHA-256 checksums and a source manifest. The
-[synthetic benchmarks](benchmarks/README.md) and
-[agent compatibility evidence](docs/AGENT-COMPATIBILITY.md) distinguish
-measured task results from interface compatibility.
+## Development and license
 
-Shared history can retain earlier note content, including text later removed
-from the current Markdown. Path rules and filename filters are not a secret
-classifier: select the right folder and keep credentials and private state
-outside it. Provider permissions and read-only bindings remain the access
-boundary. [Validation detail](VALIDATION.md) distinguishes local tests from
-provider and independent-device checks.
+Build with `scripts/build_product.py`. Release assets come from an exact clean
+committed revision through `scripts/build_release.py`; each release includes a
+source manifest and external checksums. The [CI workflow](.github/workflows/test.yml)
+covers macOS, Linux and Windows.
 
-## License
-
-[MIT](LICENSE). The [historical coordinator workflow](docs/COORDINATOR-WORKFLOW.md)
-remains available for projects that use it.
+[MIT licensed](LICENSE). The name is inspired by
+[Star Trek's isolinear chips](https://www.startrek.com/en-un/news/below-deck-with-lower-decks-403-move-along).
+[Icon source and exports](assets/README.md).

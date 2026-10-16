@@ -1,6 +1,6 @@
 # Optional local MCP adapter and remote-client route
 
-Isolinear 0.7.0 can expose its existing selected-folder reader through three
+Isolinear 0.7.1 can expose its existing selected-folder reader through three
 read-only MCP tools. This adds a protocol adapter, not another memory store,
 model or retrieval engine. Ordinary native/CLI operation remains standard-library
 only. Source notes/history are not changed by the adapter; the existing private
@@ -13,7 +13,7 @@ Use a private Python 3.11+ environment and the release's optional requirement:
 ```sh
 python3 -m venv /PRIVATE/isolinear-mcp
 /PRIVATE/isolinear-mcp/bin/python -m pip install -r requirements-mcp.txt
-/PRIVATE/isolinear-mcp/bin/python /PRIVATE/isolinear-memory-0.7.0.pyz memory-mcp /SELECTED/PROJECT --state-dir /PRIVATE/STATE
+/PRIVATE/isolinear-mcp/bin/python /PRIVATE/isolinear-memory-0.7.1.pyz memory-mcp /SELECTED/PROJECT --state-dir /PRIVATE/STATE
 ```
 
 The SDK is deliberately pinned to `mcp==1.30.0`, its supported 1.x maintenance
@@ -27,7 +27,7 @@ Configure a compatible local MCP client with this launch contract:
 ```json
 {
   "command": "/PRIVATE/isolinear-mcp/bin/python",
-  "args": ["/PRIVATE/isolinear-memory-0.7.0.pyz", "memory-mcp", "/SELECTED/PROJECT", "--state-dir", "/PRIVATE/STATE"]
+  "args": ["/PRIVATE/isolinear-memory-0.7.1.pyz", "memory-mcp", "/SELECTED/PROJECT", "--state-dir", "/PRIVATE/STATE"]
 }
 ```
 

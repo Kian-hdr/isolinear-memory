@@ -5,69 +5,98 @@ description: Set up, update, or repair Isolinear Memory in a selected Markdown f
 
 # Isolinear Memory setup
 
-Isolinear Memory is the public name for the existing Shared Memory format-3
-runtime. Keep `.shared-memory.json`, `.shared-memory/`, project IDs, event history,
-private state, and provider bindings intact. The `shared-memory` command and
-`setup-shared-project-workspace` skill remain compatibility aliases.
+Set up or repair the selected Markdown folder, then leave routine work to native
+file tools. Preserve `.shared-memory.json`, `.shared-memory/`, project identity,
+original notes, attachments, history, private state and existing provider bindings.
+`shared-memory` and `setup-shared-project-workspace` remain compatibility aliases.
+A skill supplies instructions; it does not install a runtime or grant source access.
 
-For installation, inspect the selected folder's AGENTS.md and INDEX.md, then
-read the versioned [installation guide](https://github.com/Kian-hdr/isolinear-memory/blob/main/docs/INSTALL.md).
-Use only a reviewed runtime whose checksum matches its external SHA256SUMS entry.
-Verify the actual release asset before running it. Install `isolinear-memory` and `shared-memory` launchers for the
-same verified runtime outside synchronized folders. Preserve prior runtime
-versions for rollback.
+## Install or update
 
-## Vault profiles and project design
+Read the existing selected AGENTS.md and INDEX.md before changing anything. For released
+0.7 behavior, use the [installation guide](https://github.com/Kian-hdr/isolinear-memory/blob/v0.7.1/docs/INSTALL.md).
+Verify the actual release asset against its external SHA256SUMS before executing
+it. Verify any source/skill archives too, and use helper installers only from the
+matching verified source kit. On macOS/Linux, install both command aliases against
+the same verified runtime in private immutable tools storage; Windows uses Python
+with the verified package directly. Retain the previous runtime for rollback. Check `version`
+and only the needed command help, especially when an older runtime is installed.
 
-Choose the profile from the user's purpose before creating a vault:
+## Choose the vault profile
 
-- **Team:** a company vault, shared team knowledge base or general organizational knowledge. Default to `Raw/`, `Wiki/`, `Output/`. Preserve source provenance, useful shared ownership and collaboration rules. Do not invent a mandatory approval process.
-- **Personal:** one person's private knowledge. Use a light topic-based structure; the runtime seed is `Notes/`, `Resources/`. No manual person/agent attribution tables, team change register, contributor onboarding or mandatory verification/confidence templates. Write naturally and concisely. Keep useful sources and dates when they matter, correct factual errors, and preserve recovery/conflicts. Runtime causal metadata remains internal; do not repeatedly load or narrate it.
-- **Project:** a bounded project knowledge base, usually shared. Infer its domain, lifecycle, participants, working assets and deliverables from the brief and existing evidence. Design folders for that work rather than forcing `Raw/Wiki/Output`. Retain person/agent contributor attribution and team collaboration rules when shared; a sole-owner project can use the lighter personal writing policy. Sharing/access rights remain a separate decision and are never inferred from a profile.
+- **Team:** shared company or organizational knowledge; default Raw/Wiki/Output,
+  useful source provenance and shared ownership. Do not invent an approval queue.
+- **Personal:** light single-owner Notes/Resources; no mandatory manual contributor
+  tables, team change registers or verification templates. Preserve useful sources,
+  dates, factual corrections, recovery and internal causal history.
+- **Project:** domain-specific folders, usually shared. Derive them from the brief,
+  lifecycle, sources/assets and deliverables; retain contributor attribution when
+  shared. A sole-owner project can use lighter personal writing conventions.
 
-When asked to start a new project or set up its vault, establish the structure and instructions as part of that task. Use sensible labelled assumptions and ask only for consequential missing information. Choose the smallest useful folder set, explain each folder in INDEX.md, and identify the canonical brief/current handoff, decisions, source/asset locations and deliverable location. Examples are starting points, not templates to apply blindly: software `Planning/`, `Architecture/`, `Development/`, `Testing/`, `Releases/`; film `Brief/`, `Storyboard/`, `Assets/`, `Production/`, `Review/`, `Delivery/`; hardware `Requirements/`, `Design/`, `Components/`, `Prototypes/`, `Validation/`, `Deliveries/`. Keep executable code in its established repository and large working assets in their governed storage; link instead of duplicating.
+For a new empty vault, design the smallest useful folder set, explain it in INDEX.md
+and identify its canonical brief/current handoff. Run `setup PROJECT` with the
+matching `--vault-type team`, `--vault-type personal` or `--vault-type project`.
+Use repeatable `--project-folder RELATIVE_FOLDER` for a custom project structure.
+The minimal project fallback is Knowledge/Planning/Deliverables.
+Profiles exist since 0.6.0; do not assume older flags work. Preserve populated layouts
+on join/resume. A profile does not authorize reorganization, remove logs/history or
+change provider permissions. Keep code and large assets in their governed homes
+and link them. See the [profile policy](https://github.com/Kian-hdr/isolinear-memory/blob/v0.7.1/skills/setup-shared-project-workspace/references/vault-profiles.md)
+when designing a new structure or planning an explicit migration.
 
-For Isolinear Memory 0.6.0 or later, use `setup PROJECT --vault-type team|personal|project`; supply repeatable `--project-folder RELATIVE_FOLDER` for the chosen project structure. With no custom folders the project seed is a minimal `Knowledge/`, `Planning/`, `Deliverables/` fallback. The runtime creates safe folders and routing; the agent reasons about the domain and fills meaningful project-specific guidance. Published older runtimes may not support these flags: inspect `setup --help` first. On an older runtime, create the intended AGENTS.md, INDEX.md and folder README files natively before setup so its empty-folder legacy seed cannot overwrite the design. Do not pretend flags are supported. Older runtime recall may remain Wiki-scoped; use native bounded search/read for custom layouts until profile-aware retrieval is installed.
+## Routine source-first work
 
-Profiles are defaults for new empty vaults. Preserve existing hierarchy, instructions, project identity and history on join/resume. An existing vault's policy can be updated with targeted authorized edits; reorganizing its files needs a separate scoped migration. Do not remove existing logs or immutable history to make personal writing lighter. No profile grants provider access or changes ACLs.
+For a known note or exact symbol, use a bounded native read/search first. For an
+unknown location, use selected-project `recall`; choose optional `--strategy hybrid`
+for related lexical/title/explicit-link discovery. Read coverage and source metadata;
+relevance ranking is not factual confidence. Never widen the scope to another vault,
+parent folder or undeclared corpus to obtain a hit.
 
-Routine agents read INDEX.md and only the relevant canonical notes, then edit
-Markdown directly. Use `recall` for bounded source-linked discovery and `show`
-for a hash-checked passage. Treat durable memory upkeep as part of task completion:
-record meaningful findings, decisions, corrections, generated deliverables, changed
-status and next steps in the correct existing canonical note without a separate user
-request. Keep substantial artifacts in the profile's deliverable location and code in its own repository;
-link exact paths or versions from the canonical note. Create a new note and short INDEX route only
-when there is no suitable canonical note. Preserve source, date, uncertainty and
-completed-versus-planned status. Do not dump conversations or save fleeting chatter.
-Read back touched notes and artifacts before confirming they were saved.
-This is an agent instruction, not an automatic conversation-extraction service;
-each host agent must perform the native edit within its selected folder permissions.
+Use complete relevant evidence already returned when its scope, qualifiers and
+freshness satisfy the task. Do not fetch automatically after every search. Expand
+heading-only, path-only, truncated or incomplete results with hash-checked `show` or
+the host's source tool. A local exact hit can be just a heading; its hash does not
+mean the body has been read. An indexed remote fetch is not proof of live freshness.
 
-Use the local mirror when it exists. A successful native save and local readback
-complete an ordinary save. Leave background synchronization to its client: do not
-open Drive/OneDrive apps or menus, inspect upload queues/status, poll for remote
-receipt, force syncing, restart clients or change sync settings for routine notes
-or history capture. Do not make unchecked upload status a completion blocker.
-Investigate remote delivery only when explicitly requested or required by an actual
-recipient/delivery task. On a phone or host without a local mirror, use an authorized
-remote connector to the selected sources; necessary source reads/revisions and
-remote write readback are access verification, not desktop upload-queue checks.
+Save meaningful findings, decisions, corrections, deliverable links and next steps
+in the existing canonical note, then read it back. Create a note/INDEX route only
+when no suitable home exists. Preserve dates, sources, uncertainty and planned versus
+completed status; leave a concise handoff, not a transcript. Each host agent performs
+its authorized edit; no automatic conversation extraction is implied.
 
-For startup/reset, an installed runtime may offer `context-packet`: it returns
-complete authored instructions/index and an explicitly selected handoff section or
-fails without partial excerpts. Inspect command help before using candidate-only
-features. Optional evidence receipts omit only exact passages still retained by the
-caller after source revalidation; discard them after compaction/reset or uncertain
-retention. Native targeted reads remain valid and can be cheaper.
+## Context and client routes
 
-An installed capture job records history outside the model; otherwise run one `sync`
-after material edits. Once `--status --brief` confirms a job is ready, record its
-active status only in device-local host guidance for that selected project; recheck
-and clear that signal if health changes. Never put device-specific status in shared
-`AGENTS.md`. Ordinary successful capture and provider activity should not
-appear in the user-facing reply. Optionally give the saved note's short location when
-it helps the user; report a failed canonical save or material capture gap once. Discuss
-remote receipt only for an explicitly requested investigation or actual delivery outcome, and do
-not imply local capture proves it. Keep personal and company folder boundaries,
-read-only grants, credentials, and private indexes intact.
+Released 0.7 adds optional `context-packet`: complete authored instructions/index
+plus an explicit canonical file or unique handoff section, or no partial packet.
+Never trim a stop condition to fit. Use native reads for focused evidence when
+cheaper. Optional receipts reuse only exact passages still retained after source
+revalidation; discard them after reset, compaction, a new chat or uncertain retention.
+See [context packets](https://github.com/Kian-hdr/isolinear-memory/blob/v0.7.1/docs/PROGRESSIVE-CONTEXT.md)
+and [receipts](https://github.com/Kian-hdr/isolinear-memory/blob/v0.7.1/docs/EVIDENCE-RECEIPTS.md)
+only when those modes are needed.
+
+Normal local-mirror work needs no MCP server. Optional 0.7 `memory-mcp` is a read-only,
+fixed-project stdio adapter using the SDK environment in `requirements-mcp.txt`.
+It does not itself provide a remote phone service. Without a local mirror, use an
+authorized connector/service available on that host and retain scope, source ID,
+revision and freshness limits. A saved skill transfers neither credentials nor
+client support. Read [MCP setup](https://github.com/Kian-hdr/isolinear-memory/blob/v0.7.1/docs/MCP.md)
+for that integration, not for ordinary notes.
+
+## Local save and history capture
+
+A native save plus local readback completes an ordinary save. Leave Drive/OneDrive
+apps, menus, upload queues/status and background syncing alone: no polling, forced
+sync, client restarts or sync-setting changes for routine notes/capture. Unchecked
+upload state is not a completion blocker. Remote source reads and actual remote-write
+receipts are appropriate without a local mirror; desktop upload checks are separate.
+Investigate delivery only for an explicit request or actual recipient/delivery task.
+
+The supplied automatic-capture installer is macOS-only; other hosts can use an
+existing scheduler or manual capture. Use verified configured automatic capture,
+or one `sync PROJECT --brief` after
+material edits when no capture job exists. Verify job configuration once during setup;
+keep its readiness hint in device-local guidance and recheck only when health changes.
+Do not place device/runtime state in shared AGENTS.md. Preserve saved notes on error
+and report a material save/capture gap once. Local capture does not prove remote
+receipt. Keep personal/company boundaries, read-only grants and private indexes intact.
