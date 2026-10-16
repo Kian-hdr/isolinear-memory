@@ -221,15 +221,17 @@ follow the right sources or inspect reference health.
 
 <!-- BEGIN GENERATED MERMAID: 06-knowledge-graph.mmd -->
 ```mermaid
-flowchart LR
+flowchart TB
   accTitle: Illustrative document graph from explicit note links
   accDescr: Inside one selected root, a project brief explicitly links to a storage policy with a decision relationship. The policy explicitly links to a storage check as evidence and an implementation work note as work. An unresolved depends_on reference produces a link_missing diagnostic, not a missing-note node. These are authored references, not inferred relationships or proof of factual correctness; inspection is read-only.
-  subgraph S["ILLUSTRATIVE READABLE NOTES IN ONE SELECTED ROOT"]
-    P["Project brief<br/>project note"] -->|"decision"| D["Storage policy<br/>decision note"]
-    D -->|"evidence"| E["Storage check<br/>evidence note"]
-    D -->|"work"| W["Implementation work<br/>work note"]
+  subgraph S["SELECTED PROJECT: READABLE NOTES"]
+    P["Project brief"] -->|"decision"| D["Storage policy"]
+    D -->|"evidence"| E["Storage check"]
+    D -->|"work"| W["Implementation<br/>work"]
   end
-  D -.->|"unresolved depends_on reference"| M["Diagnostic: link_missing<br/>reference location reported<br/>no target note created"]
+  D -.->|"unresolved depends_on"| M["Diagnostic: link_missing<br/>no target note"]
+  E ~~~ M
+  W ~~~ M
 ```
 <!-- END GENERATED MERMAID: 06-knowledge-graph.mmd -->
 
