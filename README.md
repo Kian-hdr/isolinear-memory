@@ -355,6 +355,12 @@ and authored context. It is optional and uses a separately pinned SDK. It does n
 create a public HTTP endpoint or stay reachable while its computer is asleep.
 See [MCP setup](docs/MCP.md).
 
+The separate private hosted pilot also supports a compact provider directory and
+fallback to an agent's authorized Drive/OneDrive connector. This avoids requiring
+a full hosted mirror for provider-backed source access. It is a separate component;
+installing the public runtime does not install that service or add a directory tool
+to the local adapter. See [feature status and component boundaries](docs/FEATURE_STATUS.md).
+
 A remote service needs its own hosting, authentication, source permissions,
 freshness checks and client acceptance. This public release does not provision
 those accounts or include private deployment bindings. Test the actual client and
