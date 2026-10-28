@@ -77,6 +77,30 @@ Desktop manifest profiles and remote provider roots need explicit parity checks
 before real-corpus admission. A synthetic endpoint/SDK test does not establish
 real-memory availability, physical iPhone/iPad acceptance or all-client support.
 
+### Compact provider directory and fallback
+
+The separate private hosted pilot supports `isolinear_directory(vault)`, an
+authenticated, scope-specific navigation record that can be read even when its
+optional search index is unavailable. Search, fetch and status can return a
+provider handoff for absent or unavailable indexed sources. A result-budget error
+can direct the caller to the smaller directory response.
+
+The calling agent opens that route with its separately authorized provider
+connector. The memory server does not proxy another installed MCP or inherit its
+credentials. A directory locates sources; it is not the source passage, a current
+revision check, a successful provider fetch or permission to access another vault.
+Keep account-specific URLs, project IDs, owner bindings and tokens in private
+configuration. Tool discovery must not disclose private directory contents.
+
+This route keeps full originals in the selected provider and avoids requiring a
+whole-vault hosted mirror. Optional indexed passages must still report their own
+source hashes, indexing time, coverage and current-source-check limits. Preserve
+separate vault scopes and each provider's access checks when following a handoff.
+
+These are hosted-component capabilities, not additional tools in the public local
+stdio adapter. The public 0.7.1 runtime still has the three local tools documented
+above. See [feature status](FEATURE_STATUS.md) for the release boundary.
+
 Routine desktop saves use local readback and leave cloud uploads alone. Remote
 source access when no mirror exists, explicit delivery diagnosis and verification
 of an authorized remote write are separate operations. No workflow should open
