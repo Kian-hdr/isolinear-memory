@@ -19,6 +19,12 @@ The core works offline in one selected folder. Your editor, Obsidian, Git and
 folder provider can remain part of your workflow. A hosted service, vector
 database or memory-extraction model is optional architecture, not a requirement.
 
+<!-- direct-downloads -->
+[![Download toolkit ZIP](https://img.shields.io/badge/Download%20toolkit%20ZIP-24292F?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Kian-hdr/isolinear-memory/releases/download/v0.7.1/isolinear-memory-0.7.1.zip)
+
+[Download toolkit ZIP](https://github.com/Kian-hdr/isolinear-memory/releases/download/v0.7.1/isolinear-memory-0.7.1.zip) · [Release v0.7.1](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.7.1)
+<!-- /direct-downloads -->
+
 [Get started](#get-started) · [How it works](#how-it-works) ·
 [Knowledge graph](#the-knowledge-graph) · [Devices and access](#devices-and-access) ·
 [Documentation](#documentation)
