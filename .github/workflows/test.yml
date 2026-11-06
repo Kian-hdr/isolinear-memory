@@ -22,6 +22,14 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python: ['3.9', '3.13']
+        # Python 3.9 has no hosted binary for Ubuntu 26.04 (ubuntu-latest).
+        # Keep its legacy toolkit coverage on the supported Ubuntu 24.04 image.
+        exclude:
+          - os: ubuntu-latest
+            python: '3.9'
+        include:
+          - os: ubuntu-24.04
+            python: '3.9'
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
