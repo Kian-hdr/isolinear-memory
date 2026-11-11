@@ -1,4 +1,4 @@
-# Isolinear Memory
+<p align="center"><strong>Isolinear Memory</strong></p>
 
 <p align="center">
 <picture>
@@ -19,9 +19,7 @@ The core works offline in one selected folder. Your editor, Obsidian, Git and
 folder provider can remain part of your workflow. A hosted service, vector
 database or memory-extraction model is optional architecture, not a requirement.
 
-## Download
-
-<p>
+<p align="center">
 <a href="https://github.com/Kian-hdr/isolinear-memory/releases/download/v0.7.1/isolinear-memory-0.7.1.zip"><img src="docs/assets/downloads/download_1.svg" width="240" height="48" alt="Download ZIP"></a>
 </p>
 
