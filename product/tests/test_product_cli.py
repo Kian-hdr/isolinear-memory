@@ -96,10 +96,11 @@ class ProductCLITests(unittest.TestCase):
             self.assertTrue(response['message'])
         return response
 
-    def create(self, mode='local-only'):
+    def create(self, mode='local-only', *, dashboard=False):
         return self.invoke('create', self.project, '--person', 'Owner Fictional',
                            '--actor', 'owner-demo', '--agent', 'Scripted test',
-                           '--mode', mode, '--purpose', 'Disposable product acceptance fixture')
+                           '--mode', mode, '--purpose', 'Disposable product acceptance fixture',
+                           *(['--obsidian-dashboard'] if dashboard else []))
 
     def metadata(self):
         return json.loads((self.project / '.workspace-project.json').read_text())
@@ -311,6 +312,14 @@ class ProductCLITests(unittest.TestCase):
         self.join(expected=3)
         self.assertEqual(snapshot(self.parent), before)
 
+    def test_obsidian_dashboard_is_opt_in(self):
+        dashboard = self.project / 'Coordination/Workspace.base'
+        self.create(dashboard=True)
+        self.assertTrue(dashboard.is_file())
+        self.invoke('doctor', self.project)
+        dashboard.unlink()
+        self.invoke('doctor', self.project)
+
     def test_tampered_project_tracker_never_executes(self):
         self.create()
         sentinel = self.parent / 'TARGET-CODE-EXECUTED'
@@ -327,6 +336,7 @@ class ProductCLITests(unittest.TestCase):
         damaged = self.alter_archive(target_name, lambda body:
             body + ('\nfrom pathlib import Path\nPath(' + repr(str(sentinel)) + ').write_text("unsafe")\n').encode())
         self.invoke('version', archive=damaged, expected=3)
+        self.invoke('recall', self.project, 'sample', archive=damaged, expected=3)
         self.assertFalse(sentinel.exists())
         damaged = self.alter_archive('BUILD.json', lambda body:
             json.dumps({**json.loads(body), 'bundle_id': '0' * 64}).encode())

@@ -277,85 +277,78 @@ def _direct(root, paths, terms):
     return [item for _, item in found], unavailable, truncated, sources
 
 
-def _fts(db, root, terms, paths):
-    available = {name: path for name, path in paths}
+def _fts(db, root, terms, paths=None, *, roots=(), max_hits):
+    available = None if paths is None else dict(paths)
     expression = ' AND '.join('"' + term.replace('"', '""') + '"' for term in terms)
-    rows = db.execute("SELECT path,start,end,heading,text FROM chunks WHERE chunks MATCH ? "
+    rows = db.execute("SELECT path,start,end,text FROM chunks WHERE chunks MATCH ? "
                       "ORDER BY (instr(lower(path), '/archive/') > 0), bm25(chunks) LIMIT 30",
                       (expression,)).fetchall()
+    # Rank the bounded index candidates once, before provider IO. This is the
+    # same stable priority as ranking the verified subset after the reads.
+    phrase = ' '.join(terms).casefold()
+
+    def rank(row):
+        parts = row[0].casefold().split('/')
+        stem = parts[-1].removesuffix('.md')
+        return ('archive' in parts, 0 if stem == phrase else 1 if phrase in stem else 2, len(parts))
+
+    rows.sort(key=rank)
     found = []
     unavailable = 0
     sources = []
     cache = {}
-    for name, start, end, heading, block in rows:
-        path = available.get(name)
-        if path is None:
+    exact_titles = set()
+    rejected = set()
+    for name, start, end, block in rows:
+        if name in exact_titles or name in rejected:
             continue
         if name not in cache:
-            cache[name] = _read(path)
-        content = cache[name]
-        if content is None:
+            if available is None:
+                if not _scope_contains(name, roots):
+                    continue
+                try:
+                    path = _relative(root, name, allowed_roots=roots)
+                except ProductError as error:
+                    if error.code not in {'recall_nested_project', 'recall_path'}:
+                        sources = _source_names(sources, [name])
+                    unavailable += 1
+                    rejected.add(name)
+                    continue
+            else:
+                path = available.get(name)
+                if path is None:
+                    continue
+            content = _read(path)
+            cache[name] = None if content is None else (content.splitlines(), _source_hash(content))
+        current = cache[name]
+        if current is None:
             unavailable += 1
             sources = _source_names(sources, [name])
             continue
-        lines = content.splitlines()
-        if '\n'.join(lines[start-1:end]) != block:
+        lines, digest = current
+        if not 1 <= start <= end <= len(lines) or '\n'.join(lines[start-1:end]) != block:
             unavailable += 1
             sources = _source_names(sources, [name])
             continue
-        current_heading = ''
-        for line in lines[:end]:
-            found_heading = HEADING.match(line)
-            if found_heading:
-                current_heading = found_heading.group(1).strip()[:160]
-        if not all(term.casefold() in (name + ' ' + current_heading + ' ' + block).casefold() for term in terms):
+        heading = ''
+        for index in range(end - 1, -1, -1):
+            match = HEADING.match(lines[index])
+            if match:
+                heading = match.group(1).strip()[:160]
+                break
+        hay = (name + ' ' + heading + ' ' + block).casefold()
+        if not all(term.casefold() in hay for term in terms):
             unavailable += 1
             sources = _source_names(sources, [name])
             continue
-        heading = current_heading
         start, end, block = _smallest_excerpt(start, end, heading, block, terms, name)
         found.append({'path': name, 'heading': heading, 'start': start, 'end': end,
-                      'excerpt': block, 'sha256': _source_hash(content)})
-    # Filename routing is useful for broad topic queries. Keep exact-title,
-    # current notes ahead of archival references without hiding the latter.
-    phrase = ' '.join(terms).casefold()
-    found.sort(key=lambda hit: (
-        'archive' in (part.casefold() for part in Path(hit['path']).parts),
-        0 if Path(hit['path']).stem.casefold() == phrase else
-        1 if phrase in Path(hit['path']).stem.casefold() else 2,
-        len(Path(hit['path']).parts)))
-    compact = []
-    exact_titles = set()
-    for hit in found:
-        if Path(hit['path']).stem.casefold() == phrase:
-            if hit['path'] in exact_titles:
-                continue
-            exact_titles.add(hit['path'])
-        compact.append(hit)
-    return compact, unavailable, sources
-
-
-def _cached(db, root, terms, *, raw, output):
-    """Read only indexed candidate paths; do not walk a provider on routine hits."""
-    expression = ' AND '.join('"' + term.replace('"', '""') + '"' for term in terms)
-    rows = db.execute("SELECT path FROM chunks WHERE chunks MATCH ? "
-                      "ORDER BY (instr(lower(path), '/archive/') > 0), bm25(chunks) LIMIT 30",
-                      (expression,)).fetchall()
-    roots, _ = _profile_scope(root, raw=raw, output=output)
-    paths = []
-    unavailable = 0
-    sources = []
-    for (name,) in rows:
-        if not _scope_contains(name, roots):
-            continue
-        try:
-            paths.append((name, _relative(root, name, allowed_roots=roots)))
-        except ProductError as error:
-            unavailable += 1
-            if error.code not in {'recall_nested_project', 'recall_path'}:
-                sources = _source_names(sources, [name])
-    hits, missing, missing_sources = _fts(db, root, terms, paths)
-    return hits, unavailable + missing, _source_names(sources, missing_sources)
+                      'excerpt': block, 'sha256': digest})
+        if rank((name,))[1] == 0:
+            exact_titles.add(name)
+        if len(found) > max_hits:  # One extra verified hit proves truncation.
+            break
+    return found, unavailable, sources
 
 
 def _path_first(root, paths, terms, *, max_hits):
@@ -453,7 +446,7 @@ def _recall_impl(root, state, terms, *, raw, output, max_hits, max_bytes, refres
     if index.exists() and not refresh:
         try:
             with contextlib.closing(_connect(index)) as db:
-                hits, unavailable, sources = _cached(db, root, terms, raw=raw, output=output)
+                hits, unavailable, sources = _fts(db, root, terms, roots=roots, max_hits=max_hits)
             if hits:
                 return _fit({'hits': hits[:max_hits], 'method': 'fts5_cached',
                              'unavailable': unavailable, 'unavailable_sources': sources,
@@ -481,7 +474,7 @@ def _recall_impl(root, state, terms, *, raw, output, max_hits, max_bytes, refres
         if seeded:
             try:
                 with contextlib.closing(_connect(index)) as db:
-                    hits, unavailable, sources = _cached(db, root, terms, raw=raw, output=output)
+                    hits, unavailable, sources = _fts(db, root, terms, roots=roots, max_hits=max_hits)
                 if hits:
                     return _fit({'hits': hits[:max_hits], 'method': 'fts5_baseline',
                                  'unavailable': meta['unavailable'] + unavailable,
@@ -496,7 +489,7 @@ def _recall_impl(root, state, terms, *, raw, output, max_hits, max_bytes, refres
             refreshed, refresh_sources = _refresh(db, paths)
             meta['unavailable'] += refreshed
             meta['unavailable_sources'] = _source_names(meta['unavailable_sources'], refresh_sources)
-            hits, unavailable, sources = _fts(db, root, terms, paths)
+            hits, unavailable, sources = _fts(db, root, terms, paths, max_hits=max_hits)
             meta['unavailable'] += unavailable
             meta['unavailable_sources'] = _source_names(meta['unavailable_sources'], sources)
     except (sqlite3.Error, OSError, ProductError):

@@ -65,13 +65,6 @@ def detected_mode(target: Path, requested: str) -> str:
     return "retrofit" if visible else "bootstrap"
 
 
-def find_vault_root(target: Path) -> Path | None:
-    for candidate in (target, *target.parents):
-        if (candidate / ".obsidian").is_dir():
-            return candidate
-    return None
-
-
 def dashboard_content(items_folder: str | None = None) -> str:
     template = (ASSETS / "workspace.base").read_text(encoding="utf-8")
     if items_folder is None:
@@ -105,10 +98,7 @@ Workspace skill version: `1.3.0`
 - Read the project home for purpose, scope, team, systems of record, and deliverables.
 - Current work lives in `Coordination/Items/WORK-*.md`.
 - Immutable change, handoff, and decision records preserve history.
-- Open `Coordination/Workspace.base` directly in Obsidian's main content area.
-  Its scope follows this shared project's location inside each person's own vault.
-  Embedding the dashboard or placing it in a sidebar changes its query context and
-  is unsupported. Keep private parent-vault folders and settings outside the share.
+- Keep private parent folders and editor settings outside the share.
 - Git controls exact code diffs when present; coordination records control ownership,
   semantic progress, dependencies, impact, evidence, and handoff context.
 
@@ -241,7 +231,7 @@ def audit(target: Path, project_home: Path, home_would_create: bool) -> list[str
         findings.append("missing project home: README.md would be created")
     findings.append("AGENTS.md: managed section present" if agents.exists() and MANAGED_START in agents.read_text(encoding="utf-8") else "AGENTS.md: missing managed section")
     findings.append("CLAUDE.md: canonical adapter present" if claude.exists() and "AGENTS.md" in claude.read_text(encoding="utf-8") else "CLAUDE.md: missing canonical adapter")
-    findings.append("Workspace.base: present" if (coordination / "Workspace.base").exists() else "Workspace.base: missing")
+    findings.append("Workspace.base: present" if (coordination / "Workspace.base").exists() else "Workspace.base: not installed (optional)")
     findings.append("project_tracker.py: present" if (coordination / "project_tracker.py").exists() else "project_tracker.py: missing")
     findings.append("Items directory: present" if (coordination / "Items").is_dir() else "Items directory: missing")
     return findings
@@ -258,6 +248,8 @@ def main() -> int:
     parser.add_argument("--actor", help="Stable actor ID for the setup decision")
     parser.add_argument("--initiated-by", help="Human who initiated setup")
     parser.add_argument("--agent", help="Agent that performed setup")
+    parser.add_argument("--obsidian-dashboard", action="store_true",
+                        help="Install the optional Obsidian Bases view for this project")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--upgrade-managed", action="store_true", help="Allow reviewed changes to managed sections and signed generated files")
     args = parser.parse_args()
@@ -290,12 +282,16 @@ def main() -> int:
         coordination = target / "Coordination"
         items = coordination / "Items"
         planned = {
-            "Coordination/Workspace.base": dashboard_content(),
             "Coordination/project_tracker.py": (ASSETS / "project_tracker.py").read_bytes(),
         }
 
-        for relative in ("Coordination/Workspace.base", "Coordination/project_tracker.py"):
+        if args.obsidian_dashboard:
+            planned["Coordination/Workspace.base"] = dashboard_content()
+
+        for relative in planned:
             existing = target / relative
+            if existing.is_symlink() or not existing.resolve().is_relative_to(target):
+                raise SetupError(f"Refusing a generated path outside the selected project: {relative}")
             if existing.exists():
                 expected = planned[relative]
                 content = existing.read_bytes() if isinstance(expected, bytes) else existing.read_text(encoding="utf-8", errors="replace")
@@ -319,22 +315,20 @@ def main() -> int:
 
         actions = []
         if home_would_create:
-            vault_root = find_vault_root(target)
-            frontmatter = ""
-            if vault_root:
-                today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-                summary = args.purpose.strip().replace("\n", " ")
-                frontmatter = (
-                    f"---\ntitle: README\ntype: project\ntags: []\nstatus: active\n"
-                    f"created: {today}\nupdated: {today}\nsummary: {summary!r}\n"
-                    f"verified: asserted\nconfidence: medium\nchecked: {today}\n---\n"
-                )
+            today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            summary = args.purpose.strip().replace("\n", " ")
+            frontmatter = (
+                f"---\ntitle: README\ntype: project\ntags: []\nstatus: active\n"
+                f"created: {today}\nupdated: {today}\nsummary: {summary!r}\n"
+                f"verified: asserted\nconfidence: medium\nchecked: {today}\n---\n"
+            )
             content = (
                 frontmatter + f"# {project_name}\n\n{args.purpose.strip()}\n\n"
                 "## Collaboration\n\n"
                 "- Agent instructions: [AGENTS.md](AGENTS.md)\n"
-                "- Project dashboard: [Coordination/Workspace.base](Coordination/Workspace.base)\n"
             )
+            if args.obsidian_dashboard:
+                content += "- Optional dashboard: [Coordination/Workspace.base](Coordination/Workspace.base)\n"
             if not args.dry_run:
                 project_home.write_text(content, encoding="utf-8")
             actions.append(f"created project home {home_label}")
@@ -360,10 +354,11 @@ def main() -> int:
             items.mkdir(parents=True, exist_ok=True)
         actions.append("ensured Coordination/Items")
 
-        base_content = planned["Coordination/Workspace.base"]
-        actions.append(
-            f"{install_generated(ASSETS / 'workspace.base', coordination / 'Workspace.base', base_content, dry_run=args.dry_run)}: Coordination/Workspace.base"
-        )
+        if args.obsidian_dashboard:
+            base_content = planned["Coordination/Workspace.base"]
+            actions.append(
+                f"{install_generated(ASSETS / 'workspace.base', coordination / 'Workspace.base', base_content, dry_run=args.dry_run)}: Coordination/Workspace.base"
+            )
         tracker_content = planned["Coordination/project_tracker.py"]
         actions.append(
             f"{install_generated(ASSETS / 'project_tracker.py', coordination / 'project_tracker.py', tracker_content, dry_run=args.dry_run)}: Coordination/project_tracker.py"
@@ -390,7 +385,6 @@ def main() -> int:
             "--impact", "compatible",
             "--evidence", "AGENTS.md",
             "--evidence", "CLAUDE.md",
-            "--evidence", "Coordination/Workspace.base",
             "--evidence", "Coordination/project_tracker.py",
         ]
         existing_decision = any(

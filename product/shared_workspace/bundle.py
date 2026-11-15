@@ -11,7 +11,7 @@ import stat
 import sys
 import tempfile
 import zipfile
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from pathlib import Path, PurePosixPath
 
 from . import PRODUCT_VERSION
@@ -94,14 +94,18 @@ def validate_build(build: dict) -> dict[str, str]:
 
 
 @contextmanager
-def open_bundle(explicit: str | None = None):
+def open_bundle(explicit: str | None = None, *, materialize: bool = True):
     source = Path(explicit).expanduser() if explicit else Path(sys.argv[0])
     if not source.exists():
         raise ProductError(5, "environment_missing", "The reviewed package or built bundle is unavailable.")
     if explicit is None and not zipfile.is_zipfile(source):
         raise ProductError(5, "environment_missing", "Source mode requires an explicit built package or directory via --bundle.")
-    with tempfile.TemporaryDirectory(prefix="shared-workspace-runtime-") as temporary:
-        root = Path(temporary)
+    # Retrieval does not use toolkit files. Archive reads can verify the same
+    # inventory and hashes without writing and rereading the temporary tree.
+    materialize = materialize or source.is_dir()
+    workspace = tempfile.TemporaryDirectory(prefix="shared-workspace-runtime-") if materialize else nullcontext()
+    with workspace as temporary:
+        root = Path(temporary) if materialize else None
         try:
             if source.is_dir():
                 build_path = source / "BUILD.json"
@@ -142,14 +146,29 @@ def open_bundle(explicit: str | None = None):
                         checked_name(entry.filename)
                         if entry.filename == "BUILD.json":
                             continue
-                        output = root / entry.filename
-                        output.parent.mkdir(parents=True, exist_ok=True)
-                        with archive.open(entry) as incoming, output.open("wb") as outgoing:
-                            shutil.copyfileobj(incoming, outgoing, 1024 * 1024)
-                        if digest_file(output) != files[entry.filename]:
+                        if materialize:
+                            output = root / entry.filename
+                            output.parent.mkdir(parents=True, exist_ok=True)
+                            with archive.open(entry) as incoming, output.open("wb") as outgoing:
+                                shutil.copyfileobj(incoming, outgoing, 1024 * 1024)
+                            digest = digest_file(output)
+                        else:
+                            # Use the stream to retain bounded memory for other
+                            # payloads, including bundles supplied via --bundle.
+                            payload_hash = hashlib.sha256()
+                            with archive.open(entry) as incoming:
+                                for chunk in iter(lambda: incoming.read(1024 * 1024), b""):
+                                    payload_hash.update(chunk)
+                            digest = payload_hash.hexdigest()
+                        if digest != files[entry.filename]:
                             raise ProductError(3, "bundle_integrity", f"Bundled file failed integrity verification: {entry.filename}")
-            bundle = Bundle(root, build)
-            if bundle.load_module("assets/project_tracker.py").WORKSPACE_TRACKER_VERSION != build["toolkit_version"]:
+                    if not materialize:
+                        tracker = archive.read(f"{SKILL_PATH}/assets/project_tracker.py")
+                        match = re.search(rb'^WORKSPACE_TRACKER_VERSION = "([0-9.]+)"$', tracker, re.M)
+                        if not match or match[1].decode("ascii") != build["toolkit_version"]:
+                            raise ProductError(3, "bundle_integrity", "Toolkit version differs from the build manifest.")
+            bundle = Bundle(root, build) if materialize else None
+            if bundle is not None and bundle.load_module("assets/project_tracker.py").WORKSPACE_TRACKER_VERSION != build["toolkit_version"]:
                 raise ProductError(3, "bundle_integrity", "Toolkit version differs from the build manifest.")
         except (json.JSONDecodeError, UnicodeError, zipfile.BadZipFile, KeyError) as exc:
             raise ProductError(3, "bundle_integrity", "Built package is malformed or incomplete.") from exc

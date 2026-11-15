@@ -636,7 +636,17 @@ class WorkspaceTests(unittest.TestCase):
         write_note(self.work_path(), data, body)
         self.assertIn("Dependency cycle", self.tracker("validate", expected=1).stdout)
 
+    def test_plain_setup_ignores_editor_and_preserves_an_existing_dashboard(self) -> None:
+        self.assertFalse((self.root / "Coordination/Workspace.base").exists())
+        self.assertEqual(read_note(self.root / "README.md")[0]["type"], "project")
+        self.tracker("validate")
+        self.setup_project(self.root, ["--obsidian-dashboard"])
+        before = snapshot(self.root)
+        self.setup_project(self.root)
+        self.assertEqual(snapshot(self.root), before)
+
     def test_base_yaml_and_view_structure(self) -> None:
+        self.setup_project(self.root, ["--obsidian-dashboard"])
         base = yaml.safe_load((self.root / "Coordination" / "Workspace.base").read_text())
         self.assertIn(PORTABLE_ITEMS_FILTER, base["filters"]["and"])
         names = {view["name"] for view in base["views"]}
@@ -648,7 +658,7 @@ class WorkspaceTests(unittest.TestCase):
         (vault / ".obsidian").mkdir(parents=True)
         target = vault / "Projects" / "Nested"
         target.mkdir(parents=True)
-        self.setup_project(target)
+        self.setup_project(target, ["--obsidian-dashboard"])
         base = yaml.safe_load((target / "Coordination" / "Workspace.base").read_text())
         self.assertIn(PORTABLE_ITEMS_FILTER, base["filters"]["and"])
         self.assertEqual(read_note(target / "README.md")[0]["type"], "project")
@@ -673,7 +683,7 @@ class WorkspaceTests(unittest.TestCase):
         (vault / ".obsidian").mkdir(parents=True)
         target = vault / "Projects" / "Team's café ‘notes’"
         target.mkdir(parents=True)
-        self.setup_project(target)
+        self.setup_project(target, ["--obsidian-dashboard"])
         installed = (target / "Coordination" / "Workspace.base").read_text(encoding="utf-8")
         installed_filters = yaml.safe_load(installed)["filters"]["and"]
         self.assertIn(PORTABLE_ITEMS_FILTER, installed_filters)
@@ -684,7 +694,7 @@ class WorkspaceTests(unittest.TestCase):
         (vault / ".obsidian").mkdir(parents=True)
         target = vault / "Projects" / "Nested"
         target.mkdir(parents=True)
-        self.setup_project(target)
+        self.setup_project(target, ["--obsidian-dashboard"])
         setup_module = load_script("workspace_legacy_setup_fixture", SETUP)
         (target / "Coordination/Workspace.base").write_text(
             setup_module.dashboard_content("Projects/Nested/Coordination/Items"), encoding="utf-8"
@@ -698,9 +708,9 @@ class WorkspaceTests(unittest.TestCase):
         self.assertIn("does not match this vault layout", result.stdout)
         self.assertIn("--dry-run --upgrade-managed", result.stdout)
         self.assertEqual(before, snapshot(recipient))
-        self.setup_project(recipient, ["--dry-run", "--upgrade-managed"])
+        self.setup_project(recipient, ["--obsidian-dashboard", "--dry-run", "--upgrade-managed"])
         self.assertEqual(before, snapshot(recipient))
-        self.setup_project(recipient, ["--upgrade-managed"])
+        self.setup_project(recipient, ["--obsidian-dashboard", "--upgrade-managed"])
         self.run_command([sys.executable, str(recipient / "Coordination" / "project_tracker.py"), "validate"])
 
     def test_shared_project_relocates_between_private_vaults_without_shared_writes(self) -> None:
@@ -727,6 +737,7 @@ class WorkspaceTests(unittest.TestCase):
             self.assertTrue(all(current.get(path) == digest for path, digest in original.items()))
 
     def test_portable_dashboard_filter_contract_excludes_siblings_and_note_embeds(self) -> None:
+        self.setup_project(self.root, ["--obsidian-dashboard"])
         # Exercise the emitted expression against documented Bases semantics.
         # This is a contract test, not evidence of native Obsidian rendering.
         base = yaml.safe_load((self.root / "Coordination/Workspace.base").read_text())
@@ -749,6 +760,7 @@ class WorkspaceTests(unittest.TestCase):
             self.assertEqual(selected("canvas"), [])
 
     def test_portable_dashboard_requires_context_guard(self) -> None:
+        self.setup_project(self.root, ["--obsidian-dashboard"])
         path = self.root / "Coordination/Workspace.base"
         path.write_text(path.read_text().replace('this.file.ext == "base" && ', ''), encoding="utf-8")
         before = snapshot(self.root)

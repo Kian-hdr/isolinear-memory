@@ -62,6 +62,10 @@ and provider diagnostics remain internal; user-facing completion can name the
 saved note briefly. Raise an issue when the current result is at risk, requested
 delivery cannot be verified or the user must act.
 
+Warm exact search revalidates the highest-ranked indexed candidates until it can
+fill the requested hit count and determine whether results were truncated.
+Unavailable counts describe sources checked for that response.
+
 ### Optional hybrid retrieval
 
 ```bash

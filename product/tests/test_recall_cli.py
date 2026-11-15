@@ -286,6 +286,18 @@ class RecallCLITests(unittest.TestCase):
         expanded = self.run_cli('recall', 'Shared Memory', '--state-dir', self.state)['data']
         self.assertEqual(sum(hit['path'] == 'Wiki/Shared Memory.md' for hit in expanded['hits']), 1)
 
+    def test_warm_recall_stops_after_enough_live_passages(self):
+        for index in range(20):
+            (self.root / 'Wiki' / f'Fixture{index:02}.md').write_text(
+                '# Passage\nCobalt evidence here.\n', encoding='utf-8')
+        retrieval.recall(self.root, self.state, 'cobalt', refresh=True)
+        with mock.patch.object(retrieval, '_read', wraps=retrieval._read) as read:
+            result = retrieval.recall(self.root, self.state, 'cobalt', max_hits=1)
+        self.assertEqual(result['method'], 'fts5_cached')
+        self.assertTrue(result['truncated'])
+        self.assertEqual(len(result['hits']), 1)
+        self.assertEqual(read.call_count, 2)
+
     def test_captured_private_baseline_seeds_body_search_without_provider_sweep(self):
         self.run_cli('setup', '--state-dir', self.state, '--actor', 'indexer', '--person', 'Tester', '--agent', 'Test')
         with mock.patch.object(retrieval, '_refresh', side_effect=AssertionError('full refresh was called')):

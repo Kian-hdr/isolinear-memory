@@ -40,6 +40,7 @@ def parser() -> argparse.ArgumentParser:
     for name in ("person", "actor", "agent", "purpose"):
         create.add_argument("--" + name, required=True)
     create.add_argument("--mode", required=True, choices=project.MODES)
+    create.add_argument("--obsidian-dashboard", action="store_true", help="Install the optional Obsidian Bases view")
     join = commands.add_parser("join", help="Register this actor in a matching existing project")
     join.add_argument("project")
     for name in ("person", "actor", "agent", "expected-project-id", "expected-bundle-id"):
@@ -179,7 +180,7 @@ def main(argv=None) -> int:
         for name in ("person", "actor", "agent", "purpose"):
             if getattr(args, name, None) is not None and not getattr(args, name).strip():
                 raise ProductError(2, "usage_error", f"--{name} cannot be empty.")
-        with open_bundle(args.bundle) as bundle:
+        with open_bundle(args.bundle, materialize=command not in {'recall', 'show', 'context-packet'}) as bundle:
             if command in folder_workflow.COMMANDS or (command in {'status', 'receipt', 'team-status', 'provider-check'} and folder_workflow.is_folder(workflow.selected_root(args.project))):
                 data = folder_workflow.dispatch(bundle, args)
             elif command in onboarding.COMMANDS:

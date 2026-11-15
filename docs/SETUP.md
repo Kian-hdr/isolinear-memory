@@ -28,9 +28,10 @@ do not use it as a fallback when a product package is unavailable.
 ## Ordinary folders are the default
 
 The legacy tracker runs in a project folder using Python and Markdown. It does not
-need Obsidian, a vault, an app launch or an Obsidian account. Its setup includes an inert
-Workspace.base dashboard file for users who want that optional view; the file is
-part of the generated package, not a runtime dependency on the Obsidian app.
+need Obsidian, a vault, an app launch or an Obsidian account. Setup leaves editor
+settings and existing dashboards intact by default. For the legacy tracker,
+add `--obsidian-dashboard` to `create` or to `setup_workspace.py` to generate the
+optional `Coordination/Workspace.base` view.
 
 ## Select a shared subfolder when using an existing vault
 
@@ -196,7 +197,7 @@ your-project/
   CLAUDE.md                      Pointer to AGENTS.md
   README.md                      Only if no suitable project home exists
   Coordination/
-    Workspace.base               Obsidian dashboard
+    Workspace.base               optional Obsidian dashboard
     project_tracker.py           Self-contained tracker
     Items/                       Work, actor, event, decision, and handoff records
 ```

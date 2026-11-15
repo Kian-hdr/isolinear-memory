@@ -94,7 +94,9 @@ def check_metadata(bundle: Bundle, root: Path) -> dict:
     if mode is None or mode.group(1) != metadata["mode"]:
         raise ProductError(3, "project_invalid", "Project instructions and manifest disagree about collaboration mode.")
     require_regular(root, "CLAUDE.md")
-    require_regular(root, "Coordination/Workspace.base")
+    dashboard = root / "Coordination/Workspace.base"
+    if dashboard.exists() or dashboard.is_symlink():
+        require_regular(root, "Coordination/Workspace.base")
     items = require_regular(root, "Coordination/Items", directory=True)
     for record in items.glob("*.md"):
         require_regular(root, record.relative_to(root).as_posix())
@@ -161,7 +163,8 @@ def create(bundle: Bundle, args) -> dict:
     before = footprint(root)
     setup_result = run_tool(bundle, "scripts/setup_workspace.py", [str(root), "--purpose", args.purpose,
                             "--actor", args.actor, "--initiated-by", args.person, "--agent", args.agent,
-                            "--collaboration-mode", args.mode])
+                            "--collaboration-mode", args.mode]
+                            + (["--obsidian-dashboard"] if args.obsidian_dashboard else []))
     if setup_result["exit_code"] != 0:
         after = footprint(root)
         raise ProductError(4, "operation_rejected", "Setup did not complete. Preserve any created files and inspect diagnostics; no automatic repair was attempted.",
@@ -264,7 +267,7 @@ Inspect the existing project AGENTS.md and project home. Verify the package and 
 
 python <reviewed-package.pyz> join <my-local-project-folder> --person <my-name> --actor <my-unique-actor-id> --agent <my-agent> --expected-project-id {metadata['project_id']} --expected-bundle-id {metadata['bundle_id']}
 
-Never bootstrap, upgrade, replace the tracker, delete history, or take over claims to fix a joining failure. Stop and report any mismatch or incomplete setup. Open Coordination/Workspace.base directly in Obsidian's main content area when using Obsidian. Local checks do not prove provider propagation, receipt on another device, or independent-agent readiness. Preserve my tool approvals and existing project restrictions; do not send invitations, change permissions, enter credentials, install applications or publish anything without authorization.
+Never bootstrap, upgrade, replace the tracker, delete history, or take over claims to fix a joining failure. Stop and report any mismatch or incomplete setup. If Coordination/Workspace.base is present and you use Obsidian, open it directly in the main content area. Local checks do not prove provider propagation, receipt on another device, or independent-agent readiness. Preserve my tool approvals and existing project restrictions; do not send invitations, change permissions, enter credentials, install applications or publish anything without authorization.
 """
     return {"metadata": metadata, "prompt": prompt, "readiness": "partial" if missing else "ready",
             "missing_fields": missing, "remote_readiness": "not_applicable" if metadata["mode"] == "local-only" else "unverified"}

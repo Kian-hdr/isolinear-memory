@@ -1176,9 +1176,9 @@ def validate_workspace() -> list[str]:
                 errors.append("AGENTS.md has a nonportable project-home pointer. Select an existing project-relative home note and review setup --project-home <relative-note> --dry-run --upgrade-managed before updating the managed section.")
     if not claude.exists() or "AGENTS.md" not in claude.read_text(encoding="utf-8"):
         errors.append("CLAUDE.md is missing or does not point to AGENTS.md.")
-    if not base.exists():
-        errors.append("Coordination/Workspace.base is missing.")
-    else:
+    if base.is_symlink() or (base.exists() and not base.is_file()):
+        errors.append("Coordination/Workspace.base must be a regular file when present.")
+    elif base.is_file():
         base_text = base.read_text(encoding="utf-8")
         if "__ITEMS_FOLDER__" in base_text:
             errors.append("Workspace.base still contains an unresolved folder placeholder.")
@@ -1188,7 +1188,7 @@ def validate_workspace() -> list[str]:
             expected_folder = ITEMS_DIR.relative_to(vault_root).as_posix()
             if configured_folder != expected_folder:
                 errors.append(
-                    f"Workspace.base folder does not match this vault layout: expected legacy folder {expected_folder!r}, found {configured_folder!r}. Review setup --dry-run --upgrade-managed to install the portable direct-open dashboard, or preserve a legacy dashboard only when its fixed folder matches this vault."
+                    f"Workspace.base folder does not match this vault layout: expected legacy folder {expected_folder!r}, found {configured_folder!r}. Review setup --obsidian-dashboard --dry-run --upgrade-managed to install the portable direct-open dashboard, or preserve a legacy dashboard only when its fixed folder matches this vault."
                 )
     try:
         records = all_records()

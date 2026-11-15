@@ -38,7 +38,7 @@ and identify its canonical brief/current handoff. Run `setup PROJECT` with the
 matching `--vault-type team`, `--vault-type personal` or `--vault-type project`.
 Use repeatable `--project-folder RELATIVE_FOLDER` for a custom project structure.
 The minimal project fallback is Knowledge/Planning/Deliverables.
-Profiles exist since 0.6.0; do not assume older flags work. Preserve populated layouts
+Setup uses plain Markdown. It does not depend on Obsidian; existing wiki links and editor settings stay intact. Profiles exist since 0.6.0; do not assume older flags work. Preserve populated layouts
 on join/resume. A profile does not authorize reorganization, remove logs/history or
 change provider permissions. Keep code and large assets in their governed homes
 and link them. See the [profile policy](https://github.com/Kian-hdr/isolinear-memory/blob/v0.7.1/skills/setup-shared-project-workspace/references/vault-profiles.md)
@@ -47,8 +47,9 @@ when designing a new structure or planning an explicit migration.
 ## Routine source-first work
 
 For a known note or exact symbol, use a bounded native read/search first. For an
-unknown location, use selected-project `recall`; choose optional `--strategy hybrid`
-for related lexical/title/explicit-link discovery. Read coverage and source metadata;
+unknown location, start with `isolinear-memory recall PROJECT "specific terms" --max-hits 2 --text`.
+Increase the hit limit only when needed. Use optional `--strategy hybrid` when
+exact terms are not enough. Read coverage and source metadata;
 relevance ranking is not factual confidence. Never widen the scope to another vault,
 parent folder or undeclared corpus to obtain a hit.
 

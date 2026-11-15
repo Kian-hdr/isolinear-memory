@@ -320,7 +320,7 @@ def hybrid_recall(root, state, terms, *, raw, output, max_hits, max_bytes,
                                    ((name, hit['start'], hit['end'], hit['heading'], hit['excerpt'])
                                     for hit in blocks[name]))
                     db.execute('INSERT OR REPLACE INTO files VALUES(?,?,?,?,?,?)',
-                               (name, -1, -1, -1, -1, source._source_hash(content)))
+                               (name, -1, -1, -1, -1, blocks[name][0]['sha256'] if blocks[name] else source._source_hash(content)))
                 if not truncated:
                     for (old,) in db.execute('SELECT path FROM files').fetchall():
                         if old not in documents:
@@ -333,15 +333,21 @@ def hybrid_recall(root, state, terms, *, raw, output, max_hits, max_bytes,
                               (expression, MAX_CANDIDATES + 1)).fetchall()
             truncated |= len(rows) > MAX_CANDIDATES
             lexical = []
+            indexed_hashes = {}
+            live_spans = {}
             for name, start, end, text in rows[:MAX_CANDIDATES]:
                 if name not in documents:
                     continue
-                recorded = db.execute('SELECT sha256 FROM files WHERE path=?', (name,)).fetchone()
-                if not recorded or recorded[0] != source._source_hash(documents[name]):
+                if name not in indexed_hashes:
+                    indexed_hashes[name] = db.execute('SELECT sha256 FROM files WHERE path=?', (name,)).fetchone()
+                recorded = indexed_hashes[name]
+                if not recorded or not blocks[name] or recorded[0] != blocks[name][0]['sha256']:
                     fts_status = 'stale'
                     continue
-                match = next((hit for hit in blocks[name] if hit['start'] == start and hit['end'] == end and hit['excerpt'] == text), None)
-                if match and _dated(text, after_date, before_date):
+                if name not in live_spans:
+                    live_spans[name] = {(hit['start'], hit['end']): hit for hit in blocks[name]}
+                match = live_spans[name].get((start, end))
+                if match and match['excerpt'] == text and _dated(text, after_date, before_date):
                     lexical.append(match)
             lists['bm25_or'] = lexical
             if fts_status != 'stale':
@@ -436,7 +442,7 @@ def hybrid_recall(root, state, terms, *, raw, output, max_hits, max_bytes,
                 continue
             candidates.append({'path': name, 'heading': heading, 'start': line_number,
                                'end': line_number, 'excerpt': line,
-                               'sha256': source._source_hash(content)})
+                               'sha256': blocks[name][0]['sha256']})
         candidates.sort(key=lambda hit: (
             -sum(term in hit['excerpt'].casefold() for term in terms), hit['start']))
         if candidates:

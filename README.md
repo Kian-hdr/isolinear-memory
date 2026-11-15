@@ -145,11 +145,13 @@ excerpt and SHA-256 hash. Coverage fields report unavailable, truncated or
 unsearched material. A no-hit or partial result is not proof that a fact is absent.
 
 ```bash
-isolinear-memory recall . "project owner" --max-hits 3 --text
-isolinear-memory recall . "delivery constraints" --strategy hybrid --text
+isolinear-memory recall . "project owner" --max-hits 2 --text
+isolinear-memory recall . "delivery constraints" --strategy hybrid --max-hits 2 --text
 ```
 
-Use `.` only from inside the intended project. Exact recall is the default.
+Use `.` only from inside the intended project. Read a known file directly.
+Start with two hits in text form for agent use; ask for more only when needed.
+Keep JSON for scripts. Exact recall is the default.
 Optional hybrid recall combines lexical matches, titles and a bounded subset of
 explicit note links. It requires no embedding model. The configured profile
 controls retrieval folders: team defaults to `Wiki/`, personal to `Notes/`, and
