@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.2
+
+- Use ordinary Markdown by default. Obsidian vaults remain compatible, and
+  legacy tracker setup offers the Bases dashboard with `--obsidian-dashboard`.
+- Reduce repeated work during warm recall and verify the package without
+  extracting unused toolkit files. Returned passages still use live source checks.
+- Document the two-hit text workflow for compact agent retrieval.
+
 ## 0.7.1
 
 - Rewrite the README around setup, storage, retrieval, explicit knowledge links,

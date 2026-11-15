@@ -15,17 +15,18 @@ The agent reads the relevant passages, does its work, and updates the existing
 project record. A local runtime captures supported file changes and helps
 reconcile the project copies that are visible on different devices.
 
-The core works offline in one selected folder. Your editor, Obsidian, Git and
-folder provider can remain part of your workflow. A hosted service, vector
-database or memory-extraction model is optional architecture, not a requirement.
+The core works offline in one selected Markdown folder. **Obsidian is optional.**
+Existing Obsidian vaults work with their original notes, wiki links and settings.
+For the legacy tracker, `--obsidian-dashboard` enables the optional Bases dashboard
+during setup. Git and folder providers can remain part of your workflow.
 
 <p align="center">
-<a href="https://github.com/Kian-hdr/isolinear-memory/releases/download/v0.7.1/isolinear-memory-0.7.1.zip"><img src="docs/assets/downloads/download_1.svg" width="240" height="48" alt="Download ZIP"></a>
+<a href="https://github.com/Kian-hdr/isolinear-memory/releases/download/v0.7.2/isolinear-memory-0.7.2.zip"><img src="docs/assets/downloads/download_1.svg" width="240" height="48" alt="Download ZIP"></a>
 </p>
 
-[toolkit ZIP · v0.7.1](https://github.com/Kian-hdr/isolinear-memory/releases/download/v0.7.1/isolinear-memory-0.7.1.zip)
+[toolkit ZIP · v0.7.2](https://github.com/Kian-hdr/isolinear-memory/releases/download/v0.7.2/isolinear-memory-0.7.2.zip)
 
-[Release notes](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.7.1)
+[Release notes](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.7.2)
 
 [Get started](#get-started) · [How it works](#how-it-works) ·
 [Knowledge graph](#the-knowledge-graph) · [Devices and access](#devices-and-access) ·
@@ -48,7 +49,7 @@ original notes with generated summaries.
 
 ## Get started
 
-Isolinear Memory **0.7.1** requires Python **3.11+**. The runtime supports macOS,
+Isolinear Memory **0.7.2** requires Python **3.11+**. The runtime supports macOS,
 Linux and Windows. POSIX command launchers are supplied for macOS/Linux; Windows
 can invoke the verified `.pyz` with Python. Automatic capture installation is
 supplied for macOS; other systems can use manual capture or their own scheduler.
@@ -73,7 +74,7 @@ supplied for macOS; other systems can use manual capture or their own scheduler.
 ### Manual installation
 
 Download the runtime and external `SHA256SUMS` from the
-[0.7.1 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.7.1).
+[0.7.2 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.7.2).
 Verify the downloaded runtime before executing it, then follow the
 [installation instructions](docs/INSTALL.md). Keep the prior package for rollback.
 

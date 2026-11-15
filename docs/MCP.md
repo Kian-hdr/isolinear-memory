@@ -1,6 +1,6 @@
 # Optional local MCP adapter and remote-client route
 
-Isolinear 0.7.1 can expose its existing selected-folder reader through three
+Isolinear 0.7.2 can expose its existing selected-folder reader through three
 read-only MCP tools. This adds a protocol adapter, not another memory store,
 model or retrieval engine. Ordinary native/CLI operation remains standard-library
 only. Source notes/history are not changed by the adapter; the existing private
@@ -13,7 +13,7 @@ Use a private Python 3.11+ environment and the release's optional requirement:
 ```sh
 python3 -m venv /PRIVATE/isolinear-mcp
 /PRIVATE/isolinear-mcp/bin/python -m pip install -r requirements-mcp.txt
-/PRIVATE/isolinear-mcp/bin/python /PRIVATE/isolinear-memory-0.7.1.pyz memory-mcp /SELECTED/PROJECT --state-dir /PRIVATE/STATE
+/PRIVATE/isolinear-mcp/bin/python /PRIVATE/isolinear-memory-0.7.2.pyz memory-mcp /SELECTED/PROJECT --state-dir /PRIVATE/STATE
 ```
 
 The SDK is deliberately pinned to `mcp==1.30.0`, its supported 1.x maintenance
@@ -27,7 +27,7 @@ Configure a compatible local MCP client with this launch contract:
 ```json
 {
   "command": "/PRIVATE/isolinear-mcp/bin/python",
-  "args": ["/PRIVATE/isolinear-memory-0.7.1.pyz", "memory-mcp", "/SELECTED/PROJECT", "--state-dir", "/PRIVATE/STATE"]
+  "args": ["/PRIVATE/isolinear-memory-0.7.2.pyz", "memory-mcp", "/SELECTED/PROJECT", "--state-dir", "/PRIVATE/STATE"]
 }
 ```
 
@@ -98,7 +98,7 @@ source hashes, indexing time, coverage and current-source-check limits. Preserve
 separate vault scopes and each provider's access checks when following a handoff.
 
 These are hosted-component capabilities, not additional tools in the public local
-stdio adapter. The public 0.7.1 runtime still has the three local tools documented
+stdio adapter. The public 0.7.2 runtime still has the three local tools documented
 above. See [feature status](FEATURE_STATUS.md) for the release boundary.
 
 Routine desktop saves use local readback and leave cloud uploads alone. Remote

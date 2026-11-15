@@ -1,6 +1,6 @@
 # Isolinear Memory system diagrams
 
-These diagrams describe the **0.7.1 format-3 folder workflow**. They
+These diagrams describe the **0.7.2 format-3 folder workflow**. They
 separate note storage, private indexing, local history capture, provider
 transport, knowledge links and recipient verification. Local stdio MCP is optional; remote MCP access is a separate deployment. The older format-1/2 coordinator has a
 [separate operating guide](COORDINATOR-WORKFLOW.md).

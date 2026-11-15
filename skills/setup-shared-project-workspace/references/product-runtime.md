@@ -1,9 +1,9 @@
 # Product runtime and format routing
 
-This guide targets Isolinear Memory 0.7.1, formerly Shared Memory, with direct shared-folder editing. Use Python 3.11+ and
+This guide targets Isolinear Memory 0.7.2, formerly Shared Memory, with direct shared-folder editing. Use Python 3.11+ and
 an exact verified `.pyz`. The version-specific release is
-[v0.7.1](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.7.1); execute
-`isolinear-memory-0.7.1.pyz` only when actually supplied/present and verified against
+[v0.7.2](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.7.2); execute
+`isolinear-memory-0.7.2.pyz` only when actually supplied/present and verified against
 external `SHA256SUMS`. An explicitly provided reviewed candidate is separate from
 a published release. Verify before execution, then check `version` and the command help needed. Install it in private immutable tools storage using `install-package`.
 This skill is not the runtime and must not silently substitute the advisory tracker.

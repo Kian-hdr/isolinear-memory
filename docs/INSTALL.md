@@ -1,8 +1,8 @@
-# Install or update Isolinear Memory 0.7.1
+# Install or update Isolinear Memory 0.7.2
 
 This is setup reference, not routine agent context. Preserve the selected workspace,
 private state and previous runtime. Python 3.11+ is required. Download the versioned
-runtime and SHA256SUMS from the [v0.7.1 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.7.1).
+runtime and SHA256SUMS from the [v0.7.2 release](https://github.com/Kian-hdr/isolinear-memory/releases/tag/v0.7.2).
 Verify the runtime SHA-256 against its external SHA256SUMS entry before execution.
 If unavailable or mismatched, stop installation; do not substitute an unverified asset.
 
@@ -10,10 +10,10 @@ Choose the matching assets from that same release:
 
 | Asset | When needed |
 | --- | --- |
-| `isolinear-memory-0.7.1.pyz` | The self-contained runtime |
+| `isolinear-memory-0.7.2.pyz` | The self-contained runtime |
 | `SHA256SUMS` | External checksums for downloaded assets |
-| `isolinear-memory-0.7.1.zip` | Versioned source kit, including the launcher and capture installer scripts |
-| `isolinear-memory-skills-0.7.1.zip` | Packaged setup skills for the host agent |
+| `isolinear-memory-0.7.2.zip` | Versioned source kit, including the launcher and capture installer scripts |
+| `isolinear-memory-skills-0.7.2.zip` | Packaged setup skills for the host agent |
 
 Before executing a helper script, download and verify the **source kit ZIP** against
 its external checksum, then extract it to a separate tools/source directory outside
@@ -27,14 +27,18 @@ example spelling here.
 Use the verified package's `version` and `install-package --help`, then:
 
 ```text
-python3 isolinear-memory-0.7.1.pyz install-package isolinear-memory-0.7.1.pyz --sha256 VERIFIED_SHA --tools-dir PRIVATE_TOOLS
+python3 isolinear-memory-0.7.2.pyz install-package isolinear-memory-0.7.2.pyz --sha256 VERIFIED_SHA --tools-dir PRIVATE_TOOLS
 ```
 
 Substitute actual discovered paths and checksum. Use the returned immutable package
 for `setup PROJECT` and subsequent commands. Existing format-3 projects retain their
 private state; supply `--state-dir` only when required by their existing binding.
-For old formats, read the [migration guide](PRODUCT-V1.md) before proceeding.
-Version 0.7.1 supports `--vault-type team|personal|project`
+Obsidian vaults work as ordinary Markdown folders. Keep the same selected folder
+and private state when updating a format-3 project. Notes, links, attachments,
+editor settings and history remain in place. Projects using the historical
+exact-bundle workflow should keep their matching package. See the
+[migration guide](PRODUCT-V1.md) for old formats.
+Version 0.7.2 supports `--vault-type team|personal|project`
 and repeatable `--project-folder` inputs. Team keeps Raw/Wiki/Output; personal uses
 Notes/Resources; project uses chosen domain folders. See [vault profiles](../skills/setup-shared-project-workspace/references/vault-profiles.md).
 Published older releases may lack these options; inspect setup help and pre-create

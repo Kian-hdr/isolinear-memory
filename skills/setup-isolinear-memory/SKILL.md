@@ -14,7 +14,7 @@ A skill supplies instructions; it does not install a runtime or grant source acc
 ## Install or update
 
 Read the existing selected AGENTS.md and INDEX.md before changing anything. For released
-0.7 behavior, use the [installation guide](https://github.com/Kian-hdr/isolinear-memory/blob/v0.7.1/docs/INSTALL.md).
+0.7 behavior, use the [installation guide](https://github.com/Kian-hdr/isolinear-memory/blob/v0.7.2/docs/INSTALL.md).
 Verify the actual release asset against its external SHA256SUMS before executing
 it. Verify any source/skill archives too, and use helper installers only from the
 matching verified source kit. On macOS/Linux, install both command aliases against
@@ -41,7 +41,7 @@ The minimal project fallback is Knowledge/Planning/Deliverables.
 Setup uses plain Markdown. It does not depend on Obsidian; existing wiki links and editor settings stay intact. Profiles exist since 0.6.0; do not assume older flags work. Preserve populated layouts
 on join/resume. A profile does not authorize reorganization, remove logs/history or
 change provider permissions. Keep code and large assets in their governed homes
-and link them. See the [profile policy](https://github.com/Kian-hdr/isolinear-memory/blob/v0.7.1/skills/setup-shared-project-workspace/references/vault-profiles.md)
+and link them. See the [profile policy](https://github.com/Kian-hdr/isolinear-memory/blob/v0.7.2/skills/setup-shared-project-workspace/references/vault-profiles.md)
 when designing a new structure or planning an explicit migration.
 
 ## Routine source-first work
@@ -72,8 +72,8 @@ plus an explicit canonical file or unique handoff section, or no partial packet.
 Never trim a stop condition to fit. Use native reads for focused evidence when
 cheaper. Optional receipts reuse only exact passages still retained after source
 revalidation; discard them after reset, compaction, a new chat or uncertain retention.
-See [context packets](https://github.com/Kian-hdr/isolinear-memory/blob/v0.7.1/docs/PROGRESSIVE-CONTEXT.md)
-and [receipts](https://github.com/Kian-hdr/isolinear-memory/blob/v0.7.1/docs/EVIDENCE-RECEIPTS.md)
+See [context packets](https://github.com/Kian-hdr/isolinear-memory/blob/v0.7.2/docs/PROGRESSIVE-CONTEXT.md)
+and [receipts](https://github.com/Kian-hdr/isolinear-memory/blob/v0.7.2/docs/EVIDENCE-RECEIPTS.md)
 only when those modes are needed.
 
 Normal local-mirror work needs no MCP server. Optional 0.7 `memory-mcp` is a read-only,
@@ -81,7 +81,7 @@ fixed-project stdio adapter using the SDK environment in `requirements-mcp.txt`.
 It does not itself provide a remote phone service. Without a local mirror, use an
 authorized connector/service available on that host and retain scope, source ID,
 revision and freshness limits. A saved skill transfers neither credentials nor
-client support. Read [MCP setup](https://github.com/Kian-hdr/isolinear-memory/blob/v0.7.1/docs/MCP.md)
+client support. Read [MCP setup](https://github.com/Kian-hdr/isolinear-memory/blob/v0.7.2/docs/MCP.md)
 for that integration, not for ordinary notes.
 
 ## Local save and history capture

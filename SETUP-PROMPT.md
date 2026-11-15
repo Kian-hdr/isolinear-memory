@@ -21,7 +21,7 @@ Set up or update Isolinear Memory in my selected folder.
 
 2. Install a verified release. Follow the published Isolinear Memory installation
    guide, using the same release tag as the downloaded assets:
-   https://github.com/Kian-hdr/isolinear-memory/blob/v0.7.1/docs/INSTALL.md
+   https://github.com/Kian-hdr/isolinear-memory/blob/v0.7.2/docs/INSTALL.md
    Verify the runtime against its external SHA256SUMS before execution. Verify
    any source-kit or skill ZIP against that same external checksum file too.
    Run helper installers only from the matching verified extracted source kit,
