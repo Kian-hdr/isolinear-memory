@@ -23,7 +23,7 @@ def manifest_mode(data):
         return 'legacy'
     if type(version) is int and version == 2 and data.get('content_mode') == 'markdown':
         return 'markdown'
-    raise ProductError(3, 'project_invalid', 'Unsupported Shared Memory content format; use a compatible reviewed runtime.')
+    raise ProductError(3, 'project_invalid', 'Unsupported Isolinear Memory content format; use a compatible reviewed runtime.')
 
 
 def client_mode(config):

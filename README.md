@@ -17,8 +17,7 @@ reconcile the project copies that are visible on different devices.
 
 The core works offline in one selected Markdown folder. **Obsidian is optional.**
 Existing Obsidian vaults work with their original notes, wiki links and settings.
-For the legacy tracker, `--obsidian-dashboard` enables the optional Bases dashboard
-during setup. Git and folder providers can remain part of your workflow.
+Git and folder providers can remain part of your workflow.
 
 <p align="center">
 <a href="https://github.com/Kian-hdr/isolinear-memory/releases/download/v0.7.2/isolinear-memory-0.7.2.zip"><img src="docs/assets/downloads/download_1.svg" width="240" height="48" alt="Download ZIP"></a>
@@ -58,9 +57,8 @@ supplied for macOS; other systems can use manual capture or their own scheduler.
 
 1. Select the exact folder that should hold the memory. Keep personal, company and
    unrelated project scopes separate.
-2. Give an agent with authorized file access the [setup prompt](SETUP-PROMPT.md).
-   It follows the [installation guide](docs/INSTALL.md), verifies release checksums,
-   and preserves an existing project's identity, notes and history.
+2. Use the [Codex setup skill](skills/setup-isolinear-memory/SKILL.md) if installed,
+   or give an agent with authorized file access the [setup prompt](SETUP-PROMPT.md).
 3. Choose a profile for a new empty folder. Populated folders keep their layout.
 4. Confirm the installed version and a real local capture result. Routine saves
    complete with local-file readback; leave cloud upload queues alone.
@@ -424,7 +422,7 @@ See [provider guidance](docs/PROVIDERS.md) for platform and delivery details.
 
 | Need | Guide |
 | --- | --- |
-| Give an agent a complete setup request | [Setup prompt](SETUP-PROMPT.md) |
+| Set up with an agent | [Codex skill](skills/setup-isolinear-memory/SKILL.md), [copyable setup prompt](SETUP-PROMPT.md) |
 | Install, update or roll back | [Installation](docs/INSTALL.md) |
 | Use the commands and understand profiles | [Operating guide](docs/PRODUCT-V1.md) |
 | Set up background local capture | [Automatic capture](docs/AUTOMATIC-CAPTURE.md) |

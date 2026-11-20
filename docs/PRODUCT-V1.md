@@ -157,7 +157,7 @@ The returned `state_dir` is the actual folder-state path. When an old coordinato
 state base is supplied after migration, discovery uses its `folder` child.
 Keep this state outside consumer-sync storage and the shared project.
 
-Use `--read-only` when attaching a reader. The binding forbids Shared Memory writes;
+Use `--read-only` when attaching a reader. The binding forbids Isolinear Memory writes;
 provider and OS rights remain authoritative too. Omitting the flag on a later setup
 does not silently widen a saved read-only binding. Requesting it for an existing
 writable binding is refused rather than silently changing or ignoring access intent.
@@ -227,7 +227,7 @@ a provider download. The capture actor is not proof of who originally authored t
 
 The provider uploads/downloads on its own schedule. Capture local edits before
 reconnect when practical: a provider overwrite before capture can destroy a version
-that Shared Memory has never recorded, so provider history/backups remain useful. Run sync again after reconnection
+that Isolinear Memory has never recorded, so provider history/backups remain useful. Run sync again after reconnection
 or delivered files arrive. The command is one-shot, not a background AI service.
 An optional bounded loop is available:
 

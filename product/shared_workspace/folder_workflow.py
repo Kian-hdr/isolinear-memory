@@ -40,6 +40,30 @@ def validate_project_folders(folders):
     return result
 
 
+VAULT_GUIDANCE = '''Read INDEX.md and the relevant canonical note. Use native file tools when the
+path is known. For discovery, use scoped Isolinear Memory recall and expand
+incomplete hits against the source.
+
+After substantive work, update the existing note with durable findings,
+decisions, corrections, artifact links and next steps. Include sources and
+material uncertainty. Use INDEX.md to route readers to new canonical notes.
+Complete routine saves by local readback. Keep handoffs brief and respect
+explicit do-not-save instructions.
+
+Preserve original files, attachments, unrelated edits and conflicts. Coordinate
+overlapping edits and check affected links after explicit renames or deletions.
+Missing files alone are not deletions.
+
+Reuse configured history capture or run `isolinear-memory sync PROJECT --brief`
+once after material edits. If capture fails, keep the saved notes and report the gap.
+Leave cloud upload queues and sync settings alone for routine saves. Check
+provider delivery separately when needed.
+
+Keep credentials and recovery state private. Respect read-only grants, keep one
+provider per folder and preserve `.shared-memory.json` and `.shared-memory/`.
+'''
+
+
 def profile_workspace_files(vault_type, folders):
     if vault_type == 'personal':
         title = 'Personal vault'
@@ -62,32 +86,7 @@ def profile_workspace_files(vault_type, folders):
                     'labels record asserted capture provenance, not authenticated authorship.\n'
                     'Coordinate overlapping writes and preserve source links and factual\n'
                     'uncertainty where they matter. A vault profile does not change access permissions.\n')
-    agents = f'''# {title}
-
-Read INDEX.md, then only relevant notes using bounded topic/path searches.
-
-{guidance}
-Memory upkeep is part of completing a task. Without waiting to be asked, update the
-appropriate existing note with useful durable decisions, findings, corrections,
-artifact links and next steps. Create and index a note only when no existing home
-fits. Read back touched notes before claiming a save. Keep handoffs concise and
-useful; avoid transcripts, duplicate logs and routine tool narration. Respect
-explicit do-not-save instructions and keep private material in its authorized vault.
-
-Use native file tools. Preserve existing instructions, hierarchy, attachments and
-unrelated edits. Retain conflicts; resolve factual disagreements against evidence.
-Record explicit renames/deletions through Isolinear Memory and check links; missing
-files alone are not deletions. Configured automatic capture records history;
-otherwise run the installed isolinear-memory sync once after material edits.
-Complete routine saves by local readback. Leave Drive/OneDrive background syncing
-alone: do not inspect apps, queues or upload status, poll, force sync or restart
-clients. Remote source access is appropriate when no local mirror exists; check
-remote delivery only for an explicit delivery/investigation task. Local capture
-is not remote receipt. Report actual read/capture errors once and preserve notes.
-Keep credentials, private runtime state and recovery outside the vault. Respect
-read-only grants and OS/provider controls. Preserve .shared-memory/ and
-.shared-memory.json. One provider per folder.
-'''
+    agents = f'# Isolinear Memory: {title}\n\n{guidance}\n{VAULT_GUIDANCE}'
     index = f'# {title} index\n\nRead [[AGENTS]] first.\n\n| Need | Location |\n| --- | --- |\n'
     files = {'AGENTS.md': agents}
     for name, purpose in routes:
@@ -109,42 +108,13 @@ def new_workspace_files(root, vault_type='team', project_folders=None):
     if vault_type != 'team':
         return profile_workspace_files(vault_type, project_folders or ['Knowledge', 'Planning', 'Deliverables'])
     return {
-        'AGENTS.md': '''# Shared workspace
+        'AGENTS.md': '''# Isolinear Memory: Team vault
 
-Read INDEX.md, then only relevant Wiki sections; search by topic/path with bounded
-reads. Raw/ holds sources, Wiki/ canonical knowledge, Output/ substantial deliverables.
+Use Raw/ for originals, Wiki/ for canonical notes and Output/ for substantial
+deliverables. Keep code in its repository and link the source or artifact from
+Wiki/. Keep personal and unrelated records in their authorized folders.
 
-Memory upkeep is part of completing a task. Without waiting to be asked, update the
-relevant existing Wiki note for durable findings, decisions, corrections, generated
-artifacts, status changes and next steps. Keep substantial deliverables in Output/
-and code in its project repository; link their exact paths/versions from Wiki. If no
-note fits, create one in the selected scope and add a short INDEX.md route. Use
-targeted edits, then read back touched notes and artifacts before claiming a save.
-Record source/date, uncertainty and completed versus planned status; leave a concise
-Current handoff after substantive work. No transcript, duplicate log or fleeting
-chat. Respect explicit do-not-save instructions.
-
-Use native file tools within selected-folder permissions; do not ask the human to
-manage routine memory. Never put private material in a company folder or expand
-project access. Preserve hierarchy, attachments, instructions and unrelated edits;
-coordinate overlapping writes. Retain conflicts and review factual disagreements.
-Record explicit renames/deletions through Isolinear Memory and check links; missing
-files alone are not deletions.
-
-Configured automatic capture records history independently. Otherwise run the
-installed isolinear-memory sync once after material edits. If capture fails, keep
-saved Markdown and report a material history gap once, without repeated retries.
-Complete routine saves by local readback; an optional short saved-note location
-is enough. Do not inspect cloud apps, menus, upload queues or provider status,
-poll uploads, force syncing, restart clients or change sync settings for routine
-work. Use connected source tools when no local mirror exists. Check remote
-receipt only for an explicit delivery/investigation task; local capture does not
-prove it. An actual local read/save failure still needs to be reported.
-
-Keep private state, credentials and recovery outside shared storage. Respect
-confidentiality, read-only grants and OS/provider controls. One provider per folder.
-Preserve .shared-memory/ and .shared-memory.json.
-''',
+''' + VAULT_GUIDANCE,
         'INDEX.md': '''# Workspace index
 
 Read [[AGENTS]] first, then use this routing map.

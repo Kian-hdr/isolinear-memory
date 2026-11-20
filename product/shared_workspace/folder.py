@@ -1189,7 +1189,7 @@ class Folder:
             if not value['conflict']:
                 continue
             conflict_id = digest({'path': path, 'heads': value['heads']})
-            lines = ['# Shared Memory conflict', '', 'Historical conflict observation. Run folder status to check whether it remains unresolved.',
+            lines = ['# Isolinear Memory conflict', '', 'Historical conflict observation. Run folder status to check whether it remains unresolved.',
                      '', 'Path: `' + path + '`', '', 'No version was silently selected. Resolve with an explanation after reviewing the causal versions.',
                      '', 'Common base event: ' + (value['base_id'] or 'none or ambiguous'), '']
             for version in value['versions']:
