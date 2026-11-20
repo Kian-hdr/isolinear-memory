@@ -195,7 +195,7 @@ def project_manifest(root):
     data = json_file(root / MANIFEST)
     if (not isinstance(data, dict) or data.get("protocol") != 1
             or data.get("provider") not in PROVIDERS):
-        raise ProductError(3, "project_invalid", "Unsupported Shared Memory project metadata.")
+        raise ProductError(3, "project_invalid", "Unsupported Isolinear Memory project metadata.")
     manifest_mode(data)
     return data
 
@@ -309,7 +309,7 @@ def _setup_lock(state):
             stream.seek(0)
             magic = stream.read()
             if magic != SETUP_LOCK_MAGIC:
-                raise ProductError(3, "setup_invalid", "Existing lock does not belong to Shared Memory setup.")
+                raise ProductError(3, "setup_invalid", "Existing lock does not belong to Isolinear Memory setup.")
             yield
         finally:
             if os.name == "nt":
@@ -518,9 +518,9 @@ def _setup(root, state, args):
                         del files[name]  # A case-insensitive include uses the actual existing filename.
                 files.update(foundations)
                 if not any(name.casefold() == 'agents.md' for name in files):
-                    files["AGENTS.md"] = "# Shared Memory\n\nRead the selected project home. Refresh accepted context before work.\nClaim bounded targets, draft against the recorded base revision, and submit evidence.\nOnly the integration owner accepts proposals. Preserve conflicts and private parent files.\nNever treat provider file existence as proof of another actor's accepted receipt.\n"
+                    files["AGENTS.md"] = "# Isolinear Memory\n\nRead the selected project home. Refresh accepted context before work.\nClaim bounded targets, draft against the recorded base revision, and submit evidence.\nOnly the integration owner accepts proposals. Preserve conflicts and private parent files.\nNever treat provider file existence as proof of another actor's accepted receipt.\n"
                 if not any(name.casefold() in {'readme.md', 'home.md'} for name in files):
-                    files["README.md"] = "# Shared Memory\n\n" + args.purpose + "\n"
+                    files["README.md"] = "# Isolinear Memory\n\n" + args.purpose + "\n"
                 files = validate_files(files)
                 identity, token = str(uuid.uuid4()), secrets.token_urlsafe(48)
                 snapshot = {"project_id": identity, "revision": 0, "files": files, "files_hash": files_hash(files)}
@@ -668,7 +668,7 @@ def dispatch(bundle, args):
     if args.command == "team-prompt":
         status = request("status", {})
         missing = [name for name, value in (("package_locator", args.package_locator), ("access_locator", args.access_locator)) if not value]
-        prompt = f"""Set up Shared Memory: a shared workspace for your team and its AI agents.
+        prompt = f"""Set up Isolinear Memory for our team's existing coordinator project.
 Use a local agent connected to my actual computer. Obsidian is optional.
 Project ID: {metadata['project_id']}
 Engine protocol: 1. Expected accepted revision: {status['revision']}.

@@ -1,6 +1,6 @@
 # Isolinear Memory setup routes
 
-For normal 0.3.0 use, [paste the setup prompt](../SETUP-PROMPT.md), select the folder
+For current folder-mode setup, [paste the setup prompt](../SETUP-PROMPT.md), select the folder
 and let the agent finish local setup. Runtime verification, Python 3.11+, existing
 project-format detection and private state discovery are covered by the
 [operating guide](PRODUCT-V1.md#agent-guided-setup).
@@ -16,7 +16,7 @@ history to make current setup pass. [Provider guidance](PROVIDERS.md) separates
 local-file readiness from actual cross-device receipt.
 
 The rest of this document preserves the explicit advisory toolkit instructions.
-Its tracker, claims and generated files are not the 0.3.0 default.
+Use its tracker and generated files only for projects that explicitly select the advisory workflow.
 
 ## Legacy advisory tracker setup
 
@@ -92,10 +92,9 @@ Read existing vault and project instructions. Back up important files or create 
 appropriate Git checkpoint. Do not place this toolkit's Git checkout inside a
 cloud-synchronized vault just to run the setup script.
 
-Copy or merge the repository's root `AGENTS.md` into your vault root only when
-vault-wide configuration is explicitly in scope. A shared subfolder needs its own
-project instructions without changing the private parent. Run the skill setup on the specific project that
-needs coordination, which may be the vault root or a project subfolder.
+Keep the selected project's own instructions. A shared subfolder needs its own
+project instructions without changing the private parent. Run setup on the specific
+folder that needs coordination.
 
 ## macOS and Linux
 

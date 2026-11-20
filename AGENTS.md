@@ -1,53 +1,20 @@
-# Isolinear Memory
+# Isolinear Memory contributor instructions
 
-This repository is public. Publish product behavior, reproducible synthetic tests,
-and verified release evidence. Keep account-specific operations, billing, private
-workspace content, credentials, and internal task transcripts in private storage.
-Review new docs, commit messages, and release assets for disclosure before pushing.
-
-Use the selected project's instructions and current user scope. Read its index and
-relevant notes only. Ordinary memory uses native Markdown reads/edits; Obsidian is
-optional. Keep setup, diagnostics and historical workflows out of routine context.
-Before completing substantive work, save its durable result, decision, useful
-finding, artifact link and next step in the authorized canonical note without
-waiting to be asked. Read back the touched files. Keep sources and uncertainty;
-avoid transcript dumps and repeated progress logs. Never route private facts to
-an unrelated or less private project.
-
-Folder mode permits direct/offline editing without leases, proposals or an online
-reviewer. Configured automatic capture records history independently of the model;
-otherwise sync once after edits/provider arrivals. If capture fails, preserve saved
-notes and record the gap for recovery. Keep routine capture and provider diagnostics
-out of the user-facing response. Name the saved note briefly when useful; surface
-an issue only when the current result may be unavailable, requested delivery is
-unverified, or the user needs to act. Do not invent scripts or repeatedly retry setup.
-
-Preserve project identity/history, existing instructions, hierarchy, attachments,
-unrelated changes and nested project boundaries. Coordinate overlapping edits.
-Retain conflicts; resolve factual disagreements against evidence. Record explicit
-rename/delete intentions and validate links; missing files alone are not deletions.
-
-Choose one provider per folder. Keep private baselines, credentials, recovery and
-SQLite outside shared storage. Scope never expands to parents or new recipients.
-Respect read-only grants, confidentiality and mandatory OS/authentication controls.
-Local capture is not provider delivery or proof of independent recipient receipt.
-Routine local saves complete with native-file readback. Never inspect Drive/OneDrive
-apps, menus, queues or upload status, poll, force sync, restart clients or alter
-sync settings merely to verify routine saves/capture. Remote source access without
-a local mirror is allowed; remote delivery checks require that task scope.
-
-
-New empty projects choose team (Raw/Wiki/Output), personal (light single-owner
-notes without manual contributor audit) or project (domain-specific folders). See
-skills/setup-shared-project-workspace/references/vault-profiles.md. Never reorganize
-populated folders during setup. Update existing canonical notes with durable decisions and provenance.
-Formats 1/2 retain their historical workflow until an explicit backed-up migration;
-never reset their authority or treat pending work as accepted. Legacy trackers remain
-separate. Consult docs/PRODUCT-V1.md or the relevant reference only when needed.
-
-For development, preserve recoverable originals and test relevant changes. The
-product supports Python 3.11+ across macOS/Linux/Windows; platform-specific helpers
-must be labeled and import safely elsewhere. Build with scripts/build_product.py;
-run product/tests, relevant toolkit checks and documentation validation. Release
-assets must come from the exact clean committed source via scripts/build_release.py.
-Report checked behavior and remaining limits; never label unreviewed work approved.
+- Keep private workspace content, account details, credentials and transcripts
+  out of this public repository. Use synthetic fixtures for tests and examples.
+- Use the selected Markdown folder's instructions and scope. Read known sources
+  directly and use scoped recall for discovery. Save durable decisions and evidence
+  in the existing canonical note and verify the local readback.
+- Preserve project IDs, on-disk formats, history, conflicts, provider bindings and
+  read-only boundaries. Formats 1 and 2 use their existing workflow until an
+  explicit backed-up migration. See [compatibility](docs/BRAND-MIGRATION.md).
+- Keep ordinary setup and capture independent of Obsidian and hosted services.
+  Leave cloud upload queues and sync settings alone for routine local saves.
+- Put setup instructions in the [canonical skill](skills/setup-isolinear-memory/SKILL.md)
+  or the [installation guide](docs/INSTALL.md). Use Isolinear Memory in user-facing
+  text and preserve identifiers used by existing callers.
+- The runtime supports Python 3.11+ on macOS, Linux and Windows. Run the relevant
+  tests in `product/tests` and any affected toolkit checks. Build with
+  `scripts/build_product.py` and build releases from a clean commit with
+  `scripts/build_release.py`. Check generated Mermaid blocks with
+  `python scripts/render_diagrams.py --check-markdown`.

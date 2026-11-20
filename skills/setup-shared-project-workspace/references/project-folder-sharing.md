@@ -19,6 +19,6 @@ backed-up migration, not a second setup pretending to be the same project.
 Links should resolve within the intended share or point to deliberately authorized
 external references. A private sibling link does not grant access and may reveal its
 title. Obsidian graph visibility and native rename behavior are separate from provider
-permissions and Shared Memory history; check affected links after a move.
+permissions and Isolinear Memory history; check affected links after a move.
 
 See [storage access](storage-access.md) and [teammate onboarding](teammate-onboarding.md).
